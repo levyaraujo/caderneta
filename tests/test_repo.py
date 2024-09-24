@@ -1,40 +1,8 @@
 from datetime import datetime
 
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from src.infra.database.connection import metadata
 from src.dominio.usuario.entidade import Usuario
 from src.dominio.transacao.entidade import Transacao
 from src.dominio.transacao.tipos import TipoTransacao
-from src.infra.database.repo import RepoEscrita, RepoLeitura
-
-DATABASE_URL = "sqlite:////tmp/test.sqlite3"
-
-@pytest.fixture(scope="module")
-def engine():
-    return create_engine(DATABASE_URL, echo=True)
-
-@pytest.fixture(scope="module")
-def tables(engine):
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
-
-@pytest.fixture
-def session(engine, tables):
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    yield session
-    session.close()
-
-@pytest.fixture
-def repo_escrita(session):
-    return RepoEscrita(session)
-
-@pytest.fixture
-def repo_leitura(session):
-    return RepoLeitura(session)
 
 def test_adicionar_usuario(repo_escrita, session):
     usuario = Usuario(id=1, nome="John", sobrenome="Doe", telefone="94981360000", email="john@example.com", senha="password")
