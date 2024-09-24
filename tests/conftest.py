@@ -22,7 +22,7 @@ def usuario():
         sobrenome="Silva",
         telefone="94981362600",
         email="joao@teste.com",
-        senha="senha123"
+        senha="senha123",
     )
 
 
@@ -36,7 +36,7 @@ def transacao_gen():
             destino=destino,
             tipo=tipo,
             descricao="asodihasjklfnasfr",
-            caixa=caixa
+            caixa=caixa,
         )
 
     return make_mock

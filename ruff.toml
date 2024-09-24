@@ -1,0 +1,5 @@
+[lint.per-file-ignores]
+"*" = ["F821"]
+
+[lint]
+extend-safe-fixes = ["F841", "E712"]
