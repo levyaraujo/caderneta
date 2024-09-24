@@ -1,9 +1,10 @@
-from sqlalchemy import MetaData, Table, Column, Integer, Float, String, DateTime, ForeignKey
-from sqlalchemy.orm import registry, relationship
+from sqlalchemy import Table, Column, Integer, Float, String, DateTime, ForeignKey, Enum
+from sqlalchemy.orm import registry
 from src.dominio.transacao.entidade import Transacao
+from src.dominio.transacao.tipos import TipoTransacaoORM
 from src.dominio.usuario.entidade import Usuario
+from src.infra.database.connection import metadata
 
-metadata = MetaData()
 mapper = registry()
 
 usuarios = Table(
@@ -24,13 +25,11 @@ transacoes = Table(
     Column('usuario_id', Integer, ForeignKey('usuarios.id')),
     Column('valor', Float),
     Column('destino', String),
-    Column('tipo', String),
+    Column('tipo', TipoTransacaoORM),
     Column('descricao', String),
     Column('caixa', DateTime)
 )
 
 def iniciar_mapeamento_orm():
     mapper.map_imperatively(Usuario, usuarios)
-    mapper.map_imperatively(Transacao, transacoes, properties={
-        "usuario": relationship(Usuario, back_populates="transacoes")
-    })
+    mapper.map_imperatively(Transacao, transacoes)
