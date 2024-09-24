@@ -20,7 +20,7 @@ def test_criacao_transacao(usuario, transacao_gen):
     assert transacao.tipo == TipoTransacao.DEBITO
     assert isinstance(transacao.caixa, datetime)
     assert isinstance(transacao.competencia, datetime)
-    assert transacao.apagado == False
+    assert transacao.apagado is False
 
 
 def test_transacao_imutabilidade(usuario, transacao_gen):
@@ -45,29 +45,52 @@ def test_transacao_campos_opcionais(usuario, transacao_gen):
 def test_transacao_com_tipo_errado(usuario, transacao_gen):
     with pytest.raises(TipoTransacaoInvalido) as excinfo:
         transacao_gen(usuario, 100.0, None, "outros")
-    assert str(excinfo.value) == "O tipo desse transacao deve ser TipoTransacao.DEBITO ou TipoTransacao.CREDITO"
+    assert (
+        str(excinfo.value)
+        == "O tipo desse transacao deve ser TipoTransacao.DEBITO ou TipoTransacao.CREDITO"
+    )
 
 
 def test_fluxo_competencia(usuario, transacao_gen):
     usuario = usuario
     transacoes_por_usuario = {usuario.id: []}
-    tipos = [TipoTransacao.DEBITO, TipoTransacao.CREDITO]
 
     for _ in range(10):
-        transacoes_por_usuario[usuario.id].append(transacao_gen(usuario=usuario, valor=150,
-            destino="Eletronicos", tipo=TipoTransacao.CREDITO,
-            caixa=datetime(2024, 9, randint(1, 30))))
+        transacoes_por_usuario[usuario.id].append(
+            transacao_gen(
+                usuario=usuario,
+                valor=150,
+                destino="Eletronicos",
+                tipo=TipoTransacao.CREDITO,
+                caixa=datetime(2024, 9, randint(1, 30)),
+            )
+        )
 
-    transacoes_por_usuario[usuario.id].append(transacao_gen(usuario=usuario, valor=150,
-        destino="Eletronicos", tipo=TipoTransacao.DEBITO,
-        caixa=datetime(2024, 9, randint(1, 30))))
+    transacoes_por_usuario[usuario.id].append(
+        transacao_gen(
+            usuario=usuario,
+            valor=150,
+            destino="Eletronicos",
+            tipo=TipoTransacao.DEBITO,
+            caixa=datetime(2024, 9, randint(1, 30)),
+        )
+    )
 
     for _ in range(15):
-        transacoes_por_usuario[usuario.id].append(transacao_gen(usuario=usuario, valor=250,
-            destino="Eletronicos", tipo=TipoTransacao.CREDITO, caixa=datetime(2024, randint(10, 12), randint(1, 30))))
+        transacoes_por_usuario[usuario.id].append(
+            transacao_gen(
+                usuario=usuario,
+                valor=250,
+                destino="Eletronicos",
+                tipo=TipoTransacao.CREDITO,
+                caixa=datetime(2024, randint(10, 12), randint(1, 30)),
+            )
+        )
 
-    competencia = usuario._calcular_competencia(transacoes_por_usuario[usuario.id],
-        Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 9, 30)))
+    competencia = usuario._calcular_competencia(
+        transacoes_por_usuario[usuario.id],
+        Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 9, 30)),
+    )
 
     assert competencia == 5100
 
@@ -77,15 +100,29 @@ def test_fluxo_caixa(usuario, transacao_gen):
     transacoes_por_usuario = {usuario.id: []}
 
     for _ in range(10):
-        transacoes_por_usuario[usuario.id].append(transacao_gen(usuario=usuario, valor=150,
-            destino="Eletronicos", tipo=TipoTransacao.CREDITO,
-            caixa=datetime(2024, 9, randint(1, 30))))
+        transacoes_por_usuario[usuario.id].append(
+            transacao_gen(
+                usuario=usuario,
+                valor=150,
+                destino="Eletronicos",
+                tipo=TipoTransacao.CREDITO,
+                caixa=datetime(2024, 9, randint(1, 30)),
+            )
+        )
 
-    transacoes_por_usuario[usuario.id].append(transacao_gen(usuario=usuario, valor=150,
-        destino="Eletronicos", tipo=TipoTransacao.DEBITO,
-        caixa=datetime(2024, 9, randint(1, 30))))
+    transacoes_por_usuario[usuario.id].append(
+        transacao_gen(
+            usuario=usuario,
+            valor=150,
+            destino="Eletronicos",
+            tipo=TipoTransacao.DEBITO,
+            caixa=datetime(2024, 9, randint(1, 30)),
+        )
+    )
 
-    caixa = usuario._calcular_caixa(transacoes_por_usuario[usuario.id],
-        Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 9, 30)))
+    caixa = usuario._calcular_caixa(
+        transacoes_por_usuario[usuario.id],
+        Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 9, 30)),
+    )
 
     assert caixa == 1350

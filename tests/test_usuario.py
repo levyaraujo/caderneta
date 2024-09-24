@@ -10,7 +10,7 @@ def test_criacao_modelo_usuario():
         sobrenome="Silva",
         telefone="11992720099",
         email="joao@teste.com",
-        senha="senha123"
+        senha="senha123",
     )
     assert usuario.id == 1
     assert usuario.nome == "Joao"
@@ -28,7 +28,7 @@ def test_usuario_email_format():
             sobrenome="Silva",
             telefone="11000042526",
             email="email_invalido",
-            senha="senha123"
+            senha="senha123",
         )
 
 
@@ -40,7 +40,10 @@ def test_usuario_telefone_format():
             sobrenome="Silva",
             telefone="telefone_invalido",
             email="joao@teste.com",
-            senha="senha123"
+            senha="senha123",
         )
 
-    assert str(excinfo.value) == "Formato de telefone celular inválido. Use apenas números: 2 ou 3 dígitos de DDD + 9 dígitos do número."
+    assert (
+        str(excinfo.value)
+        == "Formato de telefone celular inválido. Use apenas números: 2 ou 3 dígitos de DDD + 9 dígitos do número."
+    )
