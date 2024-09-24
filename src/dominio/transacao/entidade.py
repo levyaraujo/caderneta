@@ -5,7 +5,7 @@ from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
 from src.validadores import validar_tipo_da_transacao
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class Transacao:
     id: int
     usuario: Usuario
