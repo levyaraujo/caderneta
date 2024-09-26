@@ -15,7 +15,7 @@ iniciar_mapeamento_orm()
 
 
 @pytest.fixture
-def usuario():
+def mock_usuario():
     return Usuario(
         id=randint(1, 10000),
         nome="Joao",

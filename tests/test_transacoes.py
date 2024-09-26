@@ -9,12 +9,12 @@ from src.dominio.transacao.excecoes import TipoTransacaoInvalido
 from src.dominio.transacao.entidade import Transacao, TipoTransacao
 
 
-def test_criacao_transacao(usuario, transacao_gen):
-    transacao = transacao_gen(usuario, 100.0, "Loja A", TipoTransacao.DEBITO)
+def test_criacao_transacao(mock_usuario, transacao_gen):
+    transacao = transacao_gen(mock_usuario, 100.0, "Loja A", TipoTransacao.DEBITO)
 
     assert isinstance(transacao, Transacao)
     assert isinstance(transacao.id, int)
-    assert transacao.usuario == usuario
+    assert transacao.usuario == mock_usuario
     assert transacao.valor == 100.0
     assert transacao.destino == "Loja A"
     assert transacao.tipo == TipoTransacao.DEBITO
@@ -23,8 +23,8 @@ def test_criacao_transacao(usuario, transacao_gen):
     assert transacao.apagado is False
 
 
-def test_transacao_imutabilidade(usuario, transacao_gen):
-    transacao = transacao_gen(usuario, 100.0, "Loja A", TipoTransacao.DEBITO)
+def test_transacao_imutabilidade(mock_usuario, transacao_gen):
+    transacao = transacao_gen(mock_usuario, 100.0, "Loja A", TipoTransacao.DEBITO)
 
     with pytest.raises(dataclasses.FrozenInstanceError):
         transacao.valor = 200.0
@@ -35,24 +35,24 @@ def test_tipo_transacao_enum():
     assert TipoTransacao.CREDITO.value == "credito"
 
 
-def test_transacao_campos_opcionais(usuario, transacao_gen):
-    transacao = transacao_gen(usuario, 100.0, None, TipoTransacao.CREDITO)
+def test_transacao_campos_opcionais(mock_usuario, transacao_gen):
+    transacao = transacao_gen(mock_usuario, 100.0, None, TipoTransacao.CREDITO)
 
     assert transacao.destino is None
     assert isinstance(transacao.descricao, str)
 
 
-def test_transacao_com_tipo_errado(usuario, transacao_gen):
+def test_transacao_com_tipo_errado(mock_usuario, transacao_gen):
     with pytest.raises(TipoTransacaoInvalido) as excinfo:
-        transacao_gen(usuario, 100.0, None, "outros")
+        transacao_gen(mock_usuario, 100.0, None, "outros")
     assert (
         str(excinfo.value)
         == "O tipo desse transacao deve ser TipoTransacao.DEBITO ou TipoTransacao.CREDITO"
     )
 
 
-def test_fluxo_competencia(usuario, transacao_gen):
-    usuario = usuario
+def test_fluxo_competencia(mock_usuario, transacao_gen):
+    usuario = mock_usuario
     transacoes_por_usuario = {usuario.id: []}
 
     for _ in range(10):
@@ -95,8 +95,8 @@ def test_fluxo_competencia(usuario, transacao_gen):
     assert competencia == 5100
 
 
-def test_fluxo_caixa(usuario, transacao_gen):
-    usuario = usuario
+def test_fluxo_caixa(mock_usuario, transacao_gen):
+    usuario = mock_usuario
     transacoes_por_usuario = {usuario.id: []}
 
     for _ in range(10):
