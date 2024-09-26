@@ -8,7 +8,7 @@ load_dotenv()
 DATABASE_URL = getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL, echo=True)
 
-Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Session = sessionmaker(autocommit=False, autoflush=False, bind=engine, auto_begin=True)
 
 metadata = MetaData()
 

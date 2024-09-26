@@ -21,6 +21,9 @@ class RepoLeitura:
     def __init__(self, session: Session):
         self.session = session
 
+    def __del__(self):
+        self.session.close()
+
     def buscar_por_id(self, modelo, id):
         return self.session.query(modelo).get(id)
 
