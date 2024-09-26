@@ -1,8 +1,11 @@
 from datetime import datetime
+from random import randint
 
+from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.dominio.usuario.entidade import Usuario
 from src.dominio.transacao.entidade import Transacao
 from src.dominio.transacao.tipos import TipoTransacao
+from src.libs.tipos import Intervalo
 
 
 def test_adicionar_usuario(repo_escrita, session):
@@ -60,3 +63,22 @@ def test_buscar_usuario_por_id(repo_leitura):
 def test_buscar_todas_transacoes(repo_leitura):
     transacoes = list(repo_leitura.buscar_todos(Transacao))
     assert len(transacoes) > 0
+
+
+def test_buscar_transacao_por_intervalo_e_usuario(session, mock_usuario, transacao_gen):
+    repo_transacao_leitura = RepoTransacaoLeitura(session=session)
+    usuario = mock_usuario
+    for _ in range(10):
+        session.add(
+            transacao_gen(
+                usuario=usuario,
+                valor=randint(150, 2000),
+                caixa=datetime(2024, randint(9, 10), randint(1, 30)),
+                destino="Loja A",
+                tipo=TipoTransacao.CREDITO,
+            )
+        )
+    session.commit()
+
+    intervalo = Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 10, 30))
+    repo_transacao_leitura.buscar_por_intervalo_e_usuario(intervalo, usuario.id)
