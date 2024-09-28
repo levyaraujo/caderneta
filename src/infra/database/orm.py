@@ -56,6 +56,3 @@ def iniciar_mapeamento_orm():
             "usuario_id": transacoes.c.usuario_id,
         },
     )
-
-
-iniciar_mapeamento_orm()
