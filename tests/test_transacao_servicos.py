@@ -5,5 +5,5 @@ from src.dominio.transacao.servicos import criar_transacao
 def test_criar_transacao(mock_transacao, session):
     transacao = mock_transacao
     criar_transacao(transacao, session)
-    transacao_salva = session.query(Transacao).get(transacao.id)
+    transacao_salva = session.get(Transacao, transacao.id)
     assert transacao_salva.id == transacao.id
