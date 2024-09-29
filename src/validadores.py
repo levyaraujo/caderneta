@@ -22,7 +22,7 @@ def validar_telefone(telefone: str) -> bool:
 
 
 def validar_tipo_da_transacao(tipo):
-    if tipo not in [TipoTransacao.DEBITO, TipoTransacao.CREDITO]:
+    if tipo not in [TipoTransacao.DEBITO, TipoTransacao.CREDITO, "credito", "debito"]:
         raise TipoTransacaoInvalido(
             "O tipo desse transacao deve ser TipoTransacao.DEBITO ou TipoTransacao.CREDITO"
         )

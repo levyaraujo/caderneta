@@ -43,16 +43,19 @@ transacoes = Table(
 
 
 def iniciar_mapeamento_orm():
-    mapper.map_imperatively(
-        Usuario,
-        usuarios,
-        properties={"transacoes": relationship(Transacao, back_populates="usuario")},
-    )
-    mapper.map_imperatively(
-        Transacao,
-        transacoes,
-        properties={
-            "usuario": relationship(Usuario, back_populates="transacoes"),
-            "usuario_id": transacoes.c.usuario_id,
-        },
-    )
+    if not mapper.mappers:
+        mapper.map_imperatively(
+            Usuario,
+            usuarios,
+            properties={
+                "transacoes": relationship(Transacao, back_populates="usuario")
+            },
+        )
+        mapper.map_imperatively(
+            Transacao,
+            transacoes,
+            properties={
+                "usuario": relationship(Usuario, back_populates="transacoes"),
+                "usuario_id": transacoes.c.usuario_id,
+            },
+        )
