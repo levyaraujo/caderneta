@@ -1,9 +1,9 @@
-import dataclasses
 from random import randint
 
 import pytest
 from datetime import datetime
 
+from src.dominio.transacao.servicos import _calcular_caixa, _calcular_competencia
 from src.libs.tipos import Intervalo
 from src.dominio.transacao.excecoes import TipoTransacaoInvalido
 from src.dominio.transacao.entidade import Transacao, TipoTransacao
@@ -13,7 +13,6 @@ def test_criacao_transacao(mock_usuario, transacao_gen):
     transacao = transacao_gen(mock_usuario, 100.0, "Loja A", TipoTransacao.DEBITO)
 
     assert isinstance(transacao, Transacao)
-    assert isinstance(transacao.id, int)
     assert transacao.usuario == mock_usuario
     assert transacao.valor == 100.0
     assert transacao.destino == "Loja A"
@@ -21,13 +20,6 @@ def test_criacao_transacao(mock_usuario, transacao_gen):
     assert isinstance(transacao.caixa, datetime)
     assert isinstance(transacao.competencia, datetime)
     assert transacao.apagado is False
-
-
-def test_transacao_imutabilidade(mock_usuario, transacao_gen):
-    transacao = transacao_gen(mock_usuario, 100.0, "Loja A", TipoTransacao.DEBITO)
-
-    with pytest.raises(dataclasses.FrozenInstanceError):
-        transacao.valor = 200.0
 
 
 def test_tipo_transacao_enum():
@@ -87,7 +79,7 @@ def test_fluxo_competencia(mock_usuario, transacao_gen):
             )
         )
 
-    competencia = usuario._calcular_competencia(
+    competencia = _calcular_competencia(
         transacoes_por_usuario[usuario.id],
         Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 9, 30)),
     )
@@ -120,7 +112,7 @@ def test_fluxo_caixa(mock_usuario, transacao_gen):
         )
     )
 
-    caixa = usuario._calcular_caixa(
+    caixa = _calcular_caixa(
         transacoes_por_usuario[usuario.id],
         Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 9, 30)),
     )

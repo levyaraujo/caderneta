@@ -5,6 +5,7 @@ from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.dominio.usuario.entidade import Usuario
 from src.dominio.transacao.entidade import Transacao
 from src.dominio.transacao.tipos import TipoTransacao
+from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.libs.tipos import Intervalo
 
 
@@ -31,7 +32,7 @@ def test_remover_usuario(repo_escrita, session):
 
 def test_adicionar_transacao(repo_escrita, session):
     usuario = Usuario(
-        id=2,
+        id=randint(1, 10000),
         nome="Jane",
         sobrenome="Doe",
         telefone="94981360000",
@@ -41,7 +42,7 @@ def test_adicionar_transacao(repo_escrita, session):
     session.add(usuario)
     session.commit()
     transacao = Transacao(
-        id=1,
+        id=randint(1, 10000),
         usuario=usuario,
         valor=100.0,
         tipo=TipoTransacao.CREDITO,
@@ -51,13 +52,18 @@ def test_adicionar_transacao(repo_escrita, session):
     )
     repo_escrita.adicionar(transacao)
     repo_escrita.commit()
-    assert session.query(Transacao).filter_by(id=1).first() is not None
+    assert session.query(Transacao).filter_by(id=transacao.id).first() is not None
 
 
-def test_buscar_usuario_por_id(repo_leitura):
-    usuario = repo_leitura.buscar_por_id(Usuario, 2)
+def test_buscar_usuario_por_id(session, mock_usuario):
+    repo = RepoUsuarioLeitura(session=session)
+    novo_usuario = mock_usuario
+    session.add(novo_usuario)
+    session.commit()
+
+    usuario = repo.buscar_por_id(novo_usuario.id)
     assert usuario is not None
-    assert usuario.nome == "Jane"
+    assert usuario.nome == "Joao"
 
 
 def test_buscar_todas_transacoes(repo_leitura):
@@ -81,4 +87,15 @@ def test_buscar_transacao_por_intervalo_e_usuario(session, mock_usuario, transac
     session.commit()
 
     intervalo = Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 10, 30))
-    repo_transacao_leitura.buscar_por_intervalo_e_usuario(intervalo, usuario.id)
+    transacoes = repo_transacao_leitura.buscar_por_intervalo_e_usuario(
+        intervalo, usuario.id
+    )
+
+    assert all(
+        isinstance(transacao.usuario, Usuario) and transacao.usuario.id == usuario.id
+        for transacao in transacoes
+    )
+
+    assert all(transacao.usuario == usuario for transacao in transacoes)
+
+    assert all(transacao.tipo == TipoTransacao.CREDITO for transacao in transacoes)

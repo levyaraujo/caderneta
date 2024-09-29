@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from typing import Iterator
 
 from sqlalchemy.orm import Session
 
@@ -23,9 +23,6 @@ class RepoLeitura:
 
     def __del__(self):
         self.session.close()
-
-    def buscar_por_id(self, modelo, id):
-        return self.session.query(modelo).get(id)
 
     def buscar_todos(self, modelo) -> Iterator:
         yield from self.session.query(modelo).all()

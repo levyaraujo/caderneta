@@ -5,13 +5,10 @@ import pytest
 
 from src.dominio.transacao.entidade import Transacao
 from src.dominio.usuario.entidade import Usuario
-from src.infra.database.orm import iniciar_mapeamento_orm
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.infra.database.connection import metadata
 from src.infra.database.repo import RepoEscrita, RepoLeitura
-
-iniciar_mapeamento_orm()
 
 
 @pytest.fixture
@@ -30,7 +27,7 @@ def mock_usuario():
 def transacao_gen():
     def make_mock(usuario, valor, destino, tipo, caixa=datetime(2024, 10, 22)):
         return Transacao(
-            id=randint(1, 1000),
+            id=randint(1, 10000),
             usuario=usuario,
             valor=valor,
             destino=destino,
@@ -40,6 +37,11 @@ def transacao_gen():
         )
 
     return make_mock
+
+
+@pytest.fixture(scope="function")
+def mock_transacao(mock_usuario, transacao_gen):
+    return transacao_gen(mock_usuario, 100.0, "Loja A", "debito")
 
 
 DATABASE_URL = "sqlite:///:memory:"
