@@ -30,7 +30,7 @@ def _calcular_caixa(transacoes: List[Transacao], intervalo: Intervalo):
 
 def _calcular_competencia(transacoes: List[Transacao], intervalo: Intervalo):
     transacoes_no_periodo = [
-        transacao for transacao in transacoes if intervalo.contem(transacao.competencia)
+        transacao for transacao in transacoes if intervalo.contem(transacao.caixa)
     ]
 
     soma = 0
