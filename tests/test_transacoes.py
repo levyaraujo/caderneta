@@ -1,9 +1,10 @@
 from random import randint
 
 import pytest
+from freezegun import freeze_time
 from datetime import datetime
 
-from src.dominio.transacao.servicos import _calcular_caixa, _calcular_competencia
+from src.dominio.transacao.services import _calcular_caixa, _calcular_competencia
 from src.libs.tipos import Intervalo
 from src.dominio.transacao.excecoes import TipoTransacaoInvalido
 from src.dominio.transacao.entidade import Transacao, TipoTransacao
@@ -43,6 +44,7 @@ def test_transacao_com_tipo_errado(mock_usuario, transacao_gen):
     )
 
 
+@freeze_time(datetime(2024, 9, 1))
 def test_fluxo_competencia(mock_usuario, transacao_gen):
     usuario = mock_usuario
     transacoes_por_usuario = {usuario.id: []}
@@ -84,7 +86,7 @@ def test_fluxo_competencia(mock_usuario, transacao_gen):
         Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 9, 30)),
     )
 
-    assert competencia == 5100
+    assert competencia == 1350
 
 
 def test_fluxo_caixa(mock_usuario, transacao_gen):
