@@ -1,0 +1,2 @@
+class ErroAoCriarGrafico(Exception):
+    pass
