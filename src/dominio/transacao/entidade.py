@@ -12,7 +12,7 @@ class Transacao:
     valor: float
     tipo: TipoTransacao
     id: int | None = field(default=None)
-    destino: str | None = field(default=None)
+    categoria: str | None = field(default=None)
     descricao: str | None = field(default=None)
     caixa: datetime = field(default_factory=datetime.now)
     competencia: datetime = field(default_factory=datetime.now)
@@ -20,3 +20,16 @@ class Transacao:
 
     def __post_init__(self):
         validar_tipo_da_transacao(self.tipo)
+
+
+@dataclass
+class Real:
+    valor: float
+    moeda: str = "R$"
+
+    def __str__(self):
+        return (
+            f"{self.moeda} {self.valor:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
