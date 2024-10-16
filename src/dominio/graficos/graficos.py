@@ -1,15 +1,14 @@
 import locale
 import logging
+import math
 from datetime import datetime
 from io import BytesIO
-from typing import List, TypedDict, Literal, Union
+from typing import List, TypedDict, Literal, Any, Dict
 
 from plotly import graph_objects as go
 
 from src.dominio.graficos.excecoes import ErroAoCriarGrafico
 from src.dominio.transacao.entidade import Transacao, Real
-from src.dominio.transacao.tipos import TipoTransacao
-from src.libs.tipos import Intervalo
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("graficos")
@@ -18,10 +17,10 @@ locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 
 
 class GraficoRetorno(TypedDict):
-    titulo: str
+    nome_arquivo: str
     formato: Literal["png", "svg", "html"]
-    dados: Union[str, bytes]
-    tipo_dados: Literal["base64", "bytes"]
+    dados: bytes
+    figura: go.Figure
 
 
 class GraficoBase:
@@ -29,27 +28,22 @@ class GraficoBase:
         self,
         titulo: str,
         transacoes: List[Transacao],
-        intervalo: Intervalo,
     ):
         self.titulo = titulo
         self.transacoes = transacoes
-        self.intervalo = intervalo
-        self.figura: go.Figure = None
         self.formato: Literal["png", "svg", "html"] = "html"
 
     def _gerar_nome_arquivo(self, prefixo: str = "") -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         nome_base = (
-            f"{prefixo}_{self.titulo}_{timestamp}"
-            if prefixo
-            else f"fluxo_de_caixa_{timestamp}"
+            f"{prefixo}_{timestamp}" if prefixo else f"fluxo_de_caixa_{timestamp}"
         )
         nome_arquivo = "".join(
             c if c.isalnum() or c in ("-", "_") else "_" for c in nome_base
         )
         return nome_arquivo
 
-    def criar_grafico(self, dados, layout) -> go.Figure:
+    def criar_grafico(self, dados, layout) -> GraficoRetorno:
         try:
             fig = go.Figure(data=dados, layout=layout)
             fig.update_layout(
@@ -64,7 +58,12 @@ class GraficoBase:
             )
             logger.info("Gráfico criado com sucesso")
             self.figura = fig
-            return fig
+            return {
+                "nome_arquivo": self._gerar_nome_arquivo("fluxo_de_caixa"),
+                "formato": self.formato,
+                "dados": self.para_bytes(),
+                "figura": fig,
+            }
         except Exception as e:
             logger.error(f"Erro ao criar gráfico: {str(e)}")
             raise ErroAoCriarGrafico(
@@ -79,78 +78,140 @@ class GraficoBase:
             if self.formato == "html":
                 buffer.write(self.figura.to_html().encode("utf-8"))
             else:
-                self.figura.write_image(buffer, format=self.formato)
+                buffer.write(self.figura.to_image())
             buffer.seek(0)
             return buffer.getvalue()
         except Exception as e:
             logger.error(f"Erro ao gerar gráfico em bytes: {str(e)}")
             raise
 
+    def definir_yaxis(self, valores: List[float]):
+        valores_numericos = [float(v) for v in valores if isinstance(v, (int, float))]
+        min_value = min(valores_numericos)
+        max_value = max(valores_numericos)
 
-class GraficoFluxoCaixa(GraficoBase):
-    def __init__(self, titulo: str, transacoes: List[Transacao], intervalo: Intervalo):
-        super().__init__(titulo, transacoes, intervalo)
+        # Arredondar para o próximo múltiplo de 2000 acima e abaixo
+        y_min = math.floor(min_value / 2000) * 2000
+        y_max = math.ceil(max_value / 2000) * 2000
 
-    def criar_grafico_fluxo_caixa(
-        self, formato: Literal["png", "svg", "html"] = ""
-    ) -> go.Figure:
-        self.formato = formato if formato else self.formato
-        try:
-            logger.info(
-                f"Criando gráfico de fluxo de caixa para intervalo: {self.intervalo}"
+        return y_min, y_max
+
+    def criar_grafico_de_linha(
+        self,
+        legendas: List[Any],
+        valores: List[Any],
+        layout: go.Layout,
+        hover_texts: List[str] = None,
+    ) -> GraficoRetorno:
+        valores = [
+            go.Scatter(
+                x=legendas,
+                y=valores,
+                mode="lines+markers",
+                name="Fluxo de Caixa",
+                hovertext=hover_texts,
+                hoverinfo="text",
+                marker=dict(
+                    color=valores,
+                    size=12,
+                ),
+                line=dict(color="royalblue", width=2),
             )
+        ]
 
-            transacoes_no_periodo = [
-                transacao
-                for transacao in self.transacoes
-                if self.intervalo.contem(transacao.caixa)
-            ]
-            logger.info(
-                f"Número de transações no período: {len(transacoes_no_periodo)}"
+        fig = self.criar_grafico(valores, layout)
+        return fig
+
+    def criar_grafico_de_pizza(
+        self,
+        legendas: List[str],
+        valores: List[float],
+        layout: go.Layout,
+        hover_texts: List[str] = None,
+    ) -> GraficoRetorno:
+        dados = [
+            go.Pie(
+                labels=legendas,
+                values=valores,
+                hole=0.3,
+                textinfo="percent+label",
+                insidetextorientation="radial",
+                hovertext=hover_texts,
             )
+        ]
 
-            datas = [transacao.caixa for transacao in transacoes_no_periodo]
-            valores = [
-                transacao.valor
-                if transacao.tipo == TipoTransacao.CREDITO
-                else -transacao.valor
-                for transacao in transacoes_no_periodo
-            ]
+        fig = self.criar_grafico(dados, layout)
+        return fig
 
-            hover_texts = [
-                f"Data: {transacao.caixa.strftime('%d/%m/%Y %H:%M')}<br>"
-                + f"Valor: {Real(transacao.valor)}<br>"
-                + f"Tipo: {transacao.tipo.value}<br>"
-                + f"Destino: {transacao.categoria}<br>"
-                + f"Descrição: {transacao.descricao or 'N/A'}"
-                for transacao in transacoes_no_periodo
-            ]
+    def criar_grafico_de_barras(
+        self,
+        legendas: List[str],
+        valores: List[float],
+        layout: go.Layout,
+        hover_texts: List[str] = None,
+    ) -> GraficoRetorno:
+        y_min, y_max = self.definir_yaxis(valores)
 
-            dados = [
-                go.Scatter(
-                    x=datas,
-                    y=valores,
-                    mode="lines+markers",
-                    name="Fluxo de Caixa",
-                    hovertext=hover_texts,
-                    hoverinfo="text",
-                    marker=dict(
-                        color=valores,
-                        size=12,
-                    ),
-                    line=dict(color="royalblue", width=2),
-                )
-            ]
+        layout.yaxis.update(
+            dtick=2000,
+            range=[y_min, y_max],
+            tickformat=",d",
+        )
 
-            layout = go.Layout(
-                xaxis_title="Data", yaxis_title="Valor (R$)", template="plotly_white"
+        dados = [
+            go.Bar(
+                x=legendas,
+                y=valores,
+                text=[str(Real(v)) for v in valores],
+                textposition="auto",
+                hovertext=hover_texts,
+                marker=dict(
+                    color=["lightgreen" if v > 0 else "lightcoral" for v in valores],
+                ),
             )
+        ]
 
-            self.titulo = f"Fluxo de Caixa de {self.intervalo.inicio.strftime('%d/%m/%Y')} a {self.intervalo.fim.strftime('%d/%m/%Y')}"
+        fig = self.criar_grafico(dados, layout)
+        return fig
 
-            fig = self.criar_grafico(dados, layout)
-            return fig
+    def criar_grafico_barra_empilhada(
+        self,
+        dados: Dict[str, Any],
+        periodos: List[str],
+        layout: go.Layout = None,
+        hover_texts: List[str] = None,
+    ) -> GraficoRetorno:
+        fig = go.Figure()
 
-        except Exception as e:
-            logger.error(f"Erro ao criar gráfico de fluxo de caixa: {str(e)}")
-            raise
+        receitas = [dados[periodo]["receitas"] for periodo in periodos]
+        despesas = [dados[periodo]["despesas"] for periodo in periodos]
+
+        fig.add_trace(
+            go.Bar(
+                x=periodos,
+                y=receitas,
+                text=[str(Real(v)) for v in receitas],
+                name="Receitas",
+                marker=dict(color="lightgreen"),
+            )
+        )
+
+        fig.add_trace(
+            go.Bar(
+                x=periodos,
+                y=despesas,
+                text=[str(Real(v)) for v in despesas],
+                name="Despesas",
+                marker=dict(color="lightcoral"),
+            )
+        )
+
+        fig.update_layout(
+            barmode="relative",
+            hovermode="closest",
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="Arial"),
+            width=1900,
+            height=1200,
+        )
+
+        return self.criar_grafico(fig, layout)
