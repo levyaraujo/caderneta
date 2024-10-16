@@ -46,7 +46,7 @@ def test_adicionar_transacao(repo_escrita, session):
         usuario=usuario,
         valor=100.0,
         tipo=TipoTransacao.CREDITO,
-        destino=None,
+        categoria=None,
         descricao="Test",
         caixa=datetime.now(),
     )

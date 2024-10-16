@@ -30,7 +30,7 @@ def transacao_gen():
             id=randint(1, 10000),
             usuario=usuario,
             valor=valor,
-            destino=destino,
+            categoria=destino,
             tipo=tipo,
             descricao="asodihasjklfnasfr",
             caixa=caixa,

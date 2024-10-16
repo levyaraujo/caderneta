@@ -21,10 +21,13 @@ kaleido = "0.2.1"
 pandas = "^2.2.3"
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^4.0.1"
-ruff = "^0.6.9"
 pytest = "^8.3.3"
 freezegun = "^1.5.1"
+ruff = "^0.6.9"
+
+
+[tool.poetry.group.ruff.dependencies]
+pre-commit = "^4.0.1"
 
 [build-system]
 requires = ["poetry-core"]
