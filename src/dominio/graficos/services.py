@@ -1,15 +1,13 @@
 from collections import defaultdict
 from typing import List
 
-from plotly.graph_objs import Layout
-
-from src.dominio.graficos.graficos import GraficoBase
+from src.dominio.graficos.graficos import GraficoConfig, GraficoFactory
 from src.dominio.transacao.entidade import Transacao, Real
 from src.dominio.transacao.tipos import TipoTransacao
 
 
 def criar_grafico_fluxo_de_caixa(transacoes: List[Transacao]):
-    grafico = GraficoBase(transacoes=transacoes, titulo="Fluxo de Caixa")
+    config = GraficoConfig(titulo="Fluxo de Caixa", formato="html")
     transacoes.sort(key=lambda transacao: transacao.caixa)
     legendas = [transacao.caixa for transacao in transacoes]
     valores = [
@@ -25,19 +23,14 @@ def criar_grafico_fluxo_de_caixa(transacoes: List[Transacao]):
         for transacao in transacoes
     ]
 
-    layout = Layout(
-        hovermode="closest",
-        hoverlabel=dict(bgcolor="white", font_size=12, font_family="Arial"),
+    grafico = GraficoFactory.criar_grafico(
+        "linha", config, legendas=legendas, valores=valores, hover_texts=hover_texts
     )
-
-    grafico.titulo = f"Fluxo de Caixa {transacoes[0].caixa.strftime('%d/%m/%Y')} a {transacoes[-1].caixa.strftime('%d/%m/%Y')}"
-    return grafico.criar_grafico_de_linha(
-        legendas=legendas, valores=valores, hover_texts=hover_texts, layout=layout
-    )
+    return grafico.criar()
 
 
-def criar_grafico_receitas(transacoes: List[Transacao]):
-    grafico = GraficoBase(transacoes=transacoes, titulo="Receitas por Mês")
+def criar_grafico_receitas_e_despesas(transacoes: List[Transacao]):
+    config = GraficoConfig(titulo="Receitas e Despesas", formato="html")
     transacoes.sort(key=lambda transacao: transacao.caixa)
     receitas_despesas_por_mes = defaultdict(lambda: {"receitas": 0.0, "despesas": 0.0})
 
@@ -49,8 +42,7 @@ def criar_grafico_receitas(transacoes: List[Transacao]):
             receitas_despesas_por_mes[mes]["despesas"] -= transacao.valor
 
     legendas = list(receitas_despesas_por_mes.keys())
-
-    grafico.titulo = "Receitas e Despesas por mês"
-    return grafico.criar_grafico_barra_empilhada(
-        dados=receitas_despesas_por_mes, periodos=legendas
+    grafico = GraficoFactory.criar_grafico(
+        "barra_empilhada", config, legendas=legendas, valores=receitas_despesas_por_mes
     )
+    return grafico.criar()
