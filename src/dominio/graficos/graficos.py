@@ -1,19 +1,21 @@
 import locale
-import logging
-import math
+from abc import ABC, abstractmethod
+from typing import List, TypedDict, Literal, Any, Dict
 from datetime import datetime
 from io import BytesIO
-from typing import List, TypedDict, Literal, Any, Dict
-
+import logging
 from plotly import graph_objects as go
 
-from src.dominio.graficos.excecoes import ErroAoCriarGrafico
-from src.dominio.transacao.entidade import Transacao, Real
+from src.dominio.transacao.entidade import Real
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("graficos")
 
-locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+
+class GraficoConfig:
+    def __init__(self, titulo: str, formato: Literal["png", "svg", "html"] = "html"):
+        self.titulo = titulo
+        self.formato = formato
 
 
 class GraficoRetorno(TypedDict):
@@ -23,195 +25,220 @@ class GraficoRetorno(TypedDict):
     figura: go.Figure
 
 
-class GraficoBase:
-    def __init__(
-        self,
-        titulo: str,
-        transacoes: List[Transacao],
-    ):
-        self.titulo = titulo
-        self.transacoes = transacoes
-        self.formato: Literal["png", "svg", "html"] = "html"
+class IGrafico(ABC):
+    @abstractmethod
+    def criar(self) -> GraficoRetorno:
+        pass
+
+
+class GraficoBase(IGrafico):
+    def __init__(self, config: GraficoConfig):
+        self.config = config
+        self.figura: go.Figure = None
 
     def _gerar_nome_arquivo(self, prefixo: str = "") -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        nome_base = (
-            f"{prefixo}_{timestamp}" if prefixo else f"fluxo_de_caixa_{timestamp}"
-        )
-        nome_arquivo = "".join(
-            c if c.isalnum() or c in ("-", "_") else "_" for c in nome_base
-        )
-        return nome_arquivo
+        nome_base = f"{prefixo}_{timestamp}" if prefixo else f"grafico_{timestamp}"
+        return "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in nome_base)
 
-    def criar_grafico(self, dados, layout) -> GraficoRetorno:
-        try:
-            fig = go.Figure(data=dados, layout=layout)
-            fig.update_layout(
-                title={
-                    "text": self.titulo,
-                    "x": 0.5,
-                    "xanchor": "center",
-                    "yanchor": "top",
-                },
-                hovermode="closest",
-                hoverlabel=dict(bgcolor="white", font_size=12, font_family="Arial"),
-            )
-            logger.info("Gráfico criado com sucesso")
-            self.figura = fig
-            return {
-                "nome_arquivo": self._gerar_nome_arquivo("fluxo_de_caixa"),
-                "formato": self.formato,
-                "dados": self.para_bytes(),
-                "figura": fig,
-            }
-        except Exception as e:
-            logger.error(f"Erro ao criar gráfico: {str(e)}")
-            raise ErroAoCriarGrafico(
-                f"Erro ao criar gráfico de {self.titulo}: {str(e)}"
-            )
+    def _criar_layout_base(self) -> go.Layout:
+        return go.Layout(
+            title={
+                "text": self.config.titulo,
+                "x": 0.5,
+                "xanchor": "center",
+                "yanchor": "top",
+            },
+            hovermode="closest",
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="Arial"),
+        )
 
     def para_bytes(self) -> bytes:
         if self.figura is None:
-            raise ValueError("Figura não foi criada. Chame criar_grafico() primeiro.")
+            raise ValueError("Figura não foi criada. Chame criar() primeiro.")
         try:
             buffer = BytesIO()
-            if self.formato == "html":
+            if self.config.formato == "html":
                 buffer.write(self.figura.to_html().encode("utf-8"))
             else:
-                buffer.write(self.figura.to_image())
+                buffer.write(self.figura.to_image(format=self.config.formato))
             buffer.seek(0)
             return buffer.getvalue()
         except Exception as e:
             logger.error(f"Erro ao gerar gráfico em bytes: {str(e)}")
             raise
 
-    def definir_yaxis(self, valores: List[float]):
-        valores_numericos = [float(v) for v in valores if isinstance(v, (int, float))]
-        min_value = min(valores_numericos)
-        max_value = max(valores_numericos)
+    @abstractmethod
+    def criar(self) -> GraficoRetorno:
+        pass
 
-        # Arredondar para o próximo múltiplo de 2000 acima e abaixo
-        y_min = math.floor(min_value / 2000) * 2000
-        y_max = math.ceil(max_value / 2000) * 2000
 
-        return y_min, y_max
-
-    def criar_grafico_de_linha(
+class GraficoLinha(GraficoBase):
+    def __init__(
         self,
+        config: GraficoConfig,
         legendas: List[Any],
         valores: List[Any],
-        layout: go.Layout,
         hover_texts: List[str] = None,
-    ) -> GraficoRetorno:
-        valores = [
-            go.Scatter(
-                x=legendas,
-                y=valores,
-                mode="lines+markers",
-                name="Fluxo de Caixa",
-                hovertext=hover_texts,
-                hoverinfo="text",
-                marker=dict(
-                    color=valores,
-                    size=12,
-                ),
-                line=dict(color="royalblue", width=2),
-            )
-        ]
+    ):
+        super().__init__(config)
+        self.legendas = legendas
+        self.valores = valores
+        self.hover_texts = hover_texts
 
-        fig = self.criar_grafico(valores, layout)
-        return fig
+    def criar(self) -> GraficoRetorno:
+        trace = go.Scatter(
+            x=self.legendas,
+            y=self.valores,
+            mode="lines+markers",
+            name="Fluxo de Caixa",
+            hovertext=self.hover_texts,
+            hoverinfo="text",
+            marker=dict(color=self.valores, size=12),
+            line=dict(color="royalblue", width=2),
+        )
+        layout = self._criar_layout_base()
+        self.figura = go.Figure(data=[trace], layout=layout)
+        return self._retorno()
 
-    def criar_grafico_de_pizza(
+    def _retorno(self) -> GraficoRetorno:
+        return {
+            "nome_arquivo": self._gerar_nome_arquivo("linha"),
+            "formato": self.config.formato,
+            "dados": self.para_bytes(),
+            "figura": self.figura,
+        }
+
+
+class GraficoPizza(GraficoBase):
+    def __init__(
         self,
+        config: GraficoConfig,
         legendas: List[str],
         valores: List[float],
-        layout: go.Layout,
         hover_texts: List[str] = None,
-    ) -> GraficoRetorno:
-        dados = [
-            go.Pie(
-                labels=legendas,
-                values=valores,
-                hole=0.3,
-                textinfo="percent+label",
-                insidetextorientation="radial",
-                hovertext=hover_texts,
-            )
-        ]
+    ):
+        super().__init__(config)
+        self.legendas = legendas
+        self.valores = valores
+        self.hover_texts = hover_texts
 
-        fig = self.criar_grafico(dados, layout)
-        return fig
+    def criar(self) -> GraficoRetorno:
+        trace = go.Pie(
+            labels=self.legendas,
+            values=self.valores,
+            hole=0.3,
+            textinfo="percent+label",
+            insidetextorientation="radial",
+            hovertext=self.hover_texts,
+        )
+        layout = self._criar_layout_base()
+        self.figura = go.Figure(data=[trace], layout=layout)
+        return self._retorno()
 
-    def criar_grafico_de_barras(
+    def _retorno(self) -> GraficoRetorno:
+        return {
+            "nome_arquivo": self._gerar_nome_arquivo("pizza"),
+            "formato": self.config.formato,
+            "dados": self.para_bytes(),
+            "figura": self.figura,
+        }
+
+
+class GraficoBarras(GraficoBase):
+    def __init__(
         self,
+        config: GraficoConfig,
         legendas: List[str],
         valores: List[float],
-        layout: go.Layout,
         hover_texts: List[str] = None,
-    ) -> GraficoRetorno:
-        y_min, y_max = self.definir_yaxis(valores)
+    ):
+        super().__init__(config)
+        self.legendas = legendas
+        self.valores = valores
+        self.hover_texts = hover_texts
 
-        layout.yaxis.update(
-            dtick=2000,
-            range=[y_min, y_max],
-            tickformat=",d",
+    def criar(self) -> GraficoRetorno:
+        trace = go.Bar(
+            x=self.legendas,
+            y=self.valores,
+            text=[str(Real(v)) for v in self.valores],
+            textposition="auto",
+            hovertext=self.hover_texts,
+            marker=dict(
+                color=["lightgreen" if v > 0 else "lightcoral" for v in self.valores],
+            ),
+        )
+        layout = self._criar_layout_base()
+        layout.update(yaxis=dict(tickformat=",d"))
+        self.figura = go.Figure(data=[trace], layout=layout)
+        return self._retorno()
+
+    def _retorno(self) -> GraficoRetorno:
+        return {
+            "nome_arquivo": self._gerar_nome_arquivo("barras"),
+            "formato": self.config.formato,
+            "dados": self.para_bytes(),
+            "figura": self.figura,
+        }
+
+
+class GraficoBarraEmpilhada(GraficoBase):
+    def __init__(
+        self, config: GraficoConfig, legendas: Dict[str, Any], valores: List[str]
+    ):
+        super().__init__(config)
+        self.dados = valores
+        self.periodos = legendas
+
+    def criar(self) -> GraficoRetorno:
+        receitas = [self.dados[periodo]["receitas"] for periodo in self.periodos]
+        despesas = [self.dados[periodo]["despesas"] for periodo in self.periodos]
+
+        trace_receitas = go.Bar(
+            x=self.periodos,
+            y=receitas,
+            hoverinfo="text",
+            name="Receitas",
+            text=[str(Real(valor)) for valor in receitas],
+            marker=dict(color="lightgreen"),
+        )
+        trace_despesas = go.Bar(
+            x=self.periodos,
+            y=despesas,
+            hoverinfo="text",
+            name="Despesas",
+            text=[str(Real(valor)) for valor in despesas],
+            marker=dict(color="lightcoral"),
         )
 
-        dados = [
-            go.Bar(
-                x=legendas,
-                y=valores,
-                text=[str(Real(v)) for v in valores],
-                textposition="auto",
-                hovertext=hover_texts,
-                marker=dict(
-                    color=["lightgreen" if v > 0 else "lightcoral" for v in valores],
-                ),
-            )
-        ]
-
-        fig = self.criar_grafico(dados, layout)
-        return fig
-
-    def criar_grafico_barra_empilhada(
-        self,
-        dados: Dict[str, Any],
-        periodos: List[str],
-        layout: go.Layout = None,
-        hover_texts: List[str] = None,
-    ) -> GraficoRetorno:
-        fig = go.Figure()
-
-        receitas = [dados[periodo]["receitas"] for periodo in periodos]
-        despesas = [dados[periodo]["despesas"] for periodo in periodos]
-
-        fig.add_trace(
-            go.Bar(
-                x=periodos,
-                y=receitas,
-                text=[str(Real(v)) for v in receitas],
-                name="Receitas",
-                marker=dict(color="lightgreen"),
-            )
-        )
-
-        fig.add_trace(
-            go.Bar(
-                x=periodos,
-                y=despesas,
-                text=[str(Real(v)) for v in despesas],
-                name="Despesas",
-                marker=dict(color="lightcoral"),
-            )
-        )
-
-        fig.update_layout(
+        layout = self._criar_layout_base()
+        layout.update(
             barmode="relative",
-            hovermode="closest",
-            hoverlabel=dict(bgcolor="white", font_size=12, font_family="Arial"),
-            width=1900,
-            height=1200,
         )
 
-        return self.criar_grafico(fig, layout)
+        self.figura = go.Figure(data=[trace_receitas, trace_despesas], layout=layout)
+        return self._retorno()
+
+    def _retorno(self) -> GraficoRetorno:
+        return {
+            "nome_arquivo": self._gerar_nome_arquivo("barra_empilhada"),
+            "formato": self.config.formato,
+            "dados": self.para_bytes(),
+            "figura": self.figura,
+        }
+
+
+class GraficoFactory:
+    @staticmethod
+    def criar_grafico(tipo: str, config: GraficoConfig, **kwargs) -> IGrafico:
+        if tipo == "linha":
+            return GraficoLinha(config, **kwargs)
+        elif tipo == "pizza":
+            return GraficoPizza(config, **kwargs)
+        elif tipo == "barras":
+            return GraficoBarras(config, **kwargs)
+        elif tipo == "barra_empilhada":
+            return GraficoBarraEmpilhada(config, **kwargs)
+        else:
+            raise ValueError(f"Tipo de gráfico não suportado: {tipo}")
