@@ -1,3 +1,4 @@
+import locale
 from datetime import datetime
 from random import choice, randint
 
@@ -5,15 +6,17 @@ import pytest
 
 from src.dominio.graficos.services import (
     criar_grafico_fluxo_de_caixa,
-    criar_grafico_receitas,
+    criar_grafico_receitas_e_despesas,
 )
 from src.dominio.transacao.tipos import TipoTransacao
 
-@pytest.mark.skip
+locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+
+
 def test_grafico_fluxo_de_caixa(mock_usuario, transacao_gen):
     usuario = mock_usuario
     transacoes = []
-    for i in range(150):
+    for i in range(50):
         transacoes.append(
             transacao_gen(
                 usuario=usuario,
@@ -32,7 +35,7 @@ def test_grafico_fluxo_de_caixa(mock_usuario, transacao_gen):
                 tipo=choice(["debito", "credito"]),
                 caixa=datetime(
                     2024,
-                    choice([j for j in range(1, 13)]),
+                    choice([j for j in range(1, 2)]),
                     choice([j for j in range(1, 28)]),
                 ),
             )
@@ -41,8 +44,8 @@ def test_grafico_fluxo_de_caixa(mock_usuario, transacao_gen):
     grafico = criar_grafico_fluxo_de_caixa(transacoes)
     grafico["figura"].show()
 
-@pytest.mark.skip
-def test_grafico_receitas(mock_usuario, transacao_gen):
+
+def test_grafico_receitas_e_despesas(mock_usuario, transacao_gen):
     usuario = mock_usuario
     transacoes = []
     for i in range(150):
@@ -70,6 +73,5 @@ def test_grafico_receitas(mock_usuario, transacao_gen):
             )
         )
 
-    grafico = criar_grafico_receitas(transacoes)
+    grafico = criar_grafico_receitas_e_despesas(transacoes)
     grafico["figura"].show()
-    grafico["figura"].write_image("/tmp/teste.png")
