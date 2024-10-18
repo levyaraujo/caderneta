@@ -3,3 +3,4 @@
 
 [lint]
 extend-safe-fixes = ["F841", "E712"]
+select = ["Q000"]

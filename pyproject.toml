@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "app de gestão financeira para pequenas empresas"
 authors = ["Levy Araujo <lev0x79@gmail.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -19,6 +20,8 @@ matplotlib = "^3.9.2"
 plotly = "^5.24.1"
 kaleido = "0.2.1"
 pandas = "^2.2.3"
+accelerate = "^1.0.1"
+streamlit = "^1.39.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"

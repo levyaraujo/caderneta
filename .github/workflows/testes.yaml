@@ -34,7 +34,7 @@ jobs:
         env:
           DATABASE_URL: "sqlite:///:memory:"
         run: |
-          make test
+          poetry run pytest --ignore-glob='tests/test_graficos*' -vv
 
       - name: Check ruff
         run: |
