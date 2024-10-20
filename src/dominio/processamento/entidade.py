@@ -81,6 +81,7 @@ class TextClassifier:
             self.df["classificacao"],
             test_size=0.2,
             random_state=42,
+            shuffle=True,
         )
         X_train_vectorized = self.vectorizer.fit_transform(X_train)
         self.classifier.fit(X_train_vectorized, y_train)
@@ -98,9 +99,9 @@ class TextClassifier:
         probabilities = self.classifier.predict_proba(message_vectorized)[0]
         probs_dict = dict(zip(self.classifier.classes_, probabilities))
 
-        if pre_classification != "outro" and pre_classification != prediction:
-            prediction = pre_classification
-            probs_dict[prediction] = 1.0
+        # if pre_classification != "outro" and pre_classification != prediction:
+        #     prediction = pre_classification
+        #     probs_dict[prediction] = 1.0
 
         if update_df and probs_dict[prediction] > 0.7:
             new_row = pd.DataFrame(
@@ -113,14 +114,15 @@ class TextClassifier:
                 ]
             )
             self.df = pd.concat([self.df, new_row], ignore_index=True)
-            self.train_and_save_model()
+            self.df.to_csv(self.data_path, index=False)
 
+        self.train_model()
         return prediction, probs_dict
 
     def classify_all_messages(self):
         results = []
         for message in self.df["mensagem"]:
-            prediction, probabilities = self.classify_message(message, update_df=False)
+            prediction, probabilities = self.classify_message(message, update_df=True)
             logger.info(f"Message: {message}")
             logger.info(f"Classification: {prediction}")
             logger.info(f"Probabilities: {probabilities}")
