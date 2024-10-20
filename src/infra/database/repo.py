@@ -7,6 +7,9 @@ class RepoEscrita:
     def __init__(self, session: Session):
         self.session = session
 
+    def __del__(self):
+        self.session.rollback()
+
     def adicionar(self, entidade):
         self.session.add(entidade)
 
