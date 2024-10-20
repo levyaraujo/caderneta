@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import List
 
-from src.dominio.graficos.graficos import GraficoConfig, GraficoFactory
+from src.dominio.graficos.entidade import GraficoConfig, GraficoFactory
 from src.dominio.transacao.entidade import Transacao, Real
 from src.dominio.transacao.tipos import TipoTransacao
 
