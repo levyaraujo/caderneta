@@ -13,7 +13,7 @@ logger = logging.getLogger("bot")
 
 class BotAbstrato(ABC):
     @abstractmethod
-    def responder(self, mensagem: str):
+    def responder(self, mensagem: str, usuario: str):
         pass
 
 
@@ -24,13 +24,13 @@ class TwilioBot(BotAbstrato):
         self.__bot_number = os.getenv("TWILIO_PHONE_NUMBER")
         self.__cliente = Client(self.__account_sid, self.__auth_token)
 
-    def responder(self, mensagem: str) -> MessageInstance:
+    def responder(self, mensagem: str, usuario: str) -> MessageInstance:
         logger.info(
-            f"Sending message from: whatsapp:+{self.__bot_number} to: whatsapp:+559481362600 with body: {mensagem}"
+            f"Sending message from: whatsapp:+{self.__bot_number} to: {usuario} with body: {mensagem}"
         )
         resposta = self.__cliente.messages.create(
             from_=f"whatsapp:+{self.__bot_number}",
-            to=f"whatsapp:+559481362600",
+            to=usuario,
             body=mensagem,
         )
         return resposta
