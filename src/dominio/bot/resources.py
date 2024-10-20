@@ -1,17 +1,16 @@
-from flask_restful import Resource, request
 from twilio.twiml.messaging_response import MessagingResponse
 
 from src.dominio.bot.services import responder_usuario
+from fastapi import APIRouter, status, Request
+
+BotRouter = APIRouter(prefix="/bot", tags=["twilio", "whatsapp"])
 
 
-class TwilioWebhook(Resource):
-    def post(self):
-        dados = request.form
-        twiml = MessagingResponse()
-        usuario = dados["From"]
-        resposta = responder_usuario(dados["Body"], usuario)
-        twiml.message(resposta.body)
-        return str(twiml)
-
-    def get(self):
-        return {"message": "Hello, World!"}
+@BotRouter.post("/twilio", status_code=status.HTTP_200_OK)
+async def twilio_webhook(request: Request):
+    dados = await request.form()
+    twiml = MessagingResponse()
+    usuario = dados["From"]
+    resposta = responder_usuario(dados["Body"], usuario)
+    twiml.message(resposta.body)
+    return str(twiml)
