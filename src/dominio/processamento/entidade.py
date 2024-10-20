@@ -68,9 +68,9 @@ class TextClassifier:
 
     @staticmethod
     def categorize_text(text: str) -> str:
-        if re.search(r"v\s+\d+|recebi|r|vendi|vender", text, re.IGNORECASE):
+        if re.search(r"v\s+\d+|recebi|\bvendi\b|\bvender\b", text, re.IGNORECASE):
             return "credito"
-        if re.search(r"paguei|gastei|comprei|p", text, re.IGNORECASE):
+        if re.search(r"paguei|gastei|comprei", text, re.IGNORECASE):
             return "debito"
         return "outro"
 
