@@ -8,9 +8,8 @@ class TwilioWebhook(Resource):
     def post(self):
         dados = request.form
         twiml = MessagingResponse()
-        resposta = responder_usuario(
-            f"Olá, {dados['ProfileName']}! Seja bem-vindo ao *caderneta*! Como posso te ajudar?"
-        )
+        usuario = dados["From"]
+        resposta = responder_usuario(dados["Body"], usuario)
         twiml.message(resposta.body)
         return str(twiml)
 
