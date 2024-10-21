@@ -33,7 +33,7 @@ transacoes = Table(
     Column("id", Integer, primary_key=True, index=True),
     Column("usuario_id", Integer, ForeignKey("usuarios.id")),
     Column("valor", Float),
-    Column("destino", String),
+    Column("categoria", String),
     Column("tipo", TipoTransacaoORM),
     Column("descricao", String),
     Column("caixa", DateTime),

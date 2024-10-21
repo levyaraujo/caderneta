@@ -1,31 +1,27 @@
-from typing import Iterator
+from abc import ABC
+from typing import Iterator, Generic, TypeVar
 
 from sqlalchemy.orm import Session
 
+T = TypeVar("T")
 
-class RepoEscrita:
+
+class RepoBase(ABC, Generic[T]):
     def __init__(self, session: Session):
         self.session = session
 
-    def __del__(self):
-        self.session.rollback()
 
-    def adicionar(self, entidade):
+class RepoEscrita(RepoBase[T]):
+    def adicionar(self, entidade: T):
         self.session.add(entidade)
 
-    def remover(self, entidade):
+    def remover(self, entidade: T):
         self.session.delete(entidade)
 
-    def commit(self):
-        self.session.commit()
 
-
-class RepoLeitura:
-    def __init__(self, session: Session):
-        self.session = session
-
+class RepoLeitura(RepoBase[T]):
     def __del__(self):
         self.session.close()
 
-    def buscar_todos(self, modelo) -> Iterator:
-        yield from self.session.query(modelo).all()
+    def buscar_todos(self, entidade: T) -> Iterator:
+        yield from self.session.query(entidade).all()
