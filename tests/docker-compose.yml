@@ -1,12 +1,11 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: caderneta
-      POSTGRES_PASSWORD: senhasecreta
-      POSTGRES_DB: caderneta_test
+    container_name: caderneta-db-test
+    env_file:
+      - .env
+    build:
+        context: .
+        dockerfile: Dockerfile
     ports:
       - "5433:5433"
     healthcheck:
@@ -14,8 +13,3 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:

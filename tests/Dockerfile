@@ -1,12 +1,6 @@
 # Use the official PostgreSQL image from the Docker Hub
 FROM postgres:16-alpine
 
-# Set environment variables for PostgreSQL
-ENV POSTGRES_USER=caderneta
-ENV POSTGRES_PASSWORD=senhasecreta
-ENV POSTGRES_DB=caderneta_test
-ENV DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5433/$POSTGRES_DB
-# Expose the default PostgreSQL port
 EXPOSE 5433
 
 # Add a health check to ensure the database is ready
