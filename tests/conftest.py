@@ -5,22 +5,23 @@ import pytest
 
 from src.dominio.transacao.entidade import Transacao
 from src.dominio.usuario.entidade import Usuario
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from src.infra.database.connection import metadata
+from src.infra.database.connection import metadata, GET_DEFAULT_SESSION, engine
 from src.infra.database.repo import RepoEscrita, RepoLeitura
 
 
 @pytest.fixture
-def mock_usuario():
-    return Usuario(
+def mock_usuario(session):
+    usuario = Usuario(
         id=randint(1, 10000),
-        nome="Joao",
-        sobrenome="Silva",
+        nome="Usuario",
+        sobrenome="Pytest",
         telefone="94981362600",
         email="joao@teste.com",
         senha="senha123",
     )
+    session.add(usuario)
+    session.commit()
+    return usuario
 
 
 @pytest.fixture(scope="function")
@@ -44,27 +45,20 @@ def mock_transacao(mock_usuario, transacao_gen):
     return transacao_gen(mock_usuario, 100.0, "Loja A", "debito")
 
 
-DATABASE_URL = "sqlite:///:memory:"
+@pytest.fixture(scope="module")
+def test_engine():
+    return engine
 
 
 @pytest.fixture(scope="module")
-def engine():
-    return create_engine(DATABASE_URL, echo=True)
-
-
-@pytest.fixture(scope="module")
-def tables(engine):
+def tables(test_engine):
     metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
 
 
-@pytest.fixture
-def session(engine, tables):
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    yield session
-    session.close()
+@pytest.fixture(scope="function")
+def session(tables):
+    with GET_DEFAULT_SESSION() as session:
+        yield session
 
 
 @pytest.fixture
