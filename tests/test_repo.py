@@ -8,14 +8,13 @@ from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.uow import UnitOfWork
 from src.libs.tipos import Intervalo
-from tests.conftest import repo_escrita
 
 
 def test_adicionar_usuario(session):
     uow = UnitOfWork(session_factory=lambda: session)
     with uow:
         usuario = Usuario(
-            id=1,
+            id=randint(1, 10000),
             nome="John",
             sobrenome="Doe",
             telefone="94981360000",
@@ -24,7 +23,7 @@ def test_adicionar_usuario(session):
         )
         uow.repo_escrita.adicionar(usuario)
         uow.commit()
-    assert session.query(Usuario).filter_by(id=1).first() is not None
+    assert session.query(Usuario).filter_by(id=usuario.id).first() is not None
 
 
 def test_remover_usuario(session, mock_usuario):

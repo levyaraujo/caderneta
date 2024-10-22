@@ -1,5 +1,5 @@
 from src.dominio.usuario.entidade import Usuario
-from src.infra.database.repo import RepoLeitura
+from src.infra.database.repo import RepoLeitura, RepoEscrita
 
 
 class RepoUsuarioLeitura(RepoLeitura):
