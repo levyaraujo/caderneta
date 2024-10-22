@@ -1,5 +1,6 @@
 from twilio.twiml.messaging_response import MessagingResponse
 
+from src.dominio.bot.entidade import TwilioBot
 from src.dominio.bot.services import responder_usuario
 from fastapi import APIRouter, status, Request
 
@@ -11,6 +12,7 @@ async def twilio_webhook(request: Request):
     dados = await request.form()
     twiml = MessagingResponse()
     usuario = dados["From"]
-    resposta = responder_usuario(dados["Body"], usuario)
-    twiml.message(resposta.body)
+    bot = TwilioBot()
+    resposta = responder_usuario(dados["Body"], usuario, bot=bot)
+    twiml.message(resposta)
     return str(twiml)

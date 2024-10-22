@@ -11,20 +11,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("bot")
 
 
-class BotAbstrato(ABC):
+class BotBase(ABC):
     @abstractmethod
     def responder(self, mensagem: str, usuario: str):
         pass
 
 
-class TwilioBot(BotAbstrato):
+class TwilioBot(BotBase):
     def __init__(self):
         self.__account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         self.__auth_token = os.getenv("TWILIO_AUTH_TOKEN")
         self.__bot_number = os.getenv("TWILIO_PHONE_NUMBER")
         self.__cliente = Client(self.__account_sid, self.__auth_token)
 
-    def responder(self, mensagem: str, usuario: str) -> MessageInstance:
+    def responder(self, mensagem: str, usuario: str) -> str:
         logger.info(
             f"Sending message from: whatsapp:+{self.__bot_number} to: {usuario} with body: {mensagem}"
         )
@@ -33,4 +33,9 @@ class TwilioBot(BotAbstrato):
             to=usuario,
             body=mensagem,
         )
-        return resposta
+        return resposta.body
+
+
+class CLIBot(BotBase):
+    def responder(self, mensagem: str, usuario: str):
+        return mensagem
