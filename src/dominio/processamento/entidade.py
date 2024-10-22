@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Tuple, Dict
 
 import pandas as pd
@@ -12,6 +13,8 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import joblib
+
+from src.dominio.transacao.tipos import TipoTransacao
 
 logging.basicConfig(level=logging.INFO)
 
@@ -99,10 +102,6 @@ class TextClassifier:
         probabilities = self.classifier.predict_proba(message_vectorized)[0]
         probs_dict = dict(zip(self.classifier.classes_, probabilities))
 
-        # if pre_classification != "outro" and pre_classification != prediction:
-        #     prediction = pre_classification
-        #     probs_dict[prediction] = 1.0
-
         if update_df and probs_dict[prediction] > 0.7:
             new_row = pd.DataFrame(
                 [
@@ -144,3 +143,108 @@ class TextClassifier:
         logger.info(
             f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}"
         )
+
+
+from dataclasses import dataclass
+from datetime import datetime
+import re
+from typing import Optional
+
+
+@dataclass
+class TransactionData:
+    action: TipoTransacao
+    value: float
+    payment_method: Optional[str]
+    category: Optional[str]
+    date: datetime
+    raw_message: str
+
+
+class FinancialMessageParser(TextClassifier):
+    def __init__(self, acao: TipoTransacao):
+        super().__init__()
+        self.acao = acao
+
+    PAYMENT_METHODS = {
+        "pix",
+        "credito",
+        "debito",
+        "dinheiro",
+        "boleto",
+        "transferencia",
+    }
+
+    def parse_message(self, message: str) -> TransactionData:
+        """Parse a financial message by extracting known patterns first."""
+        message = message.lower().strip()
+        working_message = message  # Create a copy to modify
+
+        # 1. Extract and remove date (DD/MM)
+        date_pattern = r"\b\d{1,2}/\d{1,2}\b"
+        date_match = re.search(date_pattern, working_message)
+        if not date_match:
+            date_str = datetime.now().date().strftime("%d/%m")
+        else:
+            date_str = date_match.group()
+
+        day, month = map(int, date_str.split("/"))
+        date = datetime(datetime.now().year, month, day)
+        # Remove the date from working message
+        working_message = working_message.replace(date_str, "")
+
+        # 2. Extract and remove value
+        value_pattern = r"\b\d+(?:\.\d{3})*(?:,\d{2})?\b|\b\d+\b"
+        value_match = re.search(value_pattern, working_message)
+        if not value_match:
+            raise ValueError("No value found in message")
+
+        value_str = value_match.group()
+        value = float(value_str.replace(".", "").replace(",", "."))
+        # Remove the value from working message
+        working_message = working_message.replace(value_str, "")
+
+        # 3. Extract and remove payment method
+        payment_method = None
+        for method in self.PAYMENT_METHODS:
+            if method in working_message:
+                payment_method = method
+                # Remove the payment method from working message
+                working_message = working_message.replace(method, "")
+                break
+
+        # 4. Clean up remaining text and use as category
+        # Remove common words like 'de', 'para', etc
+        remaining_words = [
+            self.preprocess_text(word) for word in working_message.split()
+        ]
+
+        # Join remaining words as category, excluding the first word (action)
+        category = " ".join(remaining_words[1:]) if len(remaining_words) > 1 else None
+        # If category is empty string or only spaces, set to None
+        category = category.strip() if category else None
+
+        return TransactionData(
+            action=self.acao,
+            value=value,
+            payment_method=payment_method,
+            category=category,
+            date=date,
+            raw_message=message,
+        )
+
+    def format_transaction(self, transaction: TransactionData) -> str:
+        """Format a transaction for display."""
+        date_str = transaction.date.strftime("%d/%m/%Y")
+        parts = [
+            f"Action: {transaction.action}",
+            f"Value: R$ {transaction.value:.2f}",
+            f"Date: {date_str}",
+        ]
+
+        if transaction.payment_method:
+            parts.append(f"Payment Method: {transaction.payment_method}")
+        if transaction.category:
+            parts.append(f"Category: {transaction.category}")
+
+        return "\n".join(parts)
