@@ -5,7 +5,7 @@ import pytest
 from src.dominio.processamento.entidade import (
     ConstrutorTransacao,
     ClassificadorTexto,
-    DadosTranscao,
+    DadosTransacao,
 )
 from src.dominio.transacao.tipos import TipoTransacao
 
@@ -17,7 +17,7 @@ ANO_ATUAL = datetime.now().year
     [
         (
             "vendi 150 calça cargo credito",
-            DadosTranscao(
+            DadosTransacao(
                 acao=TipoTransacao.CREDITO,
                 valor=150,
                 metodo_pagamento="credito",
@@ -28,7 +28,7 @@ ANO_ATUAL = datetime.now().year
         ),
         (
             "paguei 250 receita federal pix 10/05",
-            DadosTranscao(
+            DadosTransacao(
                 acao=TipoTransacao.DEBITO,
                 valor=250,
                 metodo_pagamento="pix",
@@ -39,7 +39,7 @@ ANO_ATUAL = datetime.now().year
         ),
         (
             "insumos paguei 300 ifood, mercadoria credito",
-            DadosTranscao(
+            DadosTransacao(
                 acao=TipoTransacao.DEBITO,
                 valor=300,
                 metodo_pagamento="credito",

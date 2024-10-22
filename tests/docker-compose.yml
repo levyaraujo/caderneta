@@ -2,7 +2,7 @@ services:
   postgres:
     container_name: caderneta-db-test
     env_file:
-      - .env
+      - ../.env.test
     build:
         context: .
         dockerfile: Dockerfile
