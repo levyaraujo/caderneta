@@ -10,8 +10,6 @@ from src.dominio.graficos.services import (
 )
 from src.dominio.transacao.tipos import TipoTransacao
 
-locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-
 
 def test_grafico_fluxo_de_caixa(mock_usuario, transacao_gen):
     usuario = mock_usuario
