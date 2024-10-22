@@ -25,33 +25,40 @@ nltk.download("stopwords", quiet=True)
 nltk.download("wordnet", quiet=True)
 
 
-class TextClassifier:
+class ClassificadorTexto:
     def __init__(self):
-        self.data_path = "/home/lev0x/Documents/dados_categorizados.csv"
-        self.vectorizer_joblib = "/home/lev0x/Documents/vectorizer.joblib"
-        self.classifier_joblib = "/home/lev0x/Documents/classifier.joblib"
+        self.data_path = "/home/lev0x/Documents/modelo/dados_categorizados.csv"
+        self.vectorizer_joblib = "/home/lev0x/Documents/modelo/vectorizer.joblib"
+        self.classifier_joblib = "/home/lev0x/Documents/modelo/classifier.joblib"
         self.vectorizer = (
-            joblib.load(self.vectorizer_joblib)
+            self._carregar_ou_criar_vetorizador(self.vectorizer_joblib)
             if self.vectorizer_joblib
             else TfidfVectorizer(max_features=1000)
         )
         self.classifier = (
-            joblib.load(self.classifier_joblib)
+            self._carregar_ou_criar_classificador(self.classifier_joblib)
             if self.classifier_joblib
             else MultinomialNB()
         )
         self.stop_words = set(stopwords.words("portuguese"))
         self.lemmatizer = WordNetLemmatizer()
-        self.df = self._load_data()
+        self.df = self._carregar_dataframe()
 
     @staticmethod
-    def _load_or_create(path: str, cls, **kwargs):
+    def _carregar_ou_criar_vetorizador(path: str):
         try:
             return joblib.load(path)
         except FileNotFoundError:
-            return cls(**kwargs)
+            return TfidfVectorizer(max_features=1000)
 
-    def _load_data(self) -> pd.DataFrame:
+    @staticmethod
+    def _carregar_ou_criar_classificador(path: str):
+        try:
+            return joblib.load(path)
+        except FileNotFoundError:
+            return MultinomialNB()
+
+    def _carregar_dataframe(self) -> pd.DataFrame:
         try:
             df = pd.read_csv(self.data_path, on_bad_lines="skip")
             logger.info(f"Data loaded successfully. Number of samples: {len(df)}")
@@ -60,7 +67,7 @@ class TextClassifier:
             logger.error(f"Error loading data: {e}")
             raise
 
-    def preprocess_text(self, text: str) -> str:
+    def pre_processar_texto(self, text: str) -> str:
         tokens = word_tokenize(text.lower())
         tokens = [
             self.lemmatizer.lemmatize(token)
@@ -70,15 +77,15 @@ class TextClassifier:
         return " ".join(tokens)
 
     @staticmethod
-    def categorize_text(text: str) -> str:
+    def categorizar_texto(text: str) -> str:
         if re.search(r"v\s+\d+|recebi|\bvendi\b|\bvender\b", text, re.IGNORECASE):
             return "credito"
         if re.search(r"paguei|gastei|comprei", text, re.IGNORECASE):
             return "debito"
         return "outro"
 
-    def train_model(self):
-        self.df["mensagem"] = self.df["mensagem"].apply(self.preprocess_text)
+    def treinar_modelo(self):
+        self.df["mensagem"] = self.df["mensagem"].apply(self.pre_processar_texto)
         X_train, X_test, y_train, y_test = train_test_split(
             self.df["mensagem"],
             self.df["classificacao"],
@@ -92,36 +99,37 @@ class TextClassifier:
         y_pred = self.classifier.predict(X_test_vectorized)
         logger.info("\n" + classification_report(y_test, y_pred))
 
-    def classify_message(
-        self, message: str, update_df: bool = True
+    def classificar_mensagem(
+        self, mensagem: str, atualizar_df: bool = True
     ) -> Tuple[str, Dict[str, float]]:
-        pre_classification = self.categorize_text(message)
-        processed_message = self.preprocess_text(message)
-        message_vectorized = self.vectorizer.transform([processed_message])
-        prediction = self.classifier.predict(message_vectorized)[0]
-        probabilities = self.classifier.predict_proba(message_vectorized)[0]
-        probs_dict = dict(zip(self.classifier.classes_, probabilities))
+        mensagem_processada = self.pre_processar_texto(mensagem)
+        message_vectorized = self.vectorizer.transform([mensagem_processada])
+        previsao = self.classifier.predict(message_vectorized)[0]
+        probabilidades = self.classifier.predict_proba(message_vectorized)[0]
+        probs_dict = dict(zip(self.classifier.classes_, probabilidades))
 
-        if update_df and probs_dict[prediction] > 0.7:
-            new_row = pd.DataFrame(
+        if atualizar_df and probs_dict[previsao] > 0.7:
+            nova_linha = pd.DataFrame(
                 [
                     {
-                        "mensagem": message,
-                        "classificacao": prediction,
-                        "probabilidade": probs_dict[prediction],
+                        "mensagem": mensagem,
+                        "classificacao": previsao,
+                        "probabilidade": probs_dict[previsao],
                     }
                 ]
             )
-            self.df = pd.concat([self.df, new_row], ignore_index=True)
+            self.df = pd.concat([self.df, nova_linha], ignore_index=True)
             self.df.to_csv(self.data_path, index=False)
 
-        self.train_model()
-        return prediction, probs_dict
+        self.treinar_modelo()
+        return str(previsao).upper(), probs_dict
 
-    def classify_all_messages(self):
+    def classificar_todas_as_mensagens(self):
         results = []
         for message in self.df["mensagem"]:
-            prediction, probabilities = self.classify_message(message, update_df=True)
+            prediction, probabilities = self.classificar_mensagem(
+                message, atualizar_df=True
+            )
             logger.info(f"Message: {message}")
             logger.info(f"Classification: {prediction}")
             logger.info(f"Probabilities: {probabilities}")
@@ -135,8 +143,8 @@ class TextClassifier:
         df_results = pd.DataFrame(results)
         df_results.to_csv(self.data_path, index=False)
 
-    def train_and_save_model(self):
-        self.train_model()
+    def treinar_e_salvar_modelo(self):
+        self.treinar_modelo()
         joblib.dump(self.vectorizer, self.vectorizer_joblib)
         joblib.dump(self.classifier, self.classifier_joblib)
         self.df.to_csv(self.data_path, index=False)
@@ -146,27 +154,28 @@ class TextClassifier:
 
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 import re
 from typing import Optional
 
 
 @dataclass
-class TransactionData:
-    action: TipoTransacao
-    value: float
-    payment_method: Optional[str]
-    category: Optional[str]
-    date: datetime
-    raw_message: str
+class DadosTransacao:
+    acao: TipoTransacao
+    valor: float
+    metodo_pagamento: Optional[str]
+    categoria: Optional[str]
+    data: date
+    mensagem_original: str
 
 
-class FinancialMessageParser(TextClassifier):
+class ConstrutorTransacao(ClassificadorTexto):
     def __init__(self, acao: TipoTransacao):
         super().__init__()
         self.acao = acao
+        self.mensagem_encolhida = ""
 
-    PAYMENT_METHODS = {
+    METODOS_PAGAMENTO = {
         "pix",
         "credito",
         "debito",
@@ -175,7 +184,7 @@ class FinancialMessageParser(TextClassifier):
         "transferencia",
     }
 
-    def parse_message(self, message: str) -> TransactionData:
+    def parse_message(self, message: str) -> DadosTransacao:
         """Parse a financial message by extracting known patterns first."""
         message = message.lower().strip()
         working_message = message  # Create a copy to modify
@@ -189,7 +198,7 @@ class FinancialMessageParser(TextClassifier):
             date_str = date_match.group()
 
         day, month = map(int, date_str.split("/"))
-        date = datetime(datetime.now().year, month, day)
+        date = datetime.now().replace(day=day, month=month).date()
         # Remove the date from working message
         working_message = working_message.replace(date_str, "")
 
@@ -206,7 +215,7 @@ class FinancialMessageParser(TextClassifier):
 
         # 3. Extract and remove payment method
         payment_method = None
-        for method in self.PAYMENT_METHODS:
+        for method in self.METODOS_PAGAMENTO:
             if method in working_message:
                 payment_method = method
                 # Remove the payment method from working message
@@ -216,7 +225,7 @@ class FinancialMessageParser(TextClassifier):
         # 4. Clean up remaining text and use as category
         # Remove common words like 'de', 'para', etc
         remaining_words = [
-            self.preprocess_text(word) for word in working_message.split()
+            self.pre_processar_texto(word) for word in working_message.split()
         ]
 
         # Join remaining words as category, excluding the first word (action)
@@ -224,27 +233,27 @@ class FinancialMessageParser(TextClassifier):
         # If category is empty string or only spaces, set to None
         category = category.strip() if category else None
 
-        return TransactionData(
-            action=self.acao,
-            value=value,
-            payment_method=payment_method,
-            category=category,
-            date=date,
-            raw_message=message,
+        return DadosTransacao(
+            acao=self.acao,
+            valor=value,
+            metodo_pagamento=payment_method,
+            categoria=category,
+            data=date,
+            mensagem_original=message,
         )
 
-    def format_transaction(self, transaction: TransactionData) -> str:
+    def format_transaction(self, transacao: DadosTransacao) -> str:
         """Format a transaction for display."""
-        date_str = transaction.date.strftime("%d/%m/%Y")
+        date_str = transacao.data.strftime("%d/%m/%Y")
         parts = [
-            f"Action: {transaction.action}",
-            f"Value: R$ {transaction.value:.2f}",
+            f"Action: {transacao.acao}",
+            f"Value: R$ {transacao.valor:.2f}",
             f"Date: {date_str}",
         ]
 
-        if transaction.payment_method:
-            parts.append(f"Payment Method: {transaction.payment_method}")
-        if transaction.category:
-            parts.append(f"Category: {transaction.category}")
+        if transacao.metodo_pagamento:
+            parts.append(f"Payment Method: {transacao.metodo_pagamento}")
+        if transacao.categoria:
+            parts.append(f"Category: {transacao.categoria}")
 
         return "\n".join(parts)
