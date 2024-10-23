@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from dotenv import load_dotenv
 
 env = getenv("ENV", "development")
-dotenv_path = "tests/.env" if env == "testing" else ".env"
+dotenv_path = ".env.test" if env == "testing" else ".env"
 if path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 
