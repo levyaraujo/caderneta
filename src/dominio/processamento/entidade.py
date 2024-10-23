@@ -1,19 +1,19 @@
-from enum import Enum
+import logging
+import os
 from typing import Tuple, Dict
 
-import pandas as pd
-import re
-import logging
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.metrics import classification_report
+import joblib
 import nltk
-from nltk.tokenize import word_tokenize
+import pandas as pd
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-import joblib
+from nltk.tokenize import word_tokenize
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
 
+from const import COMANDOS_TRANSACAO
 from src.dominio.transacao.tipos import TipoTransacao
 
 logging.basicConfig(level=logging.INFO)
@@ -27,9 +27,9 @@ nltk.download("wordnet", quiet=True)
 
 class ClassificadorTexto:
     def __init__(self):
-        self.data_path = "/home/lev0x/Documents/modelo/dados_categorizados.csv"
-        self.vectorizer_joblib = "/home/lev0x/Documents/modelo/vectorizer.joblib"
-        self.classifier_joblib = "/home/lev0x/Documents/modelo/classifier.joblib"
+        self.csv_path = os.getenv("CSV_TREINAMENTO")
+        self.vectorizer_joblib = os.getenv("VECTORIZER_PATH")
+        self.classifier_joblib = os.getenv("CLASSIFIER_PATH")
         self.vectorizer = (
             self._carregar_ou_criar_vetorizador(self.vectorizer_joblib)
             if self.vectorizer_joblib
@@ -60,7 +60,7 @@ class ClassificadorTexto:
 
     def _carregar_dataframe(self) -> pd.DataFrame:
         try:
-            df = pd.read_csv(self.data_path, on_bad_lines="skip")
+            df = pd.read_csv(self.csv_path, on_bad_lines="skip")
             logger.info(f"Data loaded successfully. Number of samples: {len(df)}")
             return df
         except Exception as e:
@@ -119,9 +119,9 @@ class ClassificadorTexto:
                 ]
             )
             self.df = pd.concat([self.df, nova_linha], ignore_index=True)
-            self.df.to_csv(self.data_path, index=False)
+            self.df.to_csv(self.csv_path, index=False)
 
-        self.treinar_modelo()
+        self.treinar_e_salvar_modelo()
         return str(previsao).upper(), probs_dict
 
     def classificar_todas_as_mensagens(self):
@@ -141,13 +141,13 @@ class ClassificadorTexto:
                 }
             )
         df_results = pd.DataFrame(results)
-        df_results.to_csv(self.data_path, index=False)
+        df_results.to_csv(self.csv_path, index=False)
 
     def treinar_e_salvar_modelo(self):
         self.treinar_modelo()
         joblib.dump(self.vectorizer, self.vectorizer_joblib)
         joblib.dump(self.classifier, self.classifier_joblib)
-        self.df.to_csv(self.data_path, index=False)
+        self.df.to_csv(self.csv_path, index=False)
         logger.info(
             f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}"
         )
@@ -168,6 +168,10 @@ class DadosTransacao:
     data: date
     mensagem_original: str
 
+    @property
+    def data_formatada(self):
+        return self.data.strftime("%d/%m/%Y")
+
 
 class ConstrutorTransacao(ClassificadorTexto):
     def __init__(self, acao: TipoTransacao):
@@ -186,52 +190,13 @@ class ConstrutorTransacao(ClassificadorTexto):
 
     def parse_message(self, message: str) -> DadosTransacao:
         """Parse a financial message by extracting known patterns first."""
-        message = message.lower().strip()
-        working_message = message  # Create a copy to modify
-
-        # 1. Extract and remove date (DD/MM)
-        date_pattern = r"\b\d{1,2}/\d{1,2}\b"
-        date_match = re.search(date_pattern, working_message)
-        if not date_match:
-            date_str = datetime.now().date().strftime("%d/%m")
-        else:
-            date_str = date_match.group()
-
-        day, month = map(int, date_str.split("/"))
-        date = datetime.now().replace(day=day, month=month).date()
-        # Remove the date from working message
-        working_message = working_message.replace(date_str, "")
-
-        # 2. Extract and remove value
-        value_pattern = r"\b\d+(?:\.\d{3})*(?:,\d{2})?\b|\b\d+\b"
-        value_match = re.search(value_pattern, working_message)
-        if not value_match:
-            raise ValueError("No value found in message")
-
-        value_str = value_match.group()
-        value = float(value_str.replace(".", "").replace(",", "."))
-        # Remove the value from working message
-        working_message = working_message.replace(value_str, "")
-
-        # 3. Extract and remove payment method
-        payment_method = None
-        for method in self.METODOS_PAGAMENTO:
-            if method in working_message:
-                payment_method = method
-                # Remove the payment method from working message
-                working_message = working_message.replace(method, "")
-                break
-
-        # 4. Clean up remaining text and use as category
-        # Remove common words like 'de', 'para', etc
-        remaining_words = [
-            self.pre_processar_texto(word) for word in working_message.split()
-        ]
-
-        # Join remaining words as category, excluding the first word (action)
-        category = " ".join(remaining_words[1:]) if len(remaining_words) > 1 else None
-        # If category is empty string or only spaces, set to None
-        category = category.strip() if category else None
+        self.working_message = message.lower().strip()
+        if self.working_message.split()[0] in COMANDOS_TRANSACAO:
+            self.working_message = " ".join(self.working_message.split()[1:])
+        date = self._extract_date()
+        value = self._extract_value()
+        payment_method = self._extract_payment_method()
+        category = self._extract_category()
 
         return DadosTransacao(
             acao=self.acao,
@@ -241,6 +206,48 @@ class ConstrutorTransacao(ClassificadorTexto):
             data=date,
             mensagem_original=message,
         )
+
+    def _extract_date(self) -> date:
+        date_pattern = r"\b\d{1,2}/\d{1,2}\b"
+        date_match = re.search(date_pattern, self.working_message)
+        if not date_match:
+            date_str = datetime.now().date().strftime("%d/%m")
+        else:
+            date_str = date_match.group()
+
+        day, month = map(int, date_str.split("/"))
+        self.working_message = self.working_message.replace(date_str, "")
+        return datetime.now().replace(day=day, month=month).date()
+
+    def _extract_value(self) -> float:
+        value_pattern = r"\b\d+(?:\.\d{3})*(?:,\d{2})?\b|\b\d+\b"
+        value_match = re.search(value_pattern, self.working_message)
+        if not value_match:
+            raise ValueError("No value found in message")
+
+        value_str = value_match.group()
+        self.working_message = self.working_message.replace(value_str, "")
+        return float(value_str.replace(".", "").replace(",", "."))
+
+    def _extract_payment_method(self) -> Optional[str]:
+        for method in self.METODOS_PAGAMENTO:
+            if method in self.working_message:
+                self.working_message = self.working_message.replace(method, "")
+                return method
+        return None
+
+    def _extract_category(self) -> Optional[str]:
+        palavras_restantes = [
+            self.pre_processar_texto(word)
+            for word in self.working_message.split()
+            if self.pre_processar_texto(word) and word not in self.METODOS_PAGAMENTO
+        ]
+        category = (
+            " ".join(palavras_restantes).strip().replace(",", "|")
+            if len(palavras_restantes) > 0
+            else "outros"
+        )
+        return category.strip() if category else None
 
     def format_transaction(self, transacao: DadosTransacao) -> str:
         """Format a transaction for display."""
