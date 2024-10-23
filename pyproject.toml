@@ -24,6 +24,7 @@ nltk = "^3.9.1"
 fastapi = "^0.115.2"
 uvicorn = "^0.32.0"
 python-multipart = "^0.0.13"
+statsmodels = "^0.14.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
@@ -37,3 +38,9 @@ pre-commit = "^4.0.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+markers = [
+    "integracao: marks tests as integration tests",
+]
