@@ -1,9 +1,9 @@
-import locale
+import logging
 from abc import ABC, abstractmethod
-from typing import List, TypedDict, Literal, Any, Dict
 from datetime import datetime
 from io import BytesIO
-import logging
+from typing import List, TypedDict, Literal, Any, Dict
+
 from plotly import graph_objects as go
 
 from src.dominio.transacao.entidade import Real
