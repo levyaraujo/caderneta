@@ -29,7 +29,7 @@ def test_classifier_esta_carregando_arquivos_corretos():
 def test_parser_mensagens(mensagem, esperado):
     classifier = ClassificadorTexto()
     tipo, _ = classifier.classificar_mensagem(mensagem)
-    parser = ConstrutorTransacao(acao=TipoTransacao[tipo])
+    parser = ConstrutorTransacao(acao=TipoTransacao[tipo.upper()])
     transacao = parser.parse_message(mensagem)
 
     assert transacao == esperado

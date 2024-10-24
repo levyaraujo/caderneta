@@ -1,15 +1,8 @@
-COMANDOS_TRANSACAO = [
-    "recebi",
-    "vendi",
-    "v",
-    "recebimento",
-    "r",
-    "venda",
-    "vendo",
-    "rec",
-    "entrada",
-    "vendido",
-    "ganhei",
+from typing import Dict, Callable, TypeVar
+
+T = TypeVar("T")
+
+TRANSACAO_DEBITO = [
     "paguei",
     "pagamento",
     "p",
@@ -30,10 +23,23 @@ COMANDOS_TRANSACAO = [
     "pagar",
     "entrada",
     "pagarei",
-    "pix",
     "compre",
     "pagui",
-    "perdi" "vend",
+    "perdi",
+]
+
+TRANSACAO_CREDITO = [
+    "recebi",
+    "vendi",
+    "v",
+    "recebimento",
+    "r",
+    "venda",
+    "vendo",
+    "rec",
+    "entrada",
+    "vendido",
+    "ganhei",
     "vendeu",
     "recebido",
     "c",
@@ -43,3 +49,7 @@ COMANDOS_TRANSACAO = [
     "entrou",
     "reci",
 ]
+
+
+def comando(command: str = None):
+    return f"Hello, {command if command else 'world'}"

@@ -8,12 +8,21 @@ import pandas as pd
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
 
-from const import COMANDOS_TRANSACAO
+from dataclasses import dataclass
+from datetime import datetime, date
+import re
+from typing import Optional
+
+
+from const import TRANSACAO_DEBITO, TRANSACAO_CREDITO
 from src.dominio.transacao.tipos import TipoTransacao
 
 logging.basicConfig(level=logging.INFO)
@@ -33,12 +42,15 @@ class ClassificadorTexto:
         self.vectorizer = (
             self._carregar_ou_criar_vetorizador(self.vectorizer_joblib)
             if self.vectorizer_joblib
-            else TfidfVectorizer(max_features=1000)
+            else TfidfVectorizer(max_features=100, ngram_range=(1, 2))
         )
         self.classifier = (
             self._carregar_ou_criar_classificador(self.classifier_joblib)
             if self.classifier_joblib
-            else MultinomialNB()
+            else LogisticRegression(random_state=42)
+        )
+        self.pipeline = Pipeline(
+            [("vectorizer", self.vectorizer), ("classifier", self.classifier)]
         )
         self.stop_words = set(stopwords.words("portuguese"))
         self.lemmatizer = WordNetLemmatizer()
@@ -80,49 +92,72 @@ class ClassificadorTexto:
     def categorizar_texto(text: str) -> str:
         if re.search(r"v\s+\d+|recebi|\bvendi\b|\bvender\b", text, re.IGNORECASE):
             return "credito"
-        if re.search(r"paguei|gastei|comprei", text, re.IGNORECASE):
+        if re.search(r"\bpp\b|paguei|gastei|comprei", text, re.IGNORECASE):
             return "debito"
         return "outro"
 
-    def treinar_modelo(self):
+    def treinar_modelo(self) -> str:
+        """Train the model using the pipeline"""
         self.df["mensagem"] = self.df["mensagem"].apply(self.pre_processar_texto)
+
         X_train, X_test, y_train, y_test = train_test_split(
             self.df["mensagem"],
             self.df["classificacao"],
-            test_size=0.2,
+            test_size=0.3,
             random_state=42,
             shuffle=True,
         )
-        X_train_vectorized = self.vectorizer.fit_transform(X_train)
-        self.classifier.fit(X_train_vectorized, y_train)
-        X_test_vectorized = self.vectorizer.transform(X_test)
-        y_pred = self.classifier.predict(X_test_vectorized)
-        logger.info("\n" + classification_report(y_test, y_pred))
+
+        self.pipeline.fit(X_train, y_train)
+
+        y_pred = self.pipeline.predict(X_test)
+        return "\n" + classification_report(y_test, y_pred)
 
     def classificar_mensagem(
         self, mensagem: str, atualizar_df: bool = True
     ) -> Tuple[str, Dict[str, float]]:
-        mensagem_processada = self.pre_processar_texto(mensagem)
-        message_vectorized = self.vectorizer.transform([mensagem_processada])
-        previsao = self.classifier.predict(message_vectorized)[0]
-        probabilidades = self.classifier.predict_proba(message_vectorized)[0]
-        probs_dict = dict(zip(self.classifier.classes_, probabilidades))
+        try:
+            mensagem_processada = self.pre_processar_texto(mensagem)
 
-        if atualizar_df and probs_dict[previsao] > 0.7:
-            nova_linha = pd.DataFrame(
-                [
-                    {
-                        "mensagem": mensagem,
-                        "classificacao": previsao,
-                        "probabilidade": probs_dict[previsao],
-                    }
-                ]
-            )
-            self.df = pd.concat([self.df, nova_linha], ignore_index=True)
-            self.df.to_csv(self.csv_path, index=False)
+            previsao = self.pipeline.predict([mensagem_processada])[0]
+            probabilidades = self.pipeline.predict_proba([mensagem_processada])[0]
+            probs_dict = dict(zip(self.pipeline.classes_, probabilidades))
 
-        self.treinar_e_salvar_modelo()
-        return str(previsao).upper(), probs_dict
+            if probs_dict[previsao] < 0.7:
+                comando = (
+                    mensagem.split()[0] if len(mensagem.split(" ")) > 1 else mensagem
+                )
+                if comando in TRANSACAO_DEBITO:
+                    previsao = "debito"
+                elif comando in TRANSACAO_CREDITO:
+                    previsao = "debito"
+                else:
+                    previsao = comando
+                probs_dict = {previsao: 1.0}
+
+            if atualizar_df and previsao != "outros":
+                nova_linha = pd.DataFrame(
+                    [
+                        {
+                            "mensagem": mensagem,
+                            "classificacao": previsao,
+                            "probabilidade": probs_dict[previsao],
+                        }
+                    ]
+                )
+                self.df = pd.concat([self.df, nova_linha], ignore_index=True)
+                self.df.to_csv(self.csv_path, index=True)
+                logger.info(
+                    f"Dataframe atualizado com a nova classificação: {previsao}"
+                )
+
+            return previsao, probs_dict
+
+        except NotFittedError as erro:
+            logger.info(f"Model not fitted yet: {erro}")
+            self.treinar_modelo()
+            self.salvar_modelo()
+            return self.classificar_mensagem(mensagem, atualizar_df)
 
     def classificar_todas_as_mensagens(self):
         results = []
@@ -130,9 +165,6 @@ class ClassificadorTexto:
             prediction, probabilities = self.classificar_mensagem(
                 message, atualizar_df=True
             )
-            logger.info(f"Message: {message}")
-            logger.info(f"Classification: {prediction}")
-            logger.info(f"Probabilities: {probabilities}")
             results.append(
                 {
                     "mensagem": message,
@@ -140,23 +172,15 @@ class ClassificadorTexto:
                     "probabilidade": probabilities[prediction],
                 }
             )
-        df_results = pd.DataFrame(results)
-        df_results.to_csv(self.csv_path, index=False)
+        self.df = pd.DataFrame(results).drop_duplicates()
 
-    def treinar_e_salvar_modelo(self):
-        self.treinar_modelo()
+    def salvar_modelo(self):
         joblib.dump(self.vectorizer, self.vectorizer_joblib)
         joblib.dump(self.classifier, self.classifier_joblib)
         self.df.to_csv(self.csv_path, index=False)
         logger.info(
             f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}"
         )
-
-
-from dataclasses import dataclass
-from datetime import datetime, date
-import re
-from typing import Optional
 
 
 @dataclass
@@ -191,7 +215,7 @@ class ConstrutorTransacao(ClassificadorTexto):
     def parse_message(self, message: str) -> DadosTransacao:
         """Parse a financial message by extracting known patterns first."""
         self.working_message = message.lower().strip()
-        if self.working_message.split()[0] in COMANDOS_TRANSACAO:
+        if self.working_message.split()[0] in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]:
             self.working_message = " ".join(self.working_message.split()[1:])
         date = self._extract_date()
         value = self._extract_value()
@@ -240,7 +264,9 @@ class ConstrutorTransacao(ClassificadorTexto):
         palavras_restantes = [
             self.pre_processar_texto(word)
             for word in self.working_message.split()
-            if self.pre_processar_texto(word) and word not in self.METODOS_PAGAMENTO
+            if self.pre_processar_texto(word)
+            and word not in self.METODOS_PAGAMENTO
+            and word not in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]
         ]
         category = (
             " ".join(palavras_restantes).strip().replace(",", "|")
