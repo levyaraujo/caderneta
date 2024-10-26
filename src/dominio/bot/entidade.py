@@ -1,9 +1,14 @@
+import logging
 import os
 from abc import ABC, abstractmethod
-from twilio.rest import Client
-from twilio.rest.api.v2010.account.message import MessageInstance
+
 from dotenv import load_dotenv
-import logging
+from twilio.rest import Client
+from dataclasses import dataclass, field
+from typing import Callable, Dict, List, Optional
+import inspect
+
+from src.dominio.bot.exceptions import ComandoDesconhecido
 
 load_dotenv()
 
@@ -39,3 +44,72 @@ class TwilioBot(BotBase):
 class CLIBot(BotBase):
     def responder(self, mensagem: str, usuario: str):
         return mensagem
+
+
+@dataclass
+class Comando:
+    name: str
+    handler: Callable
+    description: str
+    aliases: List[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.aliases = self.aliases
+
+
+class GerenciadorComandos:
+    def __init__(self):
+        self.commands: Dict[str, Comando] = {}
+        self.prefix = "!"
+
+    def comando(
+        self, name: str, description: str, aliases: List[str] | None = None
+    ) -> Callable[[Callable], Callable]:
+        """Decorator to register commands"""
+
+        def decorator(func: Callable):
+            cmd = Comando(name, func, description, aliases or [])
+            self.registrar_comando(cmd)
+            return func
+
+        return decorator
+
+    def registrar_comando(self, command: Comando):
+        """Register a command and its aliases"""
+        self.commands[command.name] = command
+        for alias in command.aliases or []:
+            self.commands[alias] = command
+
+    async def processar_mensagem(self, message: str, **kwargs) -> Optional[str]:
+        message = f"!{message}"
+        """Handle incoming messages and execute commands"""
+        if not message.startswith(self.prefix):
+            return None
+
+        parts = message[len(self.prefix) :].strip().split()
+        if not parts:
+            return None
+
+        command_name = parts[0].lower()
+        args = parts[1:]
+
+        command = self.commands.get(command_name)
+        if not command:
+            logger.warning(f"Comando {command_name} não existe")
+            raise ComandoDesconhecido("Comando não existe")
+
+        try:
+            if inspect.iscoroutinefunction(command.handler):
+                return await command.handler(*args, **kwargs)
+            return command.handler(*args, **kwargs)
+        except Exception as e:
+            return f"Erro ao executar comando {command_name}: {str(e)}"
+
+    def get_help(self) -> str:
+        """Generate help text listing all commands"""
+        help_text = "Available commands:\n"
+        unique_commands = {cmd.name: cmd for cmd in self.commands.values()}
+        for cmd in unique_commands.values():
+            aliases = f" (aliases: {', '.join(cmd.aliases)})"
+            help_text += f"{self.prefix}{cmd.name}: {cmd.description}{aliases}\n"
+        return help_text

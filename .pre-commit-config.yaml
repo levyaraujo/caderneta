@@ -1,7 +1,26 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
   - repo: local
     hooks:
       - id: ruff
         name: ruff
         entry: bash -c 'ruff format && ruff check --config ruff.toml --fix'
         language: system
+        types: [python]
+        require_serial: true
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy checker
+        entry: bash -c 'git diff --staged --name-only --diff-filter=d | grep ".py$" | xargs -r mypy --follow-imports=skip --ignore-missing-imports --check-untyped-defs'
+        language: system
+        types: [python]
+        require_serial: true
