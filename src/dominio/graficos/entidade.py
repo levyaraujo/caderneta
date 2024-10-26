@@ -79,7 +79,7 @@ class GraficoLinha(GraficoBase):
         config: GraficoConfig,
         legendas: List[Any],
         valores: List[Any],
-        hover_texts: List[str] = None,
+        hover_texts: List[str],
     ):
         super().__init__(config)
         self.legendas = legendas
@@ -116,7 +116,7 @@ class GraficoPizza(GraficoBase):
         config: GraficoConfig,
         legendas: List[str],
         valores: List[float],
-        hover_texts: List[str] = None,
+        hover_texts: List[str],
     ):
         super().__init__(config)
         self.legendas = legendas
@@ -151,7 +151,7 @@ class GraficoBarras(GraficoBase):
         config: GraficoConfig,
         legendas: List[str],
         valores: List[float],
-        hover_texts: List[str] = None,
+        hover_texts: List[str],
     ):
         super().__init__(config)
         self.legendas = legendas
@@ -184,9 +184,7 @@ class GraficoBarras(GraficoBase):
 
 
 class GraficoBarraEmpilhada(GraficoBase):
-    def __init__(
-        self, config: GraficoConfig, legendas: Dict[str, Any], valores: List[str]
-    ):
+    def __init__(self, config: GraficoConfig, legendas: List, valores: Dict[str, Any]):
         super().__init__(config)
         self.dados = valores
         self.periodos = legendas
