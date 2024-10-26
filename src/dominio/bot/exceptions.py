@@ -1,0 +1,2 @@
+class ComandoDesconhecido(Exception):
+    pass
