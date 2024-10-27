@@ -1,27 +1,30 @@
 from src.dominio.bot.entidade import BotBase
 from src.dominio.bot.exceptions import ComandoDesconhecido
 from src.dominio.processamento.entidade import ClassificadorTexto, ConstrutorTransacao
+from src.dominio.processamento.exceptions import NaoEhTransacao
 from src.dominio.transacao.entidade import Real
 from src.dominio.transacao.tipos import TipoTransacao
-from src.dominio.bot.comandos import gerenciador_comandos
+from src.dominio.bot.comandos import bot
 
 
 async def responder_usuario(
-    mensagem: str, usuario: str, nome_usuario: str, bot: BotBase
+    mensagem: str, usuario: str, nome_usuario: str, robo: BotBase
 ):
     try:
-        resposta = await gerenciador_comandos.processar_mensagem(
-            mensagem, nome_usuario=nome_usuario
-        )
-        return bot.responder(resposta, usuario)  # type: ignore[arg-type]
+        resposta = await bot.processar_mensagem(mensagem, nome_usuario=nome_usuario)
+        return robo.responder(resposta, usuario)  # type: ignore[arg-type]
 
     except ComandoDesconhecido:
-        classifier = ClassificadorTexto()
-        tipo, _ = classifier.classificar_mensagem(mensagem)
-        if tipo == "debito" or tipo == "credito":
-            resposta = comando_criar_transacao(tipo.upper(), mensagem)
+        try:
+            classifier = ClassificadorTexto()
+            tipo, _ = classifier.classificar_mensagem(mensagem)
+            if tipo == "debito" or tipo == "credito":
+                resposta = comando_criar_transacao(tipo.upper(), mensagem)
 
-            return bot.responder(resposta, usuario)  # type: ignore[arg-type]
+                return robo.responder(resposta, usuario)
+        except NaoEhTransacao:
+            robo.responder("Não entendi sua mensagem 🫤", usuario)
+            robo.responder(bot.get_help(), usuario)
 
 
 def comando_criar_transacao(tipo: str, mensagem: str) -> str:
