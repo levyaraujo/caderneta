@@ -1,4 +1,3 @@
-# Use the official PostgreSQL image from the Docker Hub
 FROM postgres:16-alpine
 
 EXPOSE 5433

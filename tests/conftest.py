@@ -5,7 +5,7 @@ import pytest
 
 from src.dominio.transacao.entidade import Transacao
 from src.dominio.usuario.entidade import Usuario
-from src.infra.database.connection import metadata, GET_DEFAULT_SESSION, engine
+from src.infra.database.connection import metadata, GET_DEFAULT_SESSION_CONTEXT, engine
 from src.infra.database.repo import RepoEscrita, RepoLeitura
 
 
@@ -57,7 +57,7 @@ def tables(test_engine):
 
 @pytest.fixture(scope="function")
 def session(tables):
-    with GET_DEFAULT_SESSION() as session:
+    with GET_DEFAULT_SESSION_CONTEXT() as session:
         yield session
 
 

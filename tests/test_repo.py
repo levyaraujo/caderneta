@@ -41,7 +41,6 @@ def test_adicionar_transacao(session, mock_usuario):
     repo_transacao_leitura = RepoTransacaoLeitura(session=session)
     usuario = mock_usuario
     transacao = Transacao(
-        id=randint(1, 10000),
         usuario=usuario,
         valor=100.0,
         tipo=TipoTransacao.CREDITO,
