@@ -23,6 +23,7 @@ class RepoTransacaoLeitura(RepoBase[Transacao]):
                 Transacao.caixa >= intervalo.inicio,
                 Transacao.caixa <= intervalo.fim,
             )
+            .order_by(Transacao.caixa)
             .all()
         )
 
