@@ -12,15 +12,15 @@ def test_classifier_esta_carregando_arquivos_corretos():
     classifier = ClassificadorTexto()
     assert (
         classifier.csv_path
-        == "/home/lev0x/Documents/projetos/caderneta/tests/fixtures/test.csv"
+        == "/home/lev0x/Documents/projetos/caderneta/tests/parser/test.csv"
     )
     assert (
         classifier.vectorizer_joblib
-        == "/home/lev0x/Documents/projetos/caderneta/tests/fixtures/vectorizer.joblib"
+        == "/home/lev0x/Documents/projetos/caderneta/tests/parser/vectorizer.joblib"
     )
     assert (
         classifier.classifier_joblib
-        == "/home/lev0x/Documents/projetos/caderneta/tests/fixtures/classifier.joblib"
+        == "/home/lev0x/Documents/projetos/caderneta/tests/parser/classifier.joblib"
     )
 
 

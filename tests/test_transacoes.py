@@ -1,4 +1,5 @@
 from random import randint
+from typing import Dict, List
 
 import pytest
 from freezegun import freeze_time
@@ -6,7 +7,7 @@ from datetime import datetime
 
 from src.dominio.transacao.services import _calcular_caixa, _calcular_competencia
 from src.libs.tipos import Intervalo
-from src.dominio.transacao.excecoes import TipoTransacaoInvalido
+from src.dominio.transacao.exceptions import TipoTransacaoInvalido
 from src.dominio.transacao.entidade import Transacao, TipoTransacao
 
 
@@ -47,7 +48,7 @@ def test_transacao_com_tipo_errado(mock_usuario, transacao_gen):
 @freeze_time(datetime(2024, 9, 1))
 def test_fluxo_competencia(mock_usuario, transacao_gen):
     usuario = mock_usuario
-    transacoes_por_usuario = {usuario.id: []}
+    transacoes_por_usuario: Dict[int, List[Transacao]] = {usuario.id: []}
 
     for _ in range(10):
         transacoes_por_usuario[usuario.id].append(
@@ -91,7 +92,7 @@ def test_fluxo_competencia(mock_usuario, transacao_gen):
 
 def test_fluxo_caixa(mock_usuario, transacao_gen):
     usuario = mock_usuario
-    transacoes_por_usuario = {usuario.id: []}
+    transacoes_por_usuario: Dict[int, List[Transacao]] = {usuario.id: []}
 
     for _ in range(10):
         transacoes_por_usuario[usuario.id].append(
