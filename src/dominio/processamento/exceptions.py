@@ -1,0 +1,2 @@
+class NaoEhTransacao(Exception):
+    pass
