@@ -23,6 +23,7 @@ from typing import Optional
 
 
 from const import TRANSACAO_DEBITO, TRANSACAO_CREDITO
+from src.dominio.processamento.exceptions import NaoEhTransacao
 from src.dominio.transacao.tipos import TipoTransacao
 
 logging.basicConfig(level=logging.INFO)
@@ -132,7 +133,7 @@ class ClassificadorTexto:
                 elif comando in TRANSACAO_CREDITO:
                     previsao = "debito"
                 else:
-                    previsao = comando
+                    raise NaoEhTransacao("O comando informado não é de transação")
                 probs_dict = {previsao: 1.0}
 
             if atualizar_df and previsao != "outros":
