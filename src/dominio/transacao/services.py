@@ -1,10 +1,8 @@
 import logging
 from typing import List
 
-from src.dominio.transacao.excecoes import ErroAoCriarTransacao
-from src.dominio.transacao.repo import RepoTransacaoEscrita
+from src.dominio.transacao.exceptions import ErroAoCriarTransacao
 from src.dominio.transacao.tipos import TipoTransacao
-from src.infra.database.connection import Session
 from src.infra.database.uow import UnitOfWork
 from src.libs.tipos import Intervalo
 from src.dominio.transacao.entidade import Transacao
