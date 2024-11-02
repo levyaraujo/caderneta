@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy.orm import Session
 
 from src.dominio.transacao.entidade import Transacao
-from src.infra.database.repo import RepoLeitura, RepoEscrita, RepoBase
+from src.infra.database.repo import RepoEscrita, RepoBase
 from src.libs.tipos import Intervalo
 
 
@@ -19,7 +19,7 @@ class RepoTransacaoLeitura(RepoBase[Transacao]):
         return (
             self.session.query(Transacao)
             .filter(
-                Transacao.usuario_id == usuario_id,
+                Transacao.usuario_id == usuario_id,  # type: ignore
                 Transacao.caixa >= intervalo.inicio,
                 Transacao.caixa <= intervalo.fim,
             )
