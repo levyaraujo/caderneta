@@ -37,7 +37,7 @@ async def test_comando_nao_existe(mensagem):
 async def test_comandos_validos(
     mensagem, esperado, mock_usuario, transacao_gen, session
 ):
-    uow = UnitOfWork(session_factory=session)
+    uow = UnitOfWork(session_factory=lambda: session)
     usuario = mock_usuario
 
     with uow:
@@ -78,7 +78,7 @@ async def test_comandos_validos(
 @pytest.mark.asyncio
 @freeze_time(datetime(2024, 10, 28))
 async def test_grafico_fluxo(mock_usuario, transacao_gen, session):
-    uow = UnitOfWork(session_factory=session)
+    uow = UnitOfWork(session_factory=lambda: session)
     usuario = mock_usuario
     with uow:
         for dia in range(1, 4):

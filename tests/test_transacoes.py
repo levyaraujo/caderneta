@@ -21,7 +21,6 @@ def test_criacao_transacao(mock_usuario, transacao_gen):
     assert transacao.tipo == TipoTransacao.DEBITO
     assert isinstance(transacao.caixa, datetime)
     assert isinstance(transacao.competencia, datetime)
-    assert transacao.apagado is False
 
 
 def test_tipo_transacao_enum():

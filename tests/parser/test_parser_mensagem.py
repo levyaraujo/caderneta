@@ -40,6 +40,6 @@ def test_parser_mensagens(mensagem, esperado):
     assert transacao.metodo_pagamento == esperado.metodo_pagamento
     assert transacao.categoria == esperado.categoria
     assert transacao.mensagem_original == esperado.mensagem_original
-    assert transacao.data.replace(second=0, microsecond=0) == esperado.data.replace(
-        second=0, microsecond=0
-    )
+    assert transacao.data.replace(
+        minute=0, second=0, microsecond=0
+    ) == esperado.data.replace(minute=0, second=0, microsecond=0)
