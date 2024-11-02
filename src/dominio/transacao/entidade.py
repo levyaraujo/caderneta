@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, date
 
 from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
-from src.validadores import validar_tipo_da_transacao
+from src.utils.validadores import validar_tipo_da_transacao
 
 
 @dataclass(frozen=False)
@@ -14,7 +14,7 @@ class Transacao:
     id: int | None = field(default=None)
     categoria: str | None = field(default=None)
     descricao: str | None = field(default=None)
-    caixa: datetime = field(default_factory=datetime.now)
+    caixa: datetime | date = field(default_factory=datetime.now)
     competencia: datetime = field(default_factory=datetime.now)
     apagado: bool = False
 
