@@ -39,3 +39,11 @@ def criar_grafico_receitas_e_despesas(transacoes: List[Transacao]):
         "barra_empilhada", config, legendas=legendas, valores=receitas_despesas_por_mes
     )
     return grafico.criar()
+
+
+def criar_grafico_lucro(transacoes: List[Transacao]):
+    config = GraficoConfig(titulo="Lucro")
+    transacoes.sort(key=lambda transacao: transacao.caixa)
+
+    grafico = GraficoFactory.criar_grafico("lucro", config, transacoes=transacoes)
+    return grafico.criar()

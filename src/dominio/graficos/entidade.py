@@ -1,17 +1,20 @@
 import logging
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from io import BytesIO
 from typing import List, TypedDict, Literal, Any, Dict
 
-from dateutil.relativedelta import relativedelta
+from PIL import Image, ImageDraw, ImageFont
 from plotly import graph_objects as go
 
-from src.dominio.transacao.entidade import Real
-from src.libs.tipos import Intervalo
+from src.dominio.transacao.entidade import Real, Transacao
+from src.dominio.transacao.tipos import TipoTransacao
+import httpx
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("graficos")
+STATIC = os.getenv("BUCKET")
 
 
 class GraficoConfig:
@@ -24,7 +27,7 @@ class GraficoRetorno(TypedDict):
     nome_arquivo: str
     formato: Literal["png", "svg", "html"]
     dados: bytes
-    figura: go.Figure
+    figura: go.Figure | None
 
 
 class IGrafico(ABC):
@@ -53,6 +56,8 @@ class GraficoBase(IGrafico):
             },
             hovermode="closest",
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="Arial"),
+            width=1000,
+            height=700,
         )
 
     def para_bytes(self) -> bytes:
@@ -286,6 +291,163 @@ class GraficoBarraEmpilhada(GraficoBase):
         }
 
 
+class GraficoLucro(GraficoBase):
+    def __init__(self, config: GraficoConfig, transacoes: List[Transacao]):
+        super().__init__(config)
+        self.transacoes = transacoes
+
+    def criar(self) -> GraficoRetorno:
+        vendas = sum(
+            t.valor for t in self.transacoes if t.tipo == TipoTransacao.CREDITO
+        )
+        custos = sum(t.valor for t in self.transacoes if t.tipo == TipoTransacao.DEBITO)
+        resultado = vendas - custos
+
+        width = 800
+        height = 700
+
+        # Set the background color to light gray
+        image = Image.new("RGBA", (width, height), (240, 240, 240, 255))
+        draw = ImageDraw.Draw(image)
+
+        # Attempt to load the font
+        try:
+            font_path = f"{STATIC}/fonts/InterTight-Bold.ttf"
+            font_title = ImageFont.truetype(font_path, 20)
+            font_venda_despesa = ImageFont.truetype(font_path, 20)
+            font_lucro = ImageFont.truetype(font_path, 40)
+        except Exception as erro:
+            font_title = ImageFont.load_default()
+            font_lucro = font_title
+            font_venda_despesa = font_title
+
+        # Center circle position
+        center_x = width // 2
+        center_y = height // 2 - 50
+        radius = 180
+        thickness = 40
+
+        # Draw outer white circle as the background for the ring
+        draw.ellipse(
+            [
+                (center_x - radius - thickness, center_y - radius - thickness),
+                (center_x + radius + thickness, center_y + radius + thickness),
+            ],
+            fill="white",
+        )
+
+        # Draw the arc for profit and costs
+        if vendas > 0:
+            cost_angle = (custos / vendas) * 360
+            profit_angle = ((vendas - custos) / vendas) * 360
+        else:
+            cost_angle = 0
+            profit_angle = 0
+
+        # Draw cost portion (red)
+        if cost_angle > 0:
+            draw.arc(
+                [
+                    (center_x - radius, center_y - radius),
+                    (center_x + radius, center_y + radius),
+                ],
+                -90,
+                -90 + cost_angle,
+                fill="#ff4d4d",
+                width=thickness,
+            )
+
+        # Draw profit portion (green)
+        if profit_angle > 0:
+            draw.arc(
+                [
+                    (center_x - radius, center_y - radius),
+                    (center_x + radius, center_y + radius),
+                ],
+                -90 + cost_angle,
+                -90 + cost_angle + profit_angle,
+                fill="#4ade80",
+                width=thickness,
+            )
+
+        # Draw center text
+        title_text = "SEU LUCRO"
+        value_text = f"{Real(resultado)}"
+        title_bbox = draw.textbbox((0, 0), title_text, font=font_title)
+        value_bbox = draw.textbbox((0, 0), value_text, font=font_lucro)
+        title_x = center_x - (title_bbox[2] - title_bbox[0]) // 2
+        title_y = center_y - 40
+        value_x = center_x - (value_bbox[2] - value_bbox[0]) // 2
+        value_y = center_y - 10
+        draw.text((title_x, title_y), title_text, fill="#065f46", font=font_title)
+        draw.text((value_x, value_y), value_text, fill="black", font=font_lucro)
+
+        # Define box dimensions based on "VENDAS" box
+        box_width = 200
+        box_height = 80
+        box_y = height - 150
+        vendas_text_y = box_y - 40
+        custos_text_y = box_y - 40
+
+        # Vendas box (left)
+        vendas_box = [(120, box_y), (120 + box_width, box_y + box_height)]
+        draw.rounded_rectangle(vendas_box, fill="#25D364", outline="#d1fae5", radius=15)
+
+        # Center the "VENDAS" text and value in the box
+        vendas_center_x = (vendas_box[0][0] + vendas_box[1][0]) // 2
+        vendas_center_y = (vendas_box[0][1] + vendas_box[1][1]) // 2
+        draw.text(
+            (vendas_center_x, vendas_center_y - 45),
+            "VENDAS",
+            fill="#065f46",
+            font=font_title,
+            anchor="ms",
+        )
+        draw.text(
+            (vendas_center_x, vendas_center_y + 5),
+            f"{Real(vendas)}",
+            fill="#ecfdf5",
+            font=font_venda_despesa,
+            anchor="ms",
+        )
+
+        # Custos box (right)
+        custos_x = width - 120 - box_width
+        custos_box = [(custos_x, box_y), (custos_x + box_width, box_y + box_height)]
+        draw.rounded_rectangle(custos_box, fill="#e73760", outline="#fee2e2", radius=15)
+
+        # Center the "CUSTOS" text and value in the box
+        custos_center_x = (custos_box[0][0] + custos_box[1][0]) // 2
+        custos_center_y = (custos_box[0][1] + custos_box[1][1]) // 2
+        draw.text(
+            (custos_center_x, custos_center_y - 45),
+            "CUSTOS",
+            fill="#991b1b",
+            font=font_title,
+            anchor="ms",
+        )
+        draw.text(
+            (custos_center_x, custos_center_y + 5),
+            f"{Real(custos)}",
+            fill="white",
+            font=font_venda_despesa,
+            anchor="ms",
+        )
+
+        img_bytes_io: BytesIO = BytesIO()
+        image.save(img_bytes_io, format="PNG")
+        bytes_imagem: bytes = img_bytes_io.getvalue()
+        return self._retorno(bytes_imagem)
+
+    def _retorno(self, img_byte_arr) -> GraficoRetorno:
+        return {
+            "nome_arquivo": self._gerar_nome_arquivo("lucro"),
+            "formato": self.config.formato,
+            "dados": img_byte_arr,
+            "figura": None,
+        }
+
+
 class GraficoFactory:
     @staticmethod
     def criar_grafico(tipo: str, config: GraficoConfig, **kwargs) -> IGrafico:
@@ -297,5 +459,7 @@ class GraficoFactory:
             return GraficoBarras(config, **kwargs)
         elif tipo == "barra_empilhada":
             return GraficoBarraEmpilhada(config, **kwargs)
+        elif tipo == "lucro":
+            return GraficoLucro(config, **kwargs)
         else:
             raise ValueError(f"Tipo de gráfico não suportado: {tipo}")
