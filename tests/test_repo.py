@@ -1,6 +1,8 @@
 from datetime import datetime
 from random import randint
 
+import pytest
+
 from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.dominio.usuario.entidade import Usuario
 from src.dominio.transacao.entidade import Transacao
@@ -94,3 +96,25 @@ def test_buscar_transacao_por_intervalo_e_usuario(session, mock_usuario, transac
     assert all(transacao.usuario == usuario for transacao in transacoes)
 
     assert all(transacao.tipo == TipoTransacao.CREDITO for transacao in transacoes)
+
+
+def test_roll_back_sem_commit_uow(session, mock_transacao):
+    transacao = mock_transacao
+    uow = UnitOfWork(session_factory=lambda: session)
+    with uow:
+        uow.repo_escrita.adicionar(transacao)
+
+    nova_sessao = session
+    assert nova_sessao.query(Transacao).filter_by(id=transacao.id).first() is None
+
+
+def test_roll_back_exception_uow(session, mock_transacao):
+    transacao = mock_transacao
+    uow = UnitOfWork(session_factory=lambda: session)
+    with pytest.raises(Exception):
+        with uow:
+            uow.repo_escrita.adicionar(transacao)
+            raise Exception
+
+    nova_sessao = session
+    assert nova_sessao.query(Transacao).filter_by(id=transacao.id).first() is None
