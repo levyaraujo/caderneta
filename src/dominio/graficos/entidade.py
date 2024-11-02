@@ -4,16 +4,18 @@ from datetime import datetime
 from io import BytesIO
 from typing import List, TypedDict, Literal, Any, Dict
 
+from dateutil.relativedelta import relativedelta
 from plotly import graph_objects as go
 
 from src.dominio.transacao.entidade import Real
+from src.libs.tipos import Intervalo
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("graficos")
 
 
 class GraficoConfig:
-    def __init__(self, titulo: str, formato: Literal["png", "svg", "html"] = "html"):
+    def __init__(self, titulo: str, formato: Literal["png", "svg", "html"] = "png"):
         self.titulo = titulo
         self.formato = formato
 
@@ -79,10 +81,10 @@ class GraficoLinha(GraficoBase):
         config: GraficoConfig,
         legendas: List[Any],
         valores: List[Any],
-        hover_texts: List[str],
+        hover_texts: List[str] | None = None,
     ):
         super().__init__(config)
-        self.legendas = legendas
+        self.legendas: List[datetime] = legendas
         self.valores = valores
         self.hover_texts = hover_texts
 
@@ -94,11 +96,55 @@ class GraficoLinha(GraficoBase):
             name="Fluxo de Caixa",
             hovertext=self.hover_texts,
             hoverinfo="text",
-            marker=dict(color=self.valores, size=12),
+            marker=dict(
+                color=self.valores,
+                size=12,
+                colorscale=[[0, "red"], [0.5, "royalblue"], [1, "green"]],
+            ),
             line=dict(color="royalblue", width=2),
         )
-        layout = self._criar_layout_base()
+
+        layout = go.Layout(
+            title={
+                "text": f"{self.config.titulo} {self.legendas[0].strftime('%m/%Y')}",
+                "x": 0.5,
+                "xanchor": "center",
+                "yanchor": "top",
+                "y": 0.95,
+            },
+            hovermode="closest",
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="Arial"),
+            margin=dict(l=50, r=30, t=50, b=50),
+            autosize=True,
+            plot_bgcolor="rgba(240, 244, 250, 0.8)",
+            xaxis=dict(
+                showgrid=True,
+                gridwidth=1,
+                gridcolor="rgba(211, 211, 211, 0.6)",
+                zeroline=True,
+                zerolinewidth=1,
+                zerolinecolor="lightgrey",
+                tickformat="%d/%m",
+                tickangle=-45,
+                dtick="D1",
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridwidth=1,
+                gridcolor="rgba(211, 211, 211, 0.6)",
+                zeroline=True,
+                zerolinewidth=1,
+                zerolinecolor="lightgrey",
+            ),
+            height=500,
+            width=800,
+        )
+
         self.figura = go.Figure(data=[trace], layout=layout)
+
+        self.figura.update_xaxes(automargin=True)
+        self.figura.update_yaxes(automargin=True)
+
         return self._retorno()
 
     def _retorno(self) -> GraficoRetorno:
@@ -193,26 +239,39 @@ class GraficoBarraEmpilhada(GraficoBase):
         receitas = [self.dados[periodo]["receitas"] for periodo in self.periodos]
         despesas = [self.dados[periodo]["despesas"] for periodo in self.periodos]
 
+        if len(self.periodos) == 1:
+            periodo = [datetime.strptime(self.periodos[0], "%Y-%m").strftime("%m/%Y")]
+            largura = 0.5
+        else:
+            periodo = [
+                datetime.strptime(periodo, "%Y-%m").strftime("%m/%Y")
+                for periodo in self.periodos
+            ]
+            largura = None
+
         trace_receitas = go.Bar(
-            x=self.periodos,
+            x=periodo,
             y=receitas,
             hoverinfo="text",
             name="Receitas",
             text=[str(Real(valor)) for valor in receitas],
             marker=dict(color="lightgreen"),
+            width=largura,
         )
         trace_despesas = go.Bar(
-            x=self.periodos,
+            x=periodo,
             y=despesas,
             hoverinfo="text",
             name="Despesas",
             text=[str(Real(valor)) for valor in despesas],
             marker=dict(color="lightcoral"),
+            width=largura,
         )
 
         layout = self._criar_layout_base()
         layout.update(
             barmode="relative",
+            margin=dict(l=40, r=30, t=40, b=40),
         )
 
         self.figura = go.Figure(data=[trace_receitas, trace_despesas], layout=layout)
