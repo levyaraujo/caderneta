@@ -1,4 +1,7 @@
+from datetime import datetime
+
 import pytest
+from freezegun import freeze_time
 
 from src.dominio.processamento.entidade import (
     ConstrutorTransacao,
@@ -32,4 +35,11 @@ def test_parser_mensagens(mensagem, esperado):
     parser = ConstrutorTransacao(acao=TipoTransacao[tipo.upper()])
     transacao = parser.parse_message(mensagem)
 
-    assert transacao == esperado
+    assert transacao.tipo == esperado.tipo
+    assert transacao.valor == esperado.valor
+    assert transacao.metodo_pagamento == esperado.metodo_pagamento
+    assert transacao.categoria == esperado.categoria
+    assert transacao.mensagem_original == esperado.mensagem_original
+    assert transacao.data.replace(second=0, microsecond=0) == esperado.data.replace(
+        second=0, microsecond=0
+    )

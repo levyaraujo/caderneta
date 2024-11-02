@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 
 class Intervalo:
@@ -14,15 +15,15 @@ class Intervalo:
             ValueError: Se o valor inicial for maior que o valor final.
         """
         if inicio > fim:
-            raise ValueError("O valor inicial deve ser menor ou igual ao valor final.")
+            raise ValueError("O início deve ser menor ou igual ao fim do intervalo.")
         self.inicio = inicio
         self.fim = fim
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Retorna uma representação em string do intervalo."""
         return f"Intervalo({self.inicio}, {self.fim})"
 
-    def contem(self, valor):
+    def contem(self, valor) -> bool:
         """Verifica se um valor está contido no intervalo.
 
         Args:
@@ -33,7 +34,7 @@ class Intervalo:
         """
         return self.inicio <= valor <= self.fim
 
-    def interseccao(self, outro_intervalo):
+    def interseccao(self, outro_intervalo) -> Optional["Intervalo"]:
         """Calcula a interseção entre dois intervalos.
 
         Args:
@@ -48,7 +49,7 @@ class Intervalo:
             max(self.inicio, outro_intervalo.inicio), min(self.fim, outro_intervalo.fim)
         )
 
-    def uniao(self, outro_intervalo):
+    def uniao(self, outro_intervalo) -> Optional["Intervalo"]:
         """Calcula a união entre dois intervalos.
 
         Args:
