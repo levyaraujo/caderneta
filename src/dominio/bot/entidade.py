@@ -10,6 +10,7 @@ import inspect
 
 from src.dominio.bot.exceptions import ComandoDesconhecido
 from src.dominio.transacao.repo import RepoTransacaoLeitura
+from src.dominio.usuario.entidade import Usuario
 from src.infra.database.connection import (
     GET_DEFAULT_SESSION_CONTEXT,
     GET_DEFAULT_SESSION,
@@ -34,16 +35,16 @@ class TwilioBot(BotBase):
         self.__bot_number = os.getenv("TWILIO_PHONE_NUMBER")
         self.__cliente = Client(self.__account_sid, self.__auth_token)
 
-    def responder(self, mensagem: str, usuario: str) -> str:
+    def responder(self, mensagem: str, telefone: str) -> str:
         media_url = mensagem if mensagem.startswith("http") else None
         mensagem = "" if media_url else mensagem
 
         logger.info(
-            f"Sending message from: whatsapp:+{self.__bot_number} to: {usuario} with body: {mensagem}"
+            f"Enviando mensagem de whatsapp:+{self.__bot_number} para {telefone}: {mensagem}"
         )
         resposta = self.__cliente.messages.create(
             from_=f"whatsapp:+{self.__bot_number}",
-            to=usuario,
+            to=telefone,
             body=mensagem,
             media_url=media_url,
         )
@@ -98,20 +99,18 @@ class GerenciadorComandos:
         for alias in command.aliases or []:
             self.commands[alias] = command
 
-    async def processar_mensagem(self, message: str, **kwargs) -> Optional[str]:
-        message = f"!{message}"
-        """Handle incoming messages and execute commands"""
-        if not message.startswith(self.prefix):
-            return None
+    async def processar_mensagem(self, message: str, **kwargs) -> str:
+        message = f"{self.prefix}{message}"
+        usuario: Usuario = kwargs.get("usuario")
 
         message = message[len(self.prefix) :].strip()
         parts = message.split()
         if not parts:
-            return None
+            return ""
 
         command_name, args = self._extract_command_name_and_args(parts)
         if not command_name:
-            logger.warning(f"Comando {command_name} não existe")
+            logger.warning(f"Comando {parts[0]} não existe")
             raise ComandoDesconhecido("Comando não existe")
 
         command = self.commands.get(command_name)
@@ -124,7 +123,8 @@ class GerenciadorComandos:
                 return await command.handler(*args, **kwargs)
             return command.handler(*args, **kwargs)
         except Exception as e:
-            return f"Erro ao executar comando {command_name}: {str(e)}"
+            logger.error(f"Erro ao executar comando {command_name}: {str(e)}")
+            return f"Erro ao executar comando {command_name}. Tente novamente."
 
     def _extract_command_name_and_args(
         self, parts: List[str]
@@ -136,11 +136,13 @@ class GerenciadorComandos:
                 return command_name, parts[i:]
         return None, []
 
-    def get_help(self) -> str:
+    def ajuda(self) -> str:
         """Gera ajuda listando todos os comandos"""
-        help_text = "📔 Comandos disponíveis:\n\n"
+        help_text = "Estes são os comandos disponíveis:\n\n"
         unique_commands = {cmd.name: cmd for cmd in self.commands.values()}
         for cmd in unique_commands.values():
-            aliases = f" (aliases: {', '.join(cmd.aliases)})" if cmd.aliases else ""
-            help_text += f"{cmd.icon} *{cmd.name}*: {cmd.description}{aliases}\n"
+            aliases = (
+                f" (Também entendo: *{', '.join(cmd.aliases)}*)" if cmd.aliases else ""
+            )
+            help_text += f"*{cmd.name}*: {cmd.description}{aliases}\n"
         return help_text
