@@ -314,7 +314,7 @@ class GraficoLucro(GraficoBase):
         try:
             font_path = f"{STATIC}/fonts/InterTight-Bold.ttf"
             font_title = ImageFont.truetype(font_path, 20)
-            font_venda_despesa = ImageFont.truetype(font_path, 20)
+            font_venda_despesa = ImageFont.truetype(font_path, 25)
             font_lucro = ImageFont.truetype(font_path, 40)
         except Exception as erro:
             font_title = ImageFont.load_default()
