@@ -10,7 +10,7 @@ if path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 
 DATABASE_URL = getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=False)
 
 Session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
@@ -18,7 +18,7 @@ metadata = MetaData()
 
 
 @contextmanager
-def GET_DEFAULT_SESSION():
+def GET_DEFAULT_SESSION_CONTEXT():
     session = Session()
     try:
         yield session
@@ -26,3 +26,7 @@ def GET_DEFAULT_SESSION():
         raise e
     finally:
         session.close()
+
+
+def get_session():
+    return Session()

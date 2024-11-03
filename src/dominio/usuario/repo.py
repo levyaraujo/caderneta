@@ -13,8 +13,4 @@ class RepoUsuarioLeitura(RepoLeitura):
         return self.session.query(Usuario).filter(Usuario.id == id).first()
 
     def buscar_por_email_e_senha(self, email: str, senha: str):
-        return (
-            self.session.query(Usuario)
-            .filter(Usuario.email == email, Usuario.senha == senha)
-            .first()
-        )
+        return self.session.query(Usuario).filter(Usuario.email == email, Usuario.senha == senha).first()

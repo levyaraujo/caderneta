@@ -7,6 +7,7 @@ from pydantic import SecretStr
 from src.dominio.usuario.entidade import Usuario, UsuarioModel
 from src.dominio.usuario.exceptions import ErroAoCriarUsuario, UsuarioJaExiste
 from src.dominio.usuario.repo import RepoUsuarioLeitura
+from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 
 logger = logging.getLogger("usuario_services")
@@ -35,7 +36,8 @@ class PasswordHasher:
         return pwd_context.verify(plain_password, hashed_password)
 
 
-def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork):
+def criar_usuario(usuario: UsuarioModel):
+    uow = UnitOfWork(session_factory=get_session())
     senha_encriptada = PasswordHasher.hash_password(usuario.senha)
     entidade = Usuario(
         nome=usuario.nome,
@@ -44,7 +46,7 @@ def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork):
         email=usuario.email,
         senha=senha_encriptada,
     )
-    repo_usuario = RepoUsuarioLeitura(uow.session)
+    repo_usuario = RepoUsuarioLeitura(session=get_session())
     usuario_existe = repo_usuario.buscar_por_email(usuario.email)
 
     if usuario_existe:

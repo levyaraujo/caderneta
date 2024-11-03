@@ -24,7 +24,7 @@ usuarios = Table(
     Column("sobrenome", String),
     Column("telefone", String),
     Column("email", String),
-    Column("senha", String),
+    Column("senha", String, default=None),
 )
 
 transacoes = Table(
@@ -38,24 +38,17 @@ transacoes = Table(
     Column("descricao", String),
     Column("caixa", DateTime),
     Column("competencia", DateTime),
-    Column("apagado", Boolean, default=False),
 )
 
 
 def iniciar_mapeamento_orm():
     if not mapper.mappers:
-        mapper.map_imperatively(
-            Usuario,
-            usuarios,
-            properties={
-                "transacoes": relationship(Transacao, back_populates="usuario")
-            },
-        )
+        mapper.map_imperatively(Usuario, usuarios)
         mapper.map_imperatively(
             Transacao,
             transacoes,
             properties={
-                "usuario": relationship(Usuario, back_populates="transacoes"),
+                "usuario": relationship(Usuario),
                 "usuario_id": transacoes.c.usuario_id,
             },
         )
