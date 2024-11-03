@@ -1,3 +1,6 @@
+import logging
+import traceback
+
 from src.dominio.bot.comandos import bot
 from src.dominio.bot.entidade import BotBase
 from src.dominio.bot.exceptions import ComandoDesconhecido
@@ -6,6 +9,8 @@ from src.dominio.processamento.exceptions import NaoEhTransacao
 from src.dominio.transacao.services import comando_criar_transacao
 from src.dominio.usuario.entidade import Usuario
 from src.infra.database.uow import UnitOfWork
+
+logger = logging.getLogger("bot_services")
 
 
 async def responder_usuario(
@@ -33,3 +38,9 @@ async def responder_usuario(
         except NaoEhTransacao:
             robo.responder("Não entendi sua mensagem 🫤", telefone)
             robo.responder(bot.ajuda(), telefone)
+
+    except Exception:
+        logger.error(traceback.format_exc())
+        robo.responder(
+            "Ocorreu um erro desconhecido. Por favor, tente novamente.", telefone
+        )

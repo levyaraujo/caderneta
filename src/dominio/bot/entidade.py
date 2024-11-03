@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 from abc import ABC, abstractmethod
 
 from dotenv import load_dotenv
@@ -11,10 +12,7 @@ import inspect
 from src.dominio.bot.exceptions import ComandoDesconhecido
 from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.dominio.usuario.entidade import Usuario
-from src.infra.database.connection import (
-    GET_DEFAULT_SESSION_CONTEXT,
-    GET_DEFAULT_SESSION,
-)
+from src.infra.database.connection import get_session
 
 load_dotenv()
 
@@ -72,9 +70,8 @@ class GerenciadorComandos:
     def __init__(self):
         self.commands: Dict[str, Comando] = {}
         self.prefix = "!"
-        self.__session = GET_DEFAULT_SESSION
         self.repo_transacao_leitura: RepoTransacaoLeitura = RepoTransacaoLeitura(
-            session=self.__session()
+            session=get_session()
         )
 
     def comando(
@@ -101,7 +98,6 @@ class GerenciadorComandos:
 
     async def processar_mensagem(self, message: str, **kwargs) -> str:
         message = f"{self.prefix}{message}"
-        usuario: Usuario = kwargs.get("usuario")
 
         message = message[len(self.prefix) :].strip()
         parts = message.split()
@@ -123,7 +119,10 @@ class GerenciadorComandos:
                 return await command.handler(*args, **kwargs)
             return command.handler(*args, **kwargs)
         except Exception as e:
-            logger.error(f"Erro ao executar comando {command_name}: {str(e)}")
+            logger.error(
+                f"Erro ao executar comando {command_name}: {str(e)}", exc_info=e
+            )
+            logging.error(traceback.format_exc())
             return f"Erro ao executar comando {command_name}. Tente novamente."
 
     def _extract_command_name_and_args(
