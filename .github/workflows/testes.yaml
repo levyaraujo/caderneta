@@ -56,7 +56,7 @@ jobs:
           VECTORIZER_PATH: tests/parser/vectorizer.joblib
           FRONT: https://caderneta.tunn.dev
           STATIC_URL: https://caderneta-back.tunn.dev/static
-          BUCKET: /home/lev0x/.caderneta-static
+          BUCKET: /tmp/.caderneta-static
         run: |
           poetry run pytest --ignore-glob='tests/test_graficos*' -vv
       - name: Check ruff
