@@ -15,7 +15,6 @@ TRANSACAO_DEBITO = [
     "gastos",
     "pague",
     "pagou",
-    "recebi",
     "pago",
     "pguei",
     "mercado",
@@ -49,7 +48,3 @@ TRANSACAO_CREDITO = [
     "entrou",
     "reci",
 ]
-
-
-def comando(command: str = None):
-    return f"Hello, {command if command else 'world'}"
