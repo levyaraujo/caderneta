@@ -45,9 +45,7 @@ class Intervalo:
         """
         if self.fim < outro_intervalo.inicio or outro_intervalo.fim < self.inicio:
             return None
-        return Intervalo(
-            max(self.inicio, outro_intervalo.inicio), min(self.fim, outro_intervalo.fim)
-        )
+        return Intervalo(max(self.inicio, outro_intervalo.inicio), min(self.fim, outro_intervalo.fim))
 
     def uniao(self, outro_intervalo) -> Optional["Intervalo"]:
         """Calcula a união entre dois intervalos.
@@ -60,6 +58,4 @@ class Intervalo:
         """
         if self.interseccao(outro_intervalo) is None:
             return None
-        return Intervalo(
-            min(self.inicio, outro_intervalo.inicio), max(self.fim, outro_intervalo.fim)
-        )
+        return Intervalo(min(self.inicio, outro_intervalo.inicio), max(self.fim, outro_intervalo.fim))

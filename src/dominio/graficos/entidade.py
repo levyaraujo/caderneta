@@ -248,10 +248,7 @@ class GraficoBarraEmpilhada(GraficoBase):
             periodo = [datetime.strptime(self.periodos[0], "%Y-%m").strftime("%m/%Y")]
             largura = 0.5
         else:
-            periodo = [
-                datetime.strptime(periodo, "%Y-%m").strftime("%m/%Y")
-                for periodo in self.periodos
-            ]
+            periodo = [datetime.strptime(periodo, "%Y-%m").strftime("%m/%Y") for periodo in self.periodos]
             largura = None
 
         trace_receitas = go.Bar(
@@ -297,9 +294,7 @@ class GraficoLucro(GraficoBase):
         self.transacoes = transacoes
 
     def criar(self) -> GraficoRetorno:
-        vendas = sum(
-            t.valor for t in self.transacoes if t.tipo == TipoTransacao.CREDITO
-        )
+        vendas = sum(t.valor for t in self.transacoes if t.tipo == TipoTransacao.CREDITO)
         custos = sum(t.valor for t in self.transacoes if t.tipo == TipoTransacao.DEBITO)
         resultado = vendas - custos
 

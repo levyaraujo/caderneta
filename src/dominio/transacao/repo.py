@@ -13,9 +13,7 @@ class RepoTransacaoEscrita(RepoEscrita):
 
 
 class RepoTransacaoLeitura(RepoBase[Transacao]):
-    def buscar_por_intervalo_e_usuario(
-        self, intervalo: Intervalo, usuario_id: int
-    ) -> List[Transacao]:
+    def buscar_por_intervalo_e_usuario(self, intervalo: Intervalo, usuario_id: int) -> List[Transacao]:
         return (
             self.session.query(Transacao)
             .filter(
