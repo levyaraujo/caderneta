@@ -3,19 +3,16 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Dict
+from typing import Dict
 from typing import Optional
 from typing import Tuple
 
 import joblib
 import nltk
 import pandas as pd
-import torch
-from huggingface_hub import login
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-from pycparser.ply.yacc import token
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -23,11 +20,9 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
 
 from const import TRANSACAO_DEBITO, TRANSACAO_CREDITO
 from src.dominio.processamento.exceptions import NaoEhTransacao
-from src.dominio.transacao.entidade import Transacao
 from src.dominio.transacao.tipos import TipoTransacao
 
 logging.basicConfig(level=logging.INFO)
