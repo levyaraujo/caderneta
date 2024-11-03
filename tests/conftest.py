@@ -67,3 +67,11 @@ def repo_escrita(session):
 @pytest.fixture
 def repo_leitura(session):
     return RepoLeitura(session)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def clean_tables(session):
+    """Roll back database session after each test."""
+    for table in reversed(metadata.sorted_tables):
+        session.execute(table.delete())
+    session.commit()
