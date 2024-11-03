@@ -79,13 +79,10 @@ def test_buscar_transacao_por_intervalo_e_usuario(session, mock_usuario, transac
             uow.commit()
 
     intervalo = Intervalo(inicio=datetime(2024, 9, 1), fim=datetime(2024, 10, 30))
-    transacoes = repo_transacao_leitura.buscar_por_intervalo_e_usuario(
-        intervalo, usuario.id
-    )
+    transacoes = repo_transacao_leitura.buscar_por_intervalo_e_usuario(intervalo, usuario.id)
 
     assert all(
-        isinstance(transacao.usuario, Usuario) and transacao.usuario.id == usuario.id
-        for transacao in transacoes
+        isinstance(transacao.usuario, Usuario) and transacao.usuario.id == usuario.id for transacao in transacoes
     )
 
     assert all(transacao.usuario == usuario for transacao in transacoes)

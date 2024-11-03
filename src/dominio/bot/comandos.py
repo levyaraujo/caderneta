@@ -13,7 +13,6 @@ from src.dominio.graficos.services import (
 from src.dominio.transacao.entidade import Real
 from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
-from src.utils import uploader
 from src.utils.datas import intervalo_mes_atual, ultima_hora, primeira_hora
 from src.utils.uploader import Uploader
 
@@ -39,9 +38,7 @@ def ajuda(*args, **kwargs):
 def listar_fluxo(*args, **kwargs):
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
-    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(
-        usuario_id=usuario.id, intervalo=intervalo
-    )
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(usuario_id=usuario.id, intervalo=intervalo)
 
     if not transacoes:
         return "Você ainda não registrou nenhuma despesa ou receita este mês"
@@ -60,9 +57,7 @@ def grafico_fluxo(*args, **kwargs):
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
 
-    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(
-        usuario_id=usuario.id, intervalo=intervalo
-    )
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(usuario_id=usuario.id, intervalo=intervalo)
 
     if not transacoes:
         return "Você ainda não registrou nenhuma despesa ou receita este mês"
@@ -73,9 +68,7 @@ def grafico_fluxo(*args, **kwargs):
     return caminho_arquivo
 
 
-@bot.comando(
-    "grafico balanco", "Devolve gráfico de receitas e despesas", aliases=["balanco"]
-)
+@bot.comando("grafico balanco", "Devolve gráfico de receitas e despesas", aliases=["balanco"])
 def grafico_balanco(*args, **kwargs):
     now = datetime.now()
     uploader = Uploader()
@@ -90,9 +83,7 @@ def grafico_balanco(*args, **kwargs):
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual(inicio=inicio, fim=fim)
 
-    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(
-        usuario_id=usuario.id, intervalo=intervalo
-    )
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(usuario_id=usuario.id, intervalo=intervalo)
 
     if not transacoes:
         return "Você ainda não registrou nenhuma despesa ou receita este mês"
@@ -111,9 +102,7 @@ def lucro(*args, **kwargs):
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
     uploader = Uploader()
 
-    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(
-        usuario_id=usuario.id, intervalo=intervalo
-    )
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(usuario_id=usuario.id, intervalo=intervalo)
 
     if not transacoes:
         return "Você ainda não registrou nenhuma despesa ou receita este mês"

@@ -46,9 +46,7 @@ def chat():
             if user_input.lower() == "sair":
                 typer.echo("Goodbye!")
                 raise typer.Exit()
-            response = await responder_usuario(
-                user_input, usuario, usuario.telefone, usuario.nome, bot, uow=uow
-            )
+            response = await responder_usuario(user_input, usuario, usuario.telefone, usuario.nome, bot, uow=uow)
             typer.echo(f"{BOT_COLOR}{response}{RESET_COLOR}")
 
     asyncio.run(run_chat_session())

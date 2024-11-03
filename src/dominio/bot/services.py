@@ -22,9 +22,7 @@ async def responder_usuario(
     uow: UnitOfWork,
 ):
     try:
-        resposta = await bot.processar_mensagem(
-            mensagem, nome_usuario=nome_usuario, usuario=usuario, uow=uow
-        )
+        resposta = await bot.processar_mensagem(mensagem, nome_usuario=nome_usuario, usuario=usuario, uow=uow)
         return robo.responder(resposta, telefone)
 
     except ComandoDesconhecido:
@@ -41,6 +39,4 @@ async def responder_usuario(
 
     except Exception:
         logger.error(traceback.format_exc())
-        robo.responder(
-            "Ocorreu um erro desconhecido. Por favor, tente novamente.", telefone
-        )
+        robo.responder("Ocorreu um erro desconhecido. Por favor, tente novamente.", telefone)

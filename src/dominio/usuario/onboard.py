@@ -63,9 +63,7 @@ class OnboardingHandler:
         name = name.strip().capitalize()
         if self._validate_full_name(name):
             context.data.nome = name.split()[0]
-            context.data.sobrenome = " ".join(
-                part.capitalize() for part in name.split()[1:]
-            )
+            context.data.sobrenome = " ".join(part.capitalize() for part in name.split()[1:])
             context.state = OnboardingState.WAITING_EMAIL
             self._save_user_context(context.data.telefone, context)
             return "Ótimo! Agora, por favor me diga seu email:"
@@ -97,10 +95,7 @@ class OnboardingHandler:
         return ""
 
     def _generate_completion_message(self) -> str:
-        return (
-            "Cadastro concluído com sucesso! ✅\n\n"
-            "Agora você pode utilizar nossos serviços! 🎉"
-        )
+        return "Cadastro concluído com sucesso! ✅\n\n" "Agora você pode utilizar nossos serviços! 🎉"
 
     def get_user_data(self, phone_number: str) -> Optional[UserData]:
         context = self._get_user_context(phone_number)
@@ -115,9 +110,7 @@ class OnboardingHandler:
         if raw_context:
             context_dict = json.loads(raw_context)  # noqa
             user_data = UserData(**context_dict["data"])
-            return UserContext(
-                state=OnboardingState[context_dict["state"]], data=user_data
-            )
+            return UserContext(state=OnboardingState[context_dict["state"]], data=user_data)
         return None
 
     def _save_user_context(self, phone_number: str, context: UserContext):

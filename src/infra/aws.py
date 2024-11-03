@@ -84,9 +84,7 @@ class S3Uploader:
                 file_bytes = BytesIO(file_bytes)
 
             # Faz o upload
-            self.s3_client.upload_fileobj(
-                file_bytes, self.bucket_name, object_key, ExtraArgs=upload_args
-            )
+            self.s3_client.upload_fileobj(file_bytes, self.bucket_name, object_key, ExtraArgs=upload_args)
 
             return True
 

@@ -11,21 +11,16 @@ def criar_grafico_fluxo_de_caixa(transacoes: List[Transacao], formato="png"):
     transacoes.sort(key=lambda transacao: transacao.caixa)
     legendas = [transacao.caixa for transacao in transacoes]
     valores = [
-        transacao.valor if transacao.tipo == TipoTransacao.CREDITO else -transacao.valor
-        for transacao in transacoes
+        transacao.valor if transacao.tipo == TipoTransacao.CREDITO else -transacao.valor for transacao in transacoes
     ]
-    grafico = GraficoFactory.criar_grafico(
-        "linha", config, legendas=legendas, valores=valores
-    )
+    grafico = GraficoFactory.criar_grafico("linha", config, legendas=legendas, valores=valores)
     return grafico.criar()
 
 
 def criar_grafico_receitas_e_despesas(transacoes: List[Transacao]):
     config = GraficoConfig(titulo="Receitas e Despesas")
     transacoes.sort(key=lambda transacao: transacao.caixa)
-    receitas_despesas_por_mes: Dict[str, Dict[str, float]] = defaultdict(
-        lambda: {"receitas": 0.0, "despesas": 0.0}
-    )
+    receitas_despesas_por_mes: Dict[str, Dict[str, float]] = defaultdict(lambda: {"receitas": 0.0, "despesas": 0.0})
 
     for transacao in transacoes:
         mes = transacao.caixa.strftime("%Y-%m")

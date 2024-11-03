@@ -37,9 +37,7 @@ class TwilioBot(BotBase):
         media_url = mensagem if mensagem.startswith("http") else None
         mensagem = "" if media_url else mensagem
 
-        logger.info(
-            f"Enviando mensagem de whatsapp:+{self.__bot_number} para {telefone}: {mensagem}"
-        )
+        logger.info(f"Enviando mensagem de whatsapp:+{self.__bot_number} para {telefone}: {mensagem}")
         resposta = self.__cliente.messages.create(
             from_=f"whatsapp:+{self.__bot_number}",
             to=telefone,
@@ -70,9 +68,7 @@ class GerenciadorComandos:
     def __init__(self):
         self.commands: Dict[str, Comando] = {}
         self.prefix = "!"
-        self.repo_transacao_leitura: RepoTransacaoLeitura = RepoTransacaoLeitura(
-            session=get_session()
-        )
+        self.repo_transacao_leitura: RepoTransacaoLeitura = RepoTransacaoLeitura(session=get_session())
 
     def comando(
         self,
@@ -119,15 +115,11 @@ class GerenciadorComandos:
                 return await command.handler(*args, **kwargs)
             return command.handler(*args, **kwargs)
         except Exception as e:
-            logger.error(
-                f"Erro ao executar comando {command_name}: {str(e)}", exc_info=e
-            )
+            logger.error(f"Erro ao executar comando {command_name}: {str(e)}", exc_info=e)
             logging.error(traceback.format_exc())
             return f"Erro ao executar comando {command_name}. Tente novamente."
 
-    def _extract_command_name_and_args(
-        self, parts: List[str]
-    ) -> Tuple[Optional[str], List[str]]:
+    def _extract_command_name_and_args(self, parts: List[str]) -> Tuple[Optional[str], List[str]]:
         """Extrai nome do comando (incluindo comandos com múltiplas palavras) e seus argumentos"""
         for i in range(len(parts), 0, -1):
             command_name = " ".join(parts[:i]).lower()
@@ -140,8 +132,6 @@ class GerenciadorComandos:
         help_text = "Estes são os comandos disponíveis:\n\n"
         unique_commands = {cmd.name: cmd for cmd in self.commands.values()}
         for cmd in unique_commands.values():
-            aliases = (
-                f" (Também entendo: *{', '.join(cmd.aliases)}*)" if cmd.aliases else ""
-            )
+            aliases = f" (Também entendo: *{', '.join(cmd.aliases)}*)" if cmd.aliases else ""
             help_text += f"*{cmd.name}*: {cmd.description}{aliases}\n"
         return help_text

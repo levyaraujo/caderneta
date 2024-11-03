@@ -38,10 +38,7 @@ def test_transacao_campos_opcionais(mock_usuario, transacao_gen):
 def test_transacao_com_tipo_errado(mock_usuario, transacao_gen):
     with pytest.raises(TipoTransacaoInvalido) as excinfo:
         transacao_gen(mock_usuario, 100.0, None, "outros")
-    assert (
-        str(excinfo.value)
-        == "O tipo desse transacao deve ser TipoTransacao.DEBITO ou TipoTransacao.CREDITO"
-    )
+    assert str(excinfo.value) == "O tipo desse transacao deve ser TipoTransacao.DEBITO ou TipoTransacao.CREDITO"
 
 
 @freeze_time(datetime(2024, 9, 1))

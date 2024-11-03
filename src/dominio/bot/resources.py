@@ -21,8 +21,6 @@ async def twilio_webhook(request: Request):
     nome_usuario = dados["ProfileName"]
     mensagem = limpar_texto(dados["Body"])
     bot = TwilioBot()
-    resposta = await responder_usuario(
-        mensagem, usuario, telefone, nome_usuario, robo=bot, uow=uow
-    )
+    resposta = await responder_usuario(mensagem, usuario, telefone, nome_usuario, robo=bot, uow=uow)
     twiml.message(resposta)
     return str(twiml)

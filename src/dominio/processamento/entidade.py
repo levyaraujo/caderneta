@@ -49,9 +49,7 @@ class ClassificadorTexto:
             if self.classifier_joblib
             else LogisticRegression(random_state=42)
         )
-        self.pipeline = Pipeline(
-            [("vectorizer", self.vectorizer), ("classifier", self.classifier)]
-        )
+        self.pipeline = Pipeline([("vectorizer", self.vectorizer), ("classifier", self.classifier)])
         self.stop_words = set(stopwords.words("portuguese"))
         self.lemmatizer = WordNetLemmatizer()
         self.df = self._carregar_dataframe()
@@ -81,11 +79,7 @@ class ClassificadorTexto:
 
     def pre_processar_texto(self, text: str) -> str:
         tokens = word_tokenize(text.lower())
-        tokens = [
-            self.lemmatizer.lemmatize(token)
-            for token in tokens
-            if token not in self.stop_words
-        ]
+        tokens = [self.lemmatizer.lemmatize(token) for token in tokens if token not in self.stop_words]
         return " ".join(tokens)
 
     @staticmethod
@@ -113,9 +107,7 @@ class ClassificadorTexto:
         y_pred = self.pipeline.predict(X_test)
         return "\n" + classification_report(y_test, y_pred)
 
-    def classificar_mensagem(
-        self, mensagem: str, atualizar_df: bool = True
-    ) -> Tuple[str, Dict[str, float]]:
+    def classificar_mensagem(self, mensagem: str, atualizar_df: bool = True) -> Tuple[str, Dict[str, float]]:
         try:
             mensagem_processada = self.pre_processar_texto(mensagem)
 
@@ -124,9 +116,7 @@ class ClassificadorTexto:
             probs_dict = dict(zip(self.pipeline.classes_, probabilidades))
 
             if probs_dict[previsao] < 0.7:
-                comando = (
-                    mensagem.split()[0] if len(mensagem.split(" ")) > 1 else mensagem
-                )
+                comando = mensagem.split()[0] if len(mensagem.split(" ")) > 1 else mensagem
                 if comando in TRANSACAO_DEBITO:
                     previsao = "debito"
                 elif comando in TRANSACAO_CREDITO:
@@ -147,9 +137,7 @@ class ClassificadorTexto:
                 )
                 self.df = pd.concat([self.df, nova_linha], ignore_index=True)
                 self.df.to_csv(self.csv_path, index=True)
-                logger.info(
-                    f"Dataframe atualizado com a nova classificação: {previsao}"
-                )
+                logger.info(f"Dataframe atualizado com a nova classificação: {previsao}")
 
             return previsao, probs_dict
 
@@ -162,9 +150,7 @@ class ClassificadorTexto:
     def classificar_todas_as_mensagens(self):
         results = []
         for message in self.df["mensagem"]:
-            prediction, probabilities = self.classificar_mensagem(
-                message, atualizar_df=True
-            )
+            prediction, probabilities = self.classificar_mensagem(message, atualizar_df=True)
             results.append(
                 {
                     "mensagem": message,
@@ -178,9 +164,7 @@ class ClassificadorTexto:
         joblib.dump(self.vectorizer, self.vectorizer_joblib)
         joblib.dump(self.classifier, self.classifier_joblib)
         self.df.to_csv(self.csv_path, index=False)
-        logger.info(
-            f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}"
-        )
+        logger.info(f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}")
 
 
 @dataclass
@@ -287,11 +271,7 @@ class ConstrutorTransacao(ClassificadorTexto):
             and word not in self.METODOS_PAGAMENTO
             and word not in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]
         ]
-        category = (
-            " ".join(palavras_restantes).strip().replace(",", "|")
-            if len(palavras_restantes) > 0
-            else "outros"
-        )
+        category = " ".join(palavras_restantes).strip().replace(",", "|") if len(palavras_restantes) > 0 else "outros"
         return category.strip() if category else None
 
     def format_transaction(self, transacao: DadosTransacao) -> str:

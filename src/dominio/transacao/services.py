@@ -13,35 +13,23 @@ logger = logging.getLogger("transacao.servicos")
 
 
 def _calcular_caixa(transacoes: List[Transacao], intervalo: Intervalo) -> float:
-    transacoes_no_periodo = [
-        transacao for transacao in transacoes if intervalo.contem(transacao.caixa)
-    ]
+    transacoes_no_periodo = [transacao for transacao in transacoes if intervalo.contem(transacao.caixa)]
 
     soma = 0.0
 
     for transacao in transacoes_no_periodo:
-        soma += (
-            transacao.valor
-            if transacao.tipo == TipoTransacao.CREDITO
-            else -transacao.valor
-        )
+        soma += transacao.valor if transacao.tipo == TipoTransacao.CREDITO else -transacao.valor
 
     return soma
 
 
 def _calcular_competencia(transacoes: List[Transacao], intervalo: Intervalo) -> float:
-    transacoes_no_periodo = [
-        transacao for transacao in transacoes if intervalo.contem(transacao.caixa)
-    ]
+    transacoes_no_periodo = [transacao for transacao in transacoes if intervalo.contem(transacao.caixa)]
 
     soma = 0.0
 
     for transacao in transacoes_no_periodo:
-        soma += (
-            transacao.valor
-            if transacao.tipo == TipoTransacao.CREDITO
-            else -transacao.valor
-        )
+        soma += transacao.valor if transacao.tipo == TipoTransacao.CREDITO else -transacao.valor
 
     return soma
 
@@ -52,17 +40,11 @@ def salvar_transacao(transacao: Transacao, uow: UnitOfWork):
             uow.repo_escrita.adicionar(transacao)
             uow.commit()
     except Exception as e:
-        logger.error(
-            f"Erro ao criar transação para o usuario {transacao.usuario.email}: {e}"
-        )
-        raise ErroAoCriarTransacao(
-            f"Erro ao criar transação. Usuario: {transacao.usuario.email}"
-        )
+        logger.error(f"Erro ao criar transação para o usuario {transacao.usuario.email}: {e}")
+        raise ErroAoCriarTransacao(f"Erro ao criar transação. Usuario: {transacao.usuario.email}")
 
 
-def comando_criar_transacao(
-    usuario: Usuario, tipo: str, mensagem: str, uow: UnitOfWork
-) -> str:
+def comando_criar_transacao(usuario: Usuario, tipo: str, mensagem: str, uow: UnitOfWork) -> str:
     parser = ConstrutorTransacao(acao=TipoTransacao[tipo])
     acao = "pagamento" if tipo == "DEBITO" else "recebimento"
     transacao_comando = parser.parse_message(mensagem)

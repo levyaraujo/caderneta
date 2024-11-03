@@ -27,8 +27,4 @@ class Real:
     moeda: str = "R$"
 
     def __str__(self):
-        return (
-            f"{self.moeda} {self.valor:,.2f}".replace(",", "X")
-            .replace(".", ",")
-            .replace("X", ".")
-        )
+        return f"{self.moeda} {self.valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
