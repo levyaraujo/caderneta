@@ -1,13 +1,21 @@
 import logging
 import os
-from typing import Tuple, Dict
+import re
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Dict
+from typing import Optional
+from typing import Tuple
 
 import joblib
 import nltk
 import pandas as pd
+import torch
+from huggingface_hub import login
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+from pycparser.ply.yacc import token
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -15,15 +23,11 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
-
-from dataclasses import dataclass
-from datetime import datetime, date
-import re
-from typing import Optional
-
+from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
 
 from const import TRANSACAO_DEBITO, TRANSACAO_CREDITO
 from src.dominio.processamento.exceptions import NaoEhTransacao
+from src.dominio.transacao.entidade import Transacao
 from src.dominio.transacao.tipos import TipoTransacao
 
 logging.basicConfig(level=logging.INFO)
@@ -131,7 +135,7 @@ class ClassificadorTexto:
                 if comando in TRANSACAO_DEBITO:
                     previsao = "debito"
                 elif comando in TRANSACAO_CREDITO:
-                    previsao = "debito"
+                    previsao = "credito"
                 else:
                     raise NaoEhTransacao("O comando informado não é de transação")
                 probs_dict = {previsao: 1.0}
@@ -186,11 +190,11 @@ class ClassificadorTexto:
 
 @dataclass
 class DadosTransacao:
-    acao: TipoTransacao
+    tipo: TipoTransacao
     valor: float
     metodo_pagamento: Optional[str]
     categoria: Optional[str]
-    data: date
+    data: datetime
     mensagem_original: str
 
     @property
@@ -224,7 +228,7 @@ class ConstrutorTransacao(ClassificadorTexto):
         category = self._extract_category()
 
         return DadosTransacao(
-            acao=self.acao,
+            tipo=self.acao,
             valor=value,
             metodo_pagamento=payment_method,
             categoria=category,
@@ -232,7 +236,7 @@ class ConstrutorTransacao(ClassificadorTexto):
             mensagem_original=message,
         )
 
-    def _extract_date(self) -> date:
+    def _extract_date(self) -> datetime:
         date_pattern = r"\b\d{1,2}/\d{1,2}\b"
         date_match = re.search(date_pattern, self.working_message)
         if not date_match:
@@ -242,17 +246,36 @@ class ConstrutorTransacao(ClassificadorTexto):
 
         day, month = map(int, date_str.split("/"))
         self.working_message = self.working_message.replace(date_str, "")
-        return datetime.now().replace(day=day, month=month).date()
+        return datetime.now().replace(day=day, month=month)
 
     def _extract_value(self) -> float:
-        value_pattern = r"\b\d+(?:\.\d{3})*(?:,\d{2})?\b|\b\d+\b"
+        """
+        Extrai valores monetários do texto, lida com os formatos:
+        - 150
+        - 520,75
+        - 10,500
+        - 10.500
+        - 1,000,000
+        - 1.000.000
+
+        Returns:
+            float: Valor monetário extraído
+        """
+        value_pattern = r"\b\d+(?:[.,]\d{3})*(?:,\d{2})?\b"
+
         value_match = re.search(value_pattern, self.working_message)
         if not value_match:
             raise ValueError("No value found in message")
 
         value_str = value_match.group()
         self.working_message = self.working_message.replace(value_str, "")
-        return float(value_str.replace(".", "").replace(",", "."))
+
+        if re.search(r",\d{2}$", value_str):
+            value_str = value_str.replace(".", "").replace(",", ".")
+        else:
+            value_str = value_str.replace(".", "").replace(",", "")
+
+        return float(value_str)
 
     def _extract_payment_method(self) -> Optional[str]:
         for method in self.METODOS_PAGAMENTO:
@@ -280,7 +303,7 @@ class ConstrutorTransacao(ClassificadorTexto):
         """Format a transaction for display."""
         date_str = transacao.data.strftime("%d/%m/%Y")
         parts = [
-            f"Action: {transacao.acao}",
+            f"Action: {transacao.tipo}",
             f"Value: R$ {transacao.valor:.2f}",
             f"Date: {date_str}",
         ]
