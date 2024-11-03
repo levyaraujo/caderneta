@@ -48,6 +48,12 @@ jobs:
       - name: Run tests
         env:
           DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
+          CADERNETA_URL: http://localhost:8000
+          ENV: testing
+          PYTHONPATH: ${PWD}
+          CSV_TREINAMENTO: tests/parser/test.csv
+          CLASSIFIER_PATH: tests/parser/classifier.joblib
+          VECTORIZER_PATH: tests/parser/vectorizer.joblib
         run: |
           poetry run pytest --ignore-glob='tests/test_graficos*' -vv
       - name: Check ruff
