@@ -54,6 +54,9 @@ jobs:
           CSV_TREINAMENTO: tests/parser/test.csv
           CLASSIFIER_PATH: tests/parser/classifier.joblib
           VECTORIZER_PATH: tests/parser/vectorizer.joblib
+          FRONT: https://caderneta.tunn.dev
+          STATIC_URL: https://caderneta-back.tunn.dev/static
+          BUCKET: /home/lev0x/.caderneta-static
         run: |
           poetry run pytest --ignore-glob='tests/test_graficos*' -vv
       - name: Check ruff
