@@ -16,7 +16,6 @@ class Transacao:
     descricao: str | None = field(default=None)
     caixa: datetime | date = field(default_factory=datetime.now)
     competencia: datetime = field(default_factory=datetime.now)
-    apagado: bool = False
 
     def __post_init__(self):
         validar_tipo_da_transacao(self.tipo)
