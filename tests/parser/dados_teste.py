@@ -50,4 +50,15 @@ DADOS_TESTE_PARSER = [
             mensagem_original="vendi 520,75 de marmitas credito 13/10",
         ),
     ),
+    (
+        "vendi 10,500 de marmitas 13/10",
+        DadosTransacao(
+            tipo=TipoTransacao.CREDITO,
+            valor=10500,
+            metodo_pagamento=None,
+            categoria="marmitas",
+            data=now.replace(year=now.year, month=10, day=13),
+            mensagem_original="vendi 10,500 de marmitas 13/10",
+        ),
+    ),
 ]

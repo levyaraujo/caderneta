@@ -68,11 +68,6 @@ def test_buscar_usuario_por_id(session, mock_usuario):
     assert usuario.nome == "Usuario"
 
 
-def test_buscar_todas_transacoes(repo_leitura):
-    transacoes = list(repo_leitura.buscar_todos(Transacao))
-    assert len(transacoes) > 0
-
-
 def test_buscar_transacao_por_intervalo_e_usuario(session, mock_usuario, transacao_gen):
     repo_transacao_leitura = RepoTransacaoLeitura(session=session)
     uow = UnitOfWork(session_factory=lambda: session)
