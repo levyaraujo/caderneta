@@ -53,9 +53,11 @@ def salvar_transacao(transacao: Transacao, uow: UnitOfWork):
             uow.commit()
     except Exception as e:
         logger.error(
-            f"Erro ao criar transação para o usuario {transacao.usuario.id}: {e}"
+            f"Erro ao criar transação para o usuario {transacao.usuario.email}: {e}"
         )
-        raise ErroAoCriarTransacao(f"Erro ao criar transação.")
+        raise ErroAoCriarTransacao(
+            f"Erro ao criar transação. Usuario: {transacao.usuario.email}"
+        )
 
 
 def comando_criar_transacao(
