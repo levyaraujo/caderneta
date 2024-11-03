@@ -4,7 +4,7 @@ from src.dominio.bot.entidade import TwilioBot
 from src.dominio.bot.services import responder_usuario
 from fastapi import APIRouter, status, Request
 
-from src.infra.database.connection import GET_DEFAULT_SESSION
+from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.utils.validadores import limpar_texto
 
@@ -13,7 +13,7 @@ BotRouter = APIRouter(prefix="/bot", tags=["twilio", "whatsapp"])
 
 @BotRouter.post("/twilio", status_code=status.HTTP_200_OK)
 async def twilio_webhook(request: Request):
-    uow = UnitOfWork(session_factory=lambda: GET_DEFAULT_SESSION())
+    uow = UnitOfWork(session_factory=get_session)
     dados = request.state.form_data
     usuario = request.state.user
     twiml = MessagingResponse()
