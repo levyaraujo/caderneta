@@ -8,10 +8,12 @@ from src.dominio.bot.entidade import GerenciadorComandos
 from src.dominio.graficos.services import (
     criar_grafico_fluxo_de_caixa,
     criar_grafico_receitas_e_despesas,
+    criar_grafico_lucro,
 )
 from src.dominio.transacao.entidade import Real
 from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
+from src.utils import uploader
 from src.utils.datas import intervalo_mes_atual, ultima_hora, primeira_hora
 from src.utils.uploader import Uploader
 
@@ -100,4 +102,23 @@ def grafico_balanco(*args, **kwargs):
 
     caminho_arquivo = uploader.upload_file(nome_arquivo, grafico["dados"])
 
+    return caminho_arquivo
+
+
+@bot.comando("lucro", "Devolve lucro mensal")
+def lucro(*args, **kwargs):
+    usuario: Usuario = kwargs.get("usuario")
+    intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
+    uploader = Uploader()
+
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(
+        usuario_id=usuario.id, intervalo=intervalo
+    )
+
+    if not transacoes:
+        return "Você ainda não registrou nenhuma despesa ou receita este mês"
+
+    grafico = criar_grafico_lucro(transacoes=transacoes)
+    nome_arquivo = f"{grafico['nome_arquivo']}.png"
+    caminho_arquivo = uploader.upload_file(nome_arquivo, grafico["dados"])
     return caminho_arquivo
