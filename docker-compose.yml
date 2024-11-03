@@ -13,6 +13,13 @@ services:
       timeout: 5s
       retries: 5
 
+  cache:
+    image: redis:7.4-alpine3.20
+    ports:
+      - '6379:6379'
+    volumes:
+      - caderneta-cache:/data
 
 volumes:
     caderneta-data:
+    caderneta-cache:
