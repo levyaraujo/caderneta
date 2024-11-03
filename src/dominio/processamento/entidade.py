@@ -1,6 +1,11 @@
 import logging
 import os
-from typing import Tuple, Dict
+import re
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Dict
+from typing import Optional
+from typing import Tuple
 
 import joblib
 import nltk
@@ -16,13 +21,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 
-from dataclasses import dataclass
-from datetime import datetime, date
-import re
-from typing import Optional
-
-
 from const import TRANSACAO_DEBITO, TRANSACAO_CREDITO
+from src.dominio.processamento.exceptions import NaoEhTransacao
 from src.dominio.transacao.tipos import TipoTransacao
 
 logging.basicConfig(level=logging.INFO)
@@ -49,9 +49,7 @@ class ClassificadorTexto:
             if self.classifier_joblib
             else LogisticRegression(random_state=42)
         )
-        self.pipeline = Pipeline(
-            [("vectorizer", self.vectorizer), ("classifier", self.classifier)]
-        )
+        self.pipeline = Pipeline([("vectorizer", self.vectorizer), ("classifier", self.classifier)])
         self.stop_words = set(stopwords.words("portuguese"))
         self.lemmatizer = WordNetLemmatizer()
         self.df = self._carregar_dataframe()
@@ -81,11 +79,7 @@ class ClassificadorTexto:
 
     def pre_processar_texto(self, text: str) -> str:
         tokens = word_tokenize(text.lower())
-        tokens = [
-            self.lemmatizer.lemmatize(token)
-            for token in tokens
-            if token not in self.stop_words
-        ]
+        tokens = [self.lemmatizer.lemmatize(token) for token in tokens if token not in self.stop_words]
         return " ".join(tokens)
 
     @staticmethod
@@ -113,9 +107,7 @@ class ClassificadorTexto:
         y_pred = self.pipeline.predict(X_test)
         return "\n" + classification_report(y_test, y_pred)
 
-    def classificar_mensagem(
-        self, mensagem: str, atualizar_df: bool = True
-    ) -> Tuple[str, Dict[str, float]]:
+    def classificar_mensagem(self, mensagem: str, atualizar_df: bool = True) -> Tuple[str, Dict[str, float]]:
         try:
             mensagem_processada = self.pre_processar_texto(mensagem)
 
@@ -124,15 +116,13 @@ class ClassificadorTexto:
             probs_dict = dict(zip(self.pipeline.classes_, probabilidades))
 
             if probs_dict[previsao] < 0.7:
-                comando = (
-                    mensagem.split()[0] if len(mensagem.split(" ")) > 1 else mensagem
-                )
+                comando = mensagem.split()[0] if len(mensagem.split(" ")) > 1 else mensagem
                 if comando in TRANSACAO_DEBITO:
                     previsao = "debito"
                 elif comando in TRANSACAO_CREDITO:
-                    previsao = "debito"
+                    previsao = "credito"
                 else:
-                    previsao = comando
+                    raise NaoEhTransacao("O comando informado não é de transação")
                 probs_dict = {previsao: 1.0}
 
             if atualizar_df and previsao != "outros":
@@ -147,9 +137,7 @@ class ClassificadorTexto:
                 )
                 self.df = pd.concat([self.df, nova_linha], ignore_index=True)
                 self.df.to_csv(self.csv_path, index=True)
-                logger.info(
-                    f"Dataframe atualizado com a nova classificação: {previsao}"
-                )
+                logger.info(f"Dataframe atualizado com a nova classificação: {previsao}")
 
             return previsao, probs_dict
 
@@ -162,9 +150,7 @@ class ClassificadorTexto:
     def classificar_todas_as_mensagens(self):
         results = []
         for message in self.df["mensagem"]:
-            prediction, probabilities = self.classificar_mensagem(
-                message, atualizar_df=True
-            )
+            prediction, probabilities = self.classificar_mensagem(message, atualizar_df=True)
             results.append(
                 {
                     "mensagem": message,
@@ -178,18 +164,16 @@ class ClassificadorTexto:
         joblib.dump(self.vectorizer, self.vectorizer_joblib)
         joblib.dump(self.classifier, self.classifier_joblib)
         self.df.to_csv(self.csv_path, index=False)
-        logger.info(
-            f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}"
-        )
+        logger.info(f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}")
 
 
 @dataclass
 class DadosTransacao:
-    acao: TipoTransacao
+    tipo: TipoTransacao
     valor: float
     metodo_pagamento: Optional[str]
     categoria: Optional[str]
-    data: date
+    data: datetime
     mensagem_original: str
 
     @property
@@ -223,7 +207,7 @@ class ConstrutorTransacao(ClassificadorTexto):
         category = self._extract_category()
 
         return DadosTransacao(
-            acao=self.acao,
+            tipo=self.acao,
             valor=value,
             metodo_pagamento=payment_method,
             categoria=category,
@@ -231,7 +215,7 @@ class ConstrutorTransacao(ClassificadorTexto):
             mensagem_original=message,
         )
 
-    def _extract_date(self) -> date:
+    def _extract_date(self) -> datetime:
         date_pattern = r"\b\d{1,2}/\d{1,2}\b"
         date_match = re.search(date_pattern, self.working_message)
         if not date_match:
@@ -241,17 +225,36 @@ class ConstrutorTransacao(ClassificadorTexto):
 
         day, month = map(int, date_str.split("/"))
         self.working_message = self.working_message.replace(date_str, "")
-        return datetime.now().replace(day=day, month=month).date()
+        return datetime.now().replace(day=day, month=month)
 
     def _extract_value(self) -> float:
-        value_pattern = r"\b\d+(?:\.\d{3})*(?:,\d{2})?\b|\b\d+\b"
+        """
+        Extrai valores monetários do texto, lida com os formatos:
+        - 150
+        - 520,75
+        - 10,500
+        - 10.500
+        - 1,000,000
+        - 1.000.000
+
+        Returns:
+            float: Valor monetário extraído
+        """
+        value_pattern = r"\b\d+(?:[.,]\d{3})*(?:,\d{2})?\b"
+
         value_match = re.search(value_pattern, self.working_message)
         if not value_match:
             raise ValueError("No value found in message")
 
         value_str = value_match.group()
         self.working_message = self.working_message.replace(value_str, "")
-        return float(value_str.replace(".", "").replace(",", "."))
+
+        if re.search(r",\d{2}$", value_str):
+            value_str = value_str.replace(".", "").replace(",", ".")
+        else:
+            value_str = value_str.replace(".", "").replace(",", "")
+
+        return float(value_str)
 
     def _extract_payment_method(self) -> Optional[str]:
         for method in self.METODOS_PAGAMENTO:
@@ -268,18 +271,14 @@ class ConstrutorTransacao(ClassificadorTexto):
             and word not in self.METODOS_PAGAMENTO
             and word not in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]
         ]
-        category = (
-            " ".join(palavras_restantes).strip().replace(",", "|")
-            if len(palavras_restantes) > 0
-            else "outros"
-        )
+        category = " ".join(palavras_restantes).strip().replace(",", "|") if len(palavras_restantes) > 0 else "outros"
         return category.strip() if category else None
 
     def format_transaction(self, transacao: DadosTransacao) -> str:
         """Format a transaction for display."""
         date_str = transacao.data.strftime("%d/%m/%Y")
         parts = [
-            f"Action: {transacao.acao}",
+            f"Action: {transacao.tipo}",
             f"Value: R$ {transacao.valor:.2f}",
             f"Date: {date_str}",
         ]

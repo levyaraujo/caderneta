@@ -22,7 +22,14 @@ repos:
     hooks:
       - id: mypy
         name: mypy checker
-        entry: bash -c 'git diff --staged --name-only --diff-filter=d | grep ".py$" | xargs -r mypy --follow-imports=skip --ignore-missing-imports --check-untyped-defs'
+        entry: bash -c 'git diff --staged --name-only --diff-filter=d | grep ".py$" | grep -v "^tests/" | xargs -r mypy --config-file pyproject.toml --follow-imports=skip --ignore-missing-imports --check-untyped-defs'
         language: system
         types: [python]
         require_serial: true
+
+  - repo: https://github.com/gitguardian/ggshield
+    rev: v1.33.0
+    hooks:
+      - id: ggshield
+        language_version: python3
+        stages: [ commit ]

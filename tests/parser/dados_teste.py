@@ -3,51 +3,62 @@ from datetime import datetime
 from src.dominio.processamento.entidade import DadosTransacao
 from src.dominio.transacao.tipos import TipoTransacao
 
-ANO_ATUAL = datetime.now().year
+now = datetime.now()
 
 DADOS_TESTE_PARSER = [
     (
         "vendi 150 calça cargo credito",
         DadosTransacao(
-            acao=TipoTransacao.CREDITO,
+            tipo=TipoTransacao.CREDITO,
             valor=150,
             metodo_pagamento="credito",
             categoria="calça cargo",
-            data=datetime.now().date(),
+            data=datetime.now(),
             mensagem_original="vendi 150 calça cargo credito",
         ),
     ),
     (
         "paguei 250 receita federal pix 10/05",
         DadosTransacao(
-            acao=TipoTransacao.DEBITO,
+            tipo=TipoTransacao.DEBITO,
             valor=250,
             metodo_pagamento="pix",
             categoria="receita federal",
-            data=datetime(year=ANO_ATUAL, month=5, day=10).date(),
+            data=datetime.now().replace(year=now.year, month=5, day=10),
             mensagem_original="paguei 250 receita federal pix 10/05",
         ),
     ),
     (
         "insumos paguei 300 ifood, mercadoria credito",
         DadosTransacao(
-            acao=TipoTransacao.DEBITO,
+            tipo=TipoTransacao.DEBITO,
             valor=300,
             metodo_pagamento="credito",
             categoria="insumos ifood | mercadoria",
-            data=datetime.now().date(),
+            data=datetime.now(),
             mensagem_original="insumos paguei 300 ifood, mercadoria credito",
         ),
     ),
     (
         "vendi 520,75 de marmitas credito 13/10",
         DadosTransacao(
-            acao=TipoTransacao.CREDITO,
+            tipo=TipoTransacao.CREDITO,
             valor=520.75,
             metodo_pagamento="credito",
             categoria="marmitas",
-            data=datetime(year=ANO_ATUAL, month=10, day=13).date(),
+            data=now.replace(year=now.year, month=10, day=13),
             mensagem_original="vendi 520,75 de marmitas credito 13/10",
+        ),
+    ),
+    (
+        "vendi 10,500 de marmitas 13/10",
+        DadosTransacao(
+            tipo=TipoTransacao.CREDITO,
+            valor=10500,
+            metodo_pagamento=None,
+            categoria="marmitas",
+            data=now.replace(year=now.year, month=10, day=13),
+            mensagem_original="vendi 10,500 de marmitas 13/10",
         ),
     ),
 ]

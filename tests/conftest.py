@@ -9,10 +9,9 @@ from src.infra.database.connection import metadata, GET_DEFAULT_SESSION_CONTEXT,
 from src.infra.database.repo import RepoEscrita, RepoLeitura
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def mock_usuario(session):
     usuario = Usuario(
-        id=randint(1, 10000),
         nome="Usuario",
         sobrenome="Pytest",
         telefone="94981362600",
@@ -28,7 +27,6 @@ def mock_usuario(session):
 def transacao_gen():
     def make_mock(usuario, valor, destino, tipo, caixa=datetime(2024, 10, 22)):
         return Transacao(
-            id=randint(1, 10000),
             usuario=usuario,
             valor=valor,
             categoria=destino,
@@ -69,3 +67,11 @@ def repo_escrita(session):
 @pytest.fixture
 def repo_leitura(session):
     return RepoLeitura(session)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def clean_tables(session):
+    """Roll back database session after each test."""
+    for table in reversed(metadata.sorted_tables):
+        session.execute(table.delete())
+    session.commit()

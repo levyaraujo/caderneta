@@ -1,3 +1,5 @@
+line-length = 120
+
 [lint.per-file-ignores]
 "*" = ["F821"]
 
