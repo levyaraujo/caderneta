@@ -9,8 +9,8 @@ phases:
       - pip install poetry==1.8.4
   pre_build:
     commands:
-      - yum update -y
-      - yum install -y docker
+      - apt update -y
+      - apt install -y docker
       - service docker start
       - docker info
       - echo "Building Docker image..."
