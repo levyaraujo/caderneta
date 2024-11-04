@@ -37,7 +37,7 @@
     ],
     "family": "caderneta-prod-task-definition",
     "executionRoleArn": "arn:aws:iam::343339734338:role/ecsTaskExecutionRole",
-    "taskRoleArn": "arn:aws:iam::343339734338:role/ecsTaskRole",
+    "taskRoleArn": "arn:aws:iam::343339734338:role/caderneta-ecs-task-role",
     "networkMode": "awsvpc",
     "revision": 1,
     "volumes": [
