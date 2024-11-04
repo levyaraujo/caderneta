@@ -22,7 +22,13 @@
                     "type": "s3"
                 }
             ],
-            "mountPoints": [],
+            "mountPoints": [
+                {
+                    "sourceVolume": "efs-volume",
+                    "containerPath": "/mnt/efs",
+                    "readOnly": false
+                }
+            ],
             "volumesFrom": [],
             "readonlyRootFilesystem": true,
             "ulimits": [],
@@ -31,9 +37,22 @@
     ],
     "family": "caderneta-prod-task-definition",
     "executionRoleArn": "arn:aws:iam::343339734338:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::343339734338:role/caderneta-ecs-task-role",
     "networkMode": "awsvpc",
     "revision": 1,
-    "volumes": [],
+    "volumes": [
+        {
+            "name": "efs-volume",
+            "efsVolumeConfiguration": {
+                "fileSystemId": "fs-0a4fa1ad075bec1bc",
+                "rootDirectory": "/",
+                "transitEncryption": "ENABLED",
+                "authorizationConfig": {
+                    "iam": "ENABLED"
+                }
+            }
+        }
+    ],
     "status": "ACTIVE",
     "requiresAttributes": [
         {
@@ -41,6 +60,9 @@
         },
         {
             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.efs"
         },
         {
             "name": "ecs.capability.task-eni"
