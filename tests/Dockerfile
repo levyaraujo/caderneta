@@ -1,4 +1,4 @@
-FROM postgres:16-alpine
+FROM postgres:16-slim-bullseye
 
 EXPOSE 5433
 
