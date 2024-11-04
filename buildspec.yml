@@ -4,6 +4,12 @@ phases:
     runtime-versions:
       docker: 18
       python: 3.12
+    commands:
+      # Install AWS CLI and jq for JSON parsing
+      - pip install --upgrade awscli
+      - apt-get update && apt-get install -y jq
+      - apt-get install docker
+      - service docker start
 
   pre_build:
     commands:
