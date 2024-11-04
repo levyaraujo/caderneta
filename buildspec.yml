@@ -1,0 +1,32 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - echo "Installing Python 3.12..."
+      - pip install --upgrade pip
+      - pip install poetry==1.8.4
+  pre_build:
+    commands:
+      - echo "Building Docker image..."
+      - docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
+      - echo "Logging into DockerHub..."
+      - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - echo "Pushing Docker image to DockerHub..."
+      - docker push $DOCKER_IMAGE:$DOCKER_TAG
+  build:
+    commands:
+      - echo "Installing Python dependencies with Poetry..."
+      - poetry install --only main
+  post_build:
+    commands:
+      - echo "Pulling Docker image from DockerHub..."
+      - docker pull $DOCKER_IMAGE:$DOCKER_TAG
+      - echo "Registering task definition..."
+      - aws ecs register-task-definition --cli-input-json file://task-definition.json
+      - echo "Updating service on ECS cluster..."
+      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $ECS_TASK_DEFINITION
+artifacts:
+  files:
+    - task-definition.json
