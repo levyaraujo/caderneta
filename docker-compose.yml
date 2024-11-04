@@ -20,6 +20,20 @@ services:
     volumes:
       - caderneta-cache:/data
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+
 volumes:
     caderneta-data:
     caderneta-cache:
