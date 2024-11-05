@@ -42,7 +42,7 @@ phases:
       - NEW_TASK_INFO=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION")
       - NEW_REVISION=$(echo $NEW_TASK_INFO | jq '.taskDefinition.revision')
       - echo "Updating ECS service..."
-      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $TASK_DEFINITION_ARN:$NEW_REVISION --force-new-deployment
+      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $TASK_DEFINITION_ARN:$NEW_REVISION --force-new-deployment --region us-east-2
 
 artifacts:
   files: []
