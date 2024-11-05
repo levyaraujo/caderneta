@@ -36,13 +36,32 @@ phases:
       - echo "Pushing Docker image to DockerHub..."
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
-      - echo "Updating ECS task definition..."
-      - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_ARN --region us-east-2)
+
+      - echo "Getting current task definition..."
+      - echo "Task Family: $TASK_FAMILY"
+
+      # Get and display current task definition
+      - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY --region us-east-2)
+      - echo "Current task definition: $TASK_DEFINITION"
+
+      # Create new task definition
+      - echo "Creating new task definition..."
       - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$REPOSITORY_URI:$IMAGE_TAG" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
-      - NEW_TASK_INFO=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION")
-      - NEW_REVISION=$(echo $NEW_TASK_INFO | jq '.taskDefinition.revision')
-      - echo "Updating ECS service..."
-      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $TASK_DEFINITION_ARN:$NEW_REVISION --force-new-deployment --region us-east-2
+      - echo "New task definition JSON: $NEW_TASK_DEFINITION"
+
+      # Register new task definition
+      - echo "Registering new task definition..."
+      - NEW_TASK_INFO=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION" --region us-east-2)
+      - echo "New task info: $NEW_TASK_INFO"
+
+      # Extract revision number and verify it
+      - NEW_REVISION=$(echo $NEW_TASK_INFO | jq -r '.taskDefinition.revision')
+      - echo "New revision number: $NEW_REVISION"
+
+      # Update service with explicit task definition
+      - echo "Updating ECS service with task definition $TASK_FAMILY:$NEW_REVISION..."
+      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition "$TASK_FAMILY:$NEW_REVISION" --force-new-deployment --region us-east-2
+      - echo "Service update completed"
 
 artifacts:
   files: []
