@@ -20,12 +20,9 @@ phases:
 
   pre_build:
     commands:
-      # Get commit hash for tagging
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
-      # Set repository URI
       - REPOSITORY_URI=$DOCKERHUB_USERNAME/$DOCKER_REPO_NAME
-      # Login to DockerHub
       - echo "Logging into DockerHub..."
       - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
 
@@ -40,15 +37,11 @@ phases:
       - echo "Pushing Docker image to DockerHub..."
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
-
-      # Update ECS task definition
       - echo "Updating ECS task definition..."
       - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_ARN)
       - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$REPOSITORY_URI:$IMAGE_TAG" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
       - NEW_TASK_INFO=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION")
       - NEW_REVISION=$(echo $NEW_TASK_INFO | jq '.taskDefinition.revision')
-
-      # Update ECS service
       - echo "Updating ECS service..."
       - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $TASK_DEFINITION_ARN:$NEW_REVISION --force-new-deployment
 
