@@ -14,7 +14,8 @@ phases:
       # Install Docker
       - apt-get update
       - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-      - systemctl start docker || service docker start
+      - nohup dockerd &
+      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
 
   pre_build:
     commands:
