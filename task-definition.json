@@ -3,7 +3,7 @@
     "containerDefinitions": [
         {
             "name": "caderneta",
-            "image": "lev0x79/caderneta:latest",
+            "image": "docker.io/lev0x79/caderneta:latest",
             "cpu": 0,
             "portMappings": [
                 {
