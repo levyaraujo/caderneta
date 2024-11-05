@@ -43,7 +43,7 @@ phases:
       - NEW_REVISION=$(echo $NEW_TASK_INFO | jq '.taskDefinition.revision')
       - timeout 15 sh -c "until echo $NEW_REVISION; do echo .; sleep 1; done"
       - echo "Updating ECS service..."
-      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition "$TASK_DEFINITION_FAMILY:$NEW_REVISION" --force-new-deployment --region us-east-2
+      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $TASK_DEFINITION_FAMILY --force-new-deployment --region us-east-2
 
 artifacts:
   files: []
