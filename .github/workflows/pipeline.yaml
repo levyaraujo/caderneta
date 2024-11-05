@@ -1,11 +1,11 @@
-name: Caderneta CI
+name: Caderneta CI/CD
 on:
   pull_request:
     branches:
       - main
 
 jobs:
-  ci:
+  tests:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -47,7 +47,7 @@ jobs:
           DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
         run: |
           poetry run alembic upgrade head
-          
+
       - name: Check ruff
         run: |
           make ruff-fix
@@ -66,3 +66,36 @@ jobs:
           BUCKET: /tmp/.caderneta-static
         run: |
           poetry run pytest -vv
+
+
+  build:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.6'
+
+      - name: Login Dockerhub
+        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+
+      - name: Build Docker image
+        run: docker build -t lev0x79/caderneta .
+
+      - name: Push Docker image
+        run: docker push lev0x79/caderneta
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull image from Docker Hub
+        run: docker compose pull
+      - name: Remove old image
+        run: docker rm -f caderneta
+      - name: Run new docker container
+        run: docker compose up --build -d --remove-orphans
