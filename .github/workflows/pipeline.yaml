@@ -72,30 +72,24 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12.6'
-
-      - name: Login Dockerhub
-        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
-
       - name: Build Docker image
         run: docker build -t lev0x79/caderneta .
 
-      - name: Push Docker image
-        run: docker push lev0x79/caderneta
+      - name: Create SSH Key
+        run: echo '${{ secrets.LIGHTSAIL_SSH_KEY }}' > lightsail_key && chmod 600 lightsail_key
+      - name: Copy Docker Compose file to Lightsail
+        run: scp -i lightsail_key docker-compose.yml ubuntu@${{ LIGHTSAIL_INSTANCE_IP }}:~/app/docker-compose.yml
+      - name: Copy Dockerfile to Lightsail
+        run: scp -i lightsail_key Dockerfile ubuntu@${{ LIGHTSAIL_INSTANCE_IP }}:~/app/Dockerfile
 
   deploy:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Pull image from Docker Hub
-        run: docker compose pull
-      - name: Remove old image
-        run: docker rm -f caderneta
-      - name: Run new docker container
-        run: docker compose up --build -d --remove-orphans
+      - name: Navigate to app directory
+        working-directory: ~/app
+        run: |
+          docker compose down
+          docker compose pull
+          docker compose up --build -d --remove-orphans
+          docker image prune -f
