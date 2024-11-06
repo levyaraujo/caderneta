@@ -36,9 +36,8 @@ class PasswordHasher:
         return pwd_context.verify(plain_password, hashed_password)
 
 
-def criar_usuario(usuario: UsuarioModel):
-    uow = UnitOfWork(session_factory=get_session())
-    senha_encriptada = PasswordHasher.hash_password(usuario.senha)
+def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork) -> UsuarioModel | None:
+    senha_encriptada = PasswordHasher.hash_password(usuario.senha) if usuario.senha else None
     entidade = Usuario(
         nome=usuario.nome,
         sobrenome=usuario.sobrenome,
