@@ -72,9 +72,6 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     steps:
-      - name: Build Docker image
-        run: docker build -t lev0x79/caderneta .
-
       - name: Create SSH Key
         run: echo '${{ secrets.LIGHTSAIL_SSH_KEY }}' > lightsail_key && chmod 600 lightsail_key
       - name: Copy Docker Compose file to Lightsail
