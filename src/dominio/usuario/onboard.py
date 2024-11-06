@@ -1,3 +1,5 @@
+import os
+
 import redis
 import json
 from dataclasses import asdict, dataclass
@@ -7,6 +9,9 @@ from typing import Optional
 from src.dominio.usuario.entidade import UsuarioModel
 from src.dominio.usuario.services import criar_usuario
 from src.utils.validadores import validar_email
+
+REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_PORT = os.getenv("REDIS_PORT", 6379)
 
 
 class OnboardingState(Enum):
@@ -31,7 +36,7 @@ class UserContext:
 
 
 class OnboardingHandler:
-    def __init__(self, redis_host="localhost", redis_port=6379):
+    def __init__(self, redis_host=REDIS_HOST, redis_port=REDIS_PORT):
         self.redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
 
     def start_onboarding(self, phone_number: str) -> str:
