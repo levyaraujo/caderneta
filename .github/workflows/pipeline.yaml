@@ -66,28 +66,3 @@ jobs:
           BUCKET: /tmp/.caderneta-static
         run: |
           poetry run pytest -vv
-
-
-  build:
-    needs: tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create SSH Key
-        run: echo '${{ secrets.LIGHTSAIL_SSH_KEY }}' > lightsail_key && chmod 600 lightsail_key
-      - name: Copy Docker Compose file to Lightsail
-        run: scp -i lightsail_key docker-compose.yml ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }}:~/app/docker-compose.yml
-      - name: Copy Dockerfile to Lightsail
-        run: scp -i lightsail_key Dockerfile ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }}:~/app/Dockerfile
-
-  deploy:
-    needs: build
-    runs-on: self-hosted
-    timeout-minutes: 5
-    steps:
-      - name: Navigate to app directory
-        working-directory: ~/app
-        run: |
-          docker compose down
-          docker compose pull
-          docker compose up --build -d --remove-orphans
-          docker image prune -f
