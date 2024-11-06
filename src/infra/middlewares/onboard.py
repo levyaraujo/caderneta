@@ -10,6 +10,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from src.dominio.usuario.onboard import OnboardingHandler, OnboardingState
 from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
+from src.infra.database.uow import UnitOfWork
 
 FRONT = os.getenv("FRONT")
 
@@ -34,7 +35,8 @@ class UserOnboardMiddleware(BaseHTTPMiddleware):
             user = repo.buscar_por_telefone(usuario_telefone)
 
             if not user:
-                onboard = OnboardingHandler()
+                uow = UnitOfWork(session_factory=get_session)
+                onboard = OnboardingHandler(uow=uow)
                 resposta = onboard.handle_message(usuario_telefone, mensagem)
                 twiml = MessagingResponse()
                 twiml.message(resposta)

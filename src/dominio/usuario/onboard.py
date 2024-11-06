@@ -8,6 +8,7 @@ from typing import Optional
 
 from src.dominio.usuario.entidade import UsuarioModel
 from src.dominio.usuario.services import criar_usuario
+from src.infra.database.uow import UnitOfWork
 from src.utils.validadores import validar_email
 
 REDIS_HOST = os.getenv("REDIS_HOST")
@@ -36,8 +37,9 @@ class UserContext:
 
 
 class OnboardingHandler:
-    def __init__(self, redis_host=REDIS_HOST, redis_port=REDIS_PORT):
+    def __init__(self, redis_host=REDIS_HOST, redis_port=REDIS_PORT, uow: UnitOfWork = None):
         self.redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
+        self.uow = uow
 
     def start_onboarding(self, phone_number: str) -> str:
         if not self._get_user_context(phone_number):
@@ -55,7 +57,7 @@ class OnboardingHandler:
             return self.start_onboarding(phone_number)
 
         if context.state == OnboardingState.COMPLETED:
-            criar_usuario(UsuarioModel(**asdict(context.data)))  # noqa
+            criar_usuario(UsuarioModel(**asdict(context.data)), uow=self.uow)  # noqa
             return self._generate_completion_message()
         elif context.state == OnboardingState.WAITING_FULL_NAME:
             return self._handle_full_name(context, message)
@@ -79,7 +81,7 @@ class OnboardingHandler:
             context.data.email = email
             context.state = OnboardingState.COMPLETED
             self._save_user_context(context.data.telefone, context)
-            criar_usuario(UsuarioModel(**asdict(context.data)))  # noqa
+            criar_usuario(UsuarioModel(**asdict(context.data)), uow=self.uow)  # noqa
             return self._generate_completion_message()
         return "Por favor, digite um email válido."
 
