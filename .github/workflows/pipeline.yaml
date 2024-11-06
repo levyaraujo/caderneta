@@ -1,11 +1,11 @@
-name: Caderneta CI
+name: Caderneta CI/CD
 on:
   pull_request:
     branches:
       - main
 
 jobs:
-  ci:
+  tests:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -47,7 +47,7 @@ jobs:
           DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
         run: |
           poetry run alembic upgrade head
-          
+
       - name: Check ruff
         run: |
           make ruff-fix
