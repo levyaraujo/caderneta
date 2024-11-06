@@ -1,4 +1,6 @@
+import logging
 import os
+import traceback
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -10,6 +12,8 @@ from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
 
 FRONT = os.getenv("FRONT")
+
+logger = logging.getLogger("onboard_middleware")
 
 
 class UserOnboardMiddleware(BaseHTTPMiddleware):
@@ -40,6 +44,7 @@ class UserOnboardMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         except Exception as e:
+            logger.error(traceback.format_exc())
             print(f"Error in middleware: {str(e)}")
             twiml = MessagingResponse()
             twiml.message(
