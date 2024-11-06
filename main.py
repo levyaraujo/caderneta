@@ -10,12 +10,7 @@ import os
 
 BUCKET = os.getenv("BUCKET")
 
-origins = [
-    "https://caderneta.tunn.dev",
-    "http://localhost",
-    "http://localhost:5173",
-    "http://44.202.71.36"
-]
+origins = ["https://caderneta.tunn.dev", "http://localhost", "http://localhost:5173", "http://44.202.71.36"]
 
 app = FastAPI()
 
