@@ -5,6 +5,8 @@ from fastapi import APIRouter, status, HTTPException
 from src.dominio.usuario.entidade import UsuarioModel
 from src.dominio.usuario.exceptions import UsuarioJaExiste, ErroAoCriarUsuario
 from src.dominio.usuario.services import criar_usuario
+from src.infra.database.connection import get_session
+from src.infra.database.uow import UnitOfWork
 
 UsuarioRouter = APIRouter(prefix="/usuario", tags=["usuario"])
 
@@ -13,8 +15,9 @@ logger = logging.getLogger("usuario_resources")
 
 @UsuarioRouter.post("", status_code=status.HTTP_201_CREATED)
 def usuario_onboard(usuario: UsuarioModel):
+    uow = UnitOfWork(session_factory=get_session)
     try:
-        usuario_criado = criar_usuario(usuario)
+        usuario_criado = criar_usuario(usuario, uow)
         return {"message": "Usuario cadastrado com sucesso!"}
     except UsuarioJaExiste as erro:
         logger.info(f"Usuário {usuario.email} já existe no sistema")
