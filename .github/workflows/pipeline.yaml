@@ -85,6 +85,7 @@ jobs:
   deploy:
     needs: build
     runs-on: self-hosted
+    timeout-minutes: 5
     steps:
       - name: Navigate to app directory
         working-directory: ~/app
