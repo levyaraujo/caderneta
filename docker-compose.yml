@@ -44,6 +44,8 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    volumes:
+      - /opt/caderneta/static:/opt/caderneta/static
     restart: unless-stopped
 
 volumes:
