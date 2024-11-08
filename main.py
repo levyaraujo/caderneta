@@ -10,8 +10,9 @@ from src.dominio.usuario.resources import UsuarioRouter
 from src.infra.middlewares.onboard import UserOnboardMiddleware
 
 BUCKET = os.getenv("BUCKET")
+import dotenv
 
-origins = ["https://caderneta.tunn.dev", "http://localhost", "http://localhost:5173", "http://44.202.71.36"]
+dotenv.load_dotenv(".env")
 
 app = FastAPI()
 
@@ -43,6 +44,7 @@ app.add_middleware(UserOnboardMiddleware)
 
 app.include_router(BotRouter)
 app.include_router(UsuarioRouter)
+
 
 @app.get("/sentry-debug")
 async def trigger_error():
