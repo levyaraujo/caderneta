@@ -1,0 +1,21 @@
+# .dockerignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+.env
+.git
+.gitignore
+.pytest_cache
+.coverage
+htmlcov/
+.dockerignore
+Dockerfile
+docker-compose.yml
+README.md
+tests/
+*.log
+.vscode/
+.idea/

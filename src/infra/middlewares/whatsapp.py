@@ -26,14 +26,15 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: Callable) -> Coroutine[Any, Any, Response] | Response:
+        if "/bot/whatsapp" not in request.url.path:
+            return await call_next(request)
+
         dados = await request.json()
         dados = parse_whatsapp_payload(dados)
         try:
-            request.state.form_data = dados
-
             request.state.usuario = None
 
-            if "/bot/whatsapp" not in request.url.path or not dados:
+            if not dados:
                 return await call_next(request)
 
             repo = RepoUsuarioLeitura(session=get_session())

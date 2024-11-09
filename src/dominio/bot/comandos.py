@@ -115,6 +115,6 @@ def lucro(*args: List[str], **kwargs: Any) -> str:
     return caminho_arquivo
 
 
-@bot.comando("ping", "Reponde pong")
+@bot.comando("teste", "Reponde pong")
 def ping(*args: List[str], **kwargs: Any) -> str:
-    return "pong"
+    return "teste teste"
