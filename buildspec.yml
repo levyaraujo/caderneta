@@ -1,49 +1,42 @@
 version: 0.2
+
 phases:
   install:
     runtime-versions:
       python: 3.12
     commands:
-      # Install prerequisites
-      - apt-get update && apt-get install -y jq ca-certificates curl gnupg
-      # Set up Docker repository
-      - install -m 0755 -d /etc/apt/keyrings
-      - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-      - chmod a+r /etc/apt/keyrings/docker.gpg
-      - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-      # Install Docker
-      - apt-get update
-      - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-      - nohup dockerd &
-      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
-
-  pre_build:
-    commands:
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:=latest}
-      - REPOSITORY_URI=$DOCKERHUB_USERNAME/$DOCKER_REPO_NAME
-      - echo "Logging into DockerHub..."
-      - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+      - echo "Instalando Docker..."
+      - yum update -y
+      - amazon-linux-extras install docker -y
+      - service docker start
+      - usermod -a -G docker $USER
+      - chmod 666 /var/run/docker.sock
 
   build:
     commands:
-      - echo "Building Docker image..."
-      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
-      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
+      - docker compose build
 
   post_build:
     commands:
-      - echo "Pushing Docker image to DockerHub..."
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - docker push $REPOSITORY_URI:latest
-      - echo "Updating ECS task definition..."
-      - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --region us-east-2)
-      - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$REPOSITORY_URI:$IMAGE_TAG" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
-      - NEW_TASK_INFO=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION")
-      - NEW_REVISION=$(echo $NEW_TASK_INFO | jq '.taskDefinition.revision')
-      - timeout 15 sh -c "until echo $NEW_REVISION; do echo .; sleep 1; done"
-      - echo "Updating ECS service..."
-      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $TASK_DEFINITION_FAMILY --force-new-deployment --region us-east-2
+      # Deploy to Lightsail instance
+      - echo "Deploying to Lightsail..."
+      - echo "${LIGHTSAIL_SSH_PRIVATE_KEY}" > id_ed25519
+      - chmod 600 id_ed25519
 
-artifacts:
-  files: []
+      # Copy docker-compose and deploy
+      - scp -i id_ed25519 -o StrictHostKeyChecking=no docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta
+      - scp -i id_ed25519 -o StrictHostKeyChecking=no Dockerfile ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta
+      - |
+        ssh -i id_ed25519 StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
+          # Pull and restart containers
+          cd ~/caderneta
+
+          docker compose down
+
+          docker compose up -d
+
+          docker image prune -f
+        EOF
+
+      # Clean up sensitive files
+      - rm id_ed25519
