@@ -33,10 +33,13 @@ phases:
   post_build:
     commands:
       - echo "Iniciando deploy para Lightsail..."
-      # Configurar SSH
       - mkdir -p ~/.ssh
-      - echo "${LIGHTSAIL_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+
+      # Criar e verificar chave SSH
+      - echo "${LIGHTSAIL_SSH_PRIVATE_KEY}" | base64 -d > ~/.ssh/id_ed25519
       - chmod 600 ~/.ssh/id_ed25519
+      - echo "Conteúdo da chave (primeiros caracteres):"
+      - head -n 1 ~/.ssh/id_ed25519
 
       # Deploy
       - scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
