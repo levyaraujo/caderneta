@@ -51,7 +51,7 @@ phases:
           echo "Bringing down any existing containers..."
           docker compose down
           echo "Starting containers with no-cache option..."
-          docker compose up -d --no-cache
+          docker compose up --build -d
           echo "Pruning unused images..."
           docker image prune -f
           echo "Deployment completed successfully."
