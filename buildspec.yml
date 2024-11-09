@@ -5,8 +5,7 @@ phases:
     runtime-versions:
       python: 3.12
     commands:
-      - echo "Instalando Docker..."
-      # Instalar Docker usando o script oficial
+      - echo "Installing Docker..."
       - apt-get update
       - apt-get install -y ca-certificates curl gnupg
       - install -m 0755 -d /etc/apt/keyrings
@@ -19,33 +18,31 @@ phases:
 
   pre_build:
     commands:
-      - echo "Configurando Docker..."
-      # Iniciar Docker daemon
+      - echo "Configuring Docker..."
       - nohup dockerd &
       - sleep 5
       - docker info
 
   build:
     commands:
-      - echo "Iniciando build..."
+      - echo "Starting build..."
       - docker compose build
 
   post_build:
     commands:
-      - echo "Iniciando deploy para Lightsail..."
+      - echo "Deploying to Lightsail..."
       - mkdir -p ~/.ssh
 
-      # Criar e verificar chave SSH
-      - echo "${LIGHTSAIL_SSH_PRIVATE_KEY}"  > ~/.ssh/lightsail_key
-      - chmod 600 ~/.ssh/lightsail_key
-      - echo "Conteúdo da chave (primeiros caracteres):"
-      - head -n 1 ~/.ssh/lightsail_key
+      # Retrieve the private key from Secrets Manager and write to file
+      - aws secretsmanager get-secret-value --secret-id CodeBuildLightsailSSHKey --query SecretString --output text > ~/.ssh/id_ed25519
+
+      - chmod 600 ~/.ssh/id_ed25519
 
       # Deploy
-      - scp -i ~/.ssh/lightsail_key -o StrictHostKeyChecking=no docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
-      - scp -i ~/.ssh/lightsail_key -o StrictHostKeyChecking=no Dockerfile ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
+      - scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
+      - scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no Dockerfile ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
       - |
-        ssh -i ~/.ssh/lightsail_key -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
+        ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
           cd ~/caderneta
           docker compose down
           docker compose pull
@@ -53,7 +50,7 @@ phases:
           docker image prune -f
         EOF
 
-      # Limpeza
+      # Clean up
       - rm -rf ~/.ssh
 
 artifacts:
