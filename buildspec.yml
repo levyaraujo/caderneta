@@ -6,9 +6,13 @@ phases:
       python: 3.12
     commands:
       - echo "Instalando Docker..."
-      - yum update -y
-      - amazon-linux-extras install docker -y
-      - service docker start
+      - dnf update -y
+      - dnf install -y docker
+
+  pre_build:
+    commands:
+      - echo "Configurando Docker..."
+      - systemctl start docker || true
       - usermod -a -G docker $USER
       - chmod 666 /var/run/docker.sock
 
