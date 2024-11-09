@@ -32,7 +32,7 @@ phases:
     commands:
       - echo "Deploying to Lightsail..."
 
-      # Retrieve the private key from Secrets Manager and write to file
+      # Retrieve the private key from s3 and write to file
       - aws s3 cp s3://caderneta-prod/lightsail_key /tmp/lightsail_key
 
       - chmod 600 /tmp/lightsail_key
@@ -47,13 +47,12 @@ phases:
         ssh -i /tmp/lightsail_key -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
           cd ~/caderneta
           docker compose down
-          docker compose pull
           docker compose up -d
           docker image prune -f
         EOF
 
       # Clean up
-      - rm -rf ~/.ssh
+      - rm -rf /tmp/lightsail_key
 
 artifacts:
   files:
