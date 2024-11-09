@@ -25,16 +25,18 @@ phases:
 
   build:
     commands:
+      - echo "Login to ECR"
+      - $(aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR})
       - echo "Starting build..."
       # Retrieve the private key from s3 and write to file
       - aws s3 cp s3://caderneta-prod/lightsail_key /tmp/lightsail_key
       - aws s3 cp s3://caderneta-prod/.env .env
-      - docker compose build --no-cache
 
-      # Create tag and push to ECR
-      - IMAGE_TAG=$(aws ecr describe-repositories --repository-name caderneta-prod --query 'repositories[0].repositoryUri' --output text)
-      - docker tag caderneta:latest $IMAGE_TAG:latest
-      - docker push $IMAGE_TAG:latest
+      - docker compose build
+      - docker tag caderneta:latest ${ECR}/caderneta:latest
+
+      # Push to ECR
+      - docker push ${ECR}/caderneta:latest
 
   post_build:
     commands:
@@ -46,21 +48,29 @@ phases:
       - ssh-add -l
 
       # Deploy
-      - ssh -i /tmp/lightsail_key -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
+      - |
+        ssh -i /tmp/lightsail_key -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << ENDSSH
           set -e
 
           echo "Navigating to project directory..."
           cd ~/caderneta
 
-          docker pull $IMAGE_TAG:latest
+          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ECR}
 
+          echo "Pulling latest image..."
+          docker pull ${ECR}/caderneta:latest
+
+          echo "Stopping current containers..."
           docker compose down
 
-          docker compose up --no-build -d
+          echo "Starting new containers..."
+          docker compose up -d
 
           echo "Pruning unused images..."
           docker image prune -f
-        EOF
+
+          echo "Deployment complete"
+        ENDSSH
 
       # Clean up
       - echo "Deployment completed successfully."
