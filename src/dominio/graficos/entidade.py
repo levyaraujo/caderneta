@@ -331,37 +331,48 @@ class GraficoLucro(GraficoBase):
             fill="white",
         )
 
-        # Draw the arc for profit and costs
         if vendas > 0:
-            cost_angle = (custos / vendas) * 360
-            profit_angle = ((vendas - custos) / vendas) * 360
+            # Calculate the proportion of the circle each part should occupy
+            total = vendas + custos
+            vendas_angle = (vendas / total) * 360
+            custos_angle = (custos / total) * 360
         else:
-            cost_angle = 0
-            profit_angle = 0
+            vendas_angle = 0
+            custos_angle = 0
 
-        # Draw cost portion (red)
-        if cost_angle > 0:
+        if vendas > 0:
+            # Calculate the proportion of the circle each part should occupy
+            total = vendas + custos
+            vendas_angle = (vendas / total) * 360
+            custos_angle = (custos / total) * 360
+        else:
+            vendas_angle = 0
+            custos_angle = 0
+
+            # Draw vendas portion (green) - starts from 270 (bottom) and goes clockwise
+        if vendas_angle > 0:
             draw.arc(
                 [
                     (center_x - radius, center_y - radius),
                     (center_x + radius, center_y + radius),
                 ],
-                -90,
-                -90 + cost_angle,
-                fill="#ff4d4d",
+                270,
+                # Start from bottom
+                270 + vendas_angle,  # Go clockwise
+                fill="#4ade80",
                 width=thickness,
             )
 
-        # Draw profit portion (green)
-        if profit_angle > 0:
+            # Draw custos portion (red) - starts where vendas ends and completes the circle back to bottom
+        if custos_angle > 0:
             draw.arc(
                 [
                     (center_x - radius, center_y - radius),
                     (center_x + radius, center_y + radius),
                 ],
-                -90 + cost_angle,
-                -90 + cost_angle + profit_angle,
-                fill="#4ade80",
+                270 + vendas_angle,  # Start where vendas portion ends
+                630,  # Complete the circle (270 + 360)
+                fill="#ff4d4d",
                 width=thickness,
             )
 
@@ -399,7 +410,7 @@ class GraficoLucro(GraficoBase):
             anchor="ms",
         )
         draw.text(
-            (vendas_center_x, vendas_center_y + 5),
+            (vendas_center_x, vendas_center_y + 10),
             f"{Real(vendas)}",
             fill="#ecfdf5",
             font=font_venda_despesa,
@@ -422,7 +433,7 @@ class GraficoLucro(GraficoBase):
             anchor="ms",
         )
         draw.text(
-            (custos_center_x, custos_center_y + 5),
+            (custos_center_x, custos_center_y + 10),
             f"{Real(custos)}",
             fill="white",
             font=font_venda_despesa,
@@ -434,7 +445,7 @@ class GraficoLucro(GraficoBase):
         bytes_imagem: bytes = img_bytes_io.getvalue()
         return self._retorno(bytes_imagem)
 
-    def _retorno(self, img_byte_arr) -> GraficoRetorno:
+    def _retorno(self, img_byte_arr: bytes) -> GraficoRetorno:
         return {
             "nome_arquivo": self._gerar_nome_arquivo("lucro"),
             "formato": self.config.formato,
@@ -445,7 +456,7 @@ class GraficoLucro(GraficoBase):
 
 class GraficoFactory:
     @staticmethod
-    def criar_grafico(tipo: str, config: GraficoConfig, **kwargs) -> IGrafico:
+    def criar_grafico(tipo: str, config: GraficoConfig, **kwargs: Any) -> IGrafico:
         if tipo == "linha":
             return GraficoLinha(config, **kwargs)
         elif tipo == "pizza":
