@@ -31,18 +31,19 @@ phases:
   post_build:
     commands:
       - echo "Deploying to Lightsail..."
-      - mkdir -p ~/.ssh
 
       # Retrieve the private key from Secrets Manager and write to file
-      - aws secretsmanager get-secret-value --secret-id CodeBuildLightsailSSHKey --query SecretString --output text > ~/.ssh/id_ed25519
+      - aws secretsmanager get-secret-value --secret-id CodeBuildLightsailSSHKey --query SecretString --output text > lightsail_key
 
-      - chmod 600 ~/.ssh/id_ed25519
+      - chmod 600 lightsail_key
+      - ssh-add lightsail_key
+      - ssh-add -l
 
       # Deploy
-      - scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
-      - scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no Dockerfile ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
+      - scp -i lightsail_key -o StrictHostKeyChecking=no -vvv docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
+      - scp -i lightsail_key -o StrictHostKeyChecking=no -vvv Dockerfile ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
       - |
-        ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
+        ssh -i lightsail_key -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
           cd ~/caderneta
           docker compose down
           docker compose pull
