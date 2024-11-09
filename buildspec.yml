@@ -56,8 +56,6 @@ phases:
           echo "Navigating to project directory..."
           cd ~/caderneta
 
-          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin ${ECR}
-
           echo "Pulling latest image..."
           docker pull ${ECR}/caderneta:latest
 

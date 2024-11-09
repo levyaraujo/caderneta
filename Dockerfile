@@ -1,17 +1,31 @@
+FROM python:3.12.6-slim-bullseye AS builder
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir poetry
+
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-root --no-ansi --only main
+
 FROM python:3.12.6-slim-bullseye
 
 WORKDIR /app
 
 RUN mkdir -p /opt/caderneta/static
 
-RUN pip install --no-cache-dir poetry
-
-COPY pyproject.toml poetry.lock ./
-
-RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-root --no-ansi --only main
+COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
 
 COPY . .
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN useradd -m appuser && \
+    chown -R appuser:appuser /app /opt/caderneta/static
+USER appuser
+
 EXPOSE 8000
 
-CMD ["fastapi", "run"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
