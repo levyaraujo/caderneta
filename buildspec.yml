@@ -36,7 +36,7 @@ phases:
       - mkdir -p ~/.ssh
 
       # Criar e verificar chave SSH
-      - echo "${LIGHTSAIL_SSH_PRIVATE_KEY}" | base64 -d > ~/.ssh/id_ed25519
+      - echo "${LIGHTSAIL_SSH_PRIVATE_KEY}"  > ~/.ssh/id_ed25519
       - chmod 600 ~/.ssh/id_ed25519
       - echo "Conteúdo da chave (primeiros caracteres):"
       - head -n 1 ~/.ssh/id_ed25519
