@@ -22,7 +22,7 @@ services:
       - caderneta_redis_data:/data
 
   migrate:
-    image: 343339734338.dkr.ecr.us-east-1.amazonaws.com/caderneta
+    image: ${CADERNETA_IMAGE}
     depends_on:
       db:
         condition: service_healthy
@@ -32,7 +32,7 @@ services:
     restart: "no"
 
   app:
-    image: 343339734338.dkr.ecr.us-east-1.amazonaws.com/caderneta
+    image: ${CADERNETA_IMAGE}
     ports:
       - "8000:8000"
     depends_on:
