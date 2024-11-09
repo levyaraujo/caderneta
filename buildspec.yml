@@ -6,41 +6,55 @@ phases:
       python: 3.12
     commands:
       - echo "Instalando Docker..."
-      - apt update
-      - apt install -y docker
+      # Instalar Docker usando o script oficial
+      - apt-get update
+      - apt-get install -y ca-certificates curl gnupg
+      - install -m 0755 -d /etc/apt/keyrings
+      - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      - chmod a+r /etc/apt/keyrings/docker.gpg
+      - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      - apt-get update
+      - apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+      - docker --version
 
   pre_build:
     commands:
       - echo "Configurando Docker..."
-      - systemctl start docker || true
-      - usermod -a -G docker $USER
-      - chmod 666 /var/run/docker.sock
+      # Iniciar Docker daemon
+      - nohup dockerd &
+      - sleep 5
+      - docker info
 
   build:
     commands:
+      - echo "Iniciando build..."
       - docker compose build
 
   post_build:
     commands:
-      # Deploy to Lightsail instance
-      - echo "Deploying to Lightsail..."
-      - echo "${LIGHTSAIL_SSH_PRIVATE_KEY}" > id_ed25519
-      - chmod 600 id_ed25519
+      - echo "Iniciando deploy para Lightsail..."
+      # Configurar SSH
+      - mkdir -p ~/.ssh
+      - echo "${LIGHTSAIL_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+      - chmod 600 ~/.ssh/id_ed25519
 
-      # Copy docker-compose and deploy
-      - scp -i id_ed25519 -o StrictHostKeyChecking=no docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta
-      - scp -i id_ed25519 -o StrictHostKeyChecking=no Dockerfile ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta
+      # Deploy
+      - scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
+      - scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no Dockerfile ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
       - |
-        ssh -i id_ed25519 StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
-          # Pull and restart containers
+        ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
           cd ~/caderneta
-
           docker compose down
-
+          docker compose pull
           docker compose up -d
-
           docker image prune -f
         EOF
 
-      # Clean up sensitive files
-      - rm id_ed25519
+      # Limpeza
+      - rm -rf ~/.ssh
+
+artifacts:
+  files:
+    - docker-compose.yml
+    - Dockerfile
+    - '**/*'
