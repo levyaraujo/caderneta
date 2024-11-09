@@ -33,7 +33,7 @@ phases:
 
 
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
-      - docker build -t .
+      - docker build -t caderneta .
       - docker tag caderneta:latest ${ECR}/caderneta:latest
 
       # Push to ECR
