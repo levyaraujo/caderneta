@@ -31,7 +31,7 @@ sentry_sdk.init(
     },
 )
 
-# app.mount("/static", StaticFiles(directory=BUCKET), name="static")
+app.mount("/static", StaticFiles(directory=BUCKET), name="static")
 
 app.add_middleware(
     CORSMiddleware,
