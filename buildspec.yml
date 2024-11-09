@@ -29,17 +29,25 @@ phases:
 
       - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 
-      # Retrieve the private key from s3 and write to file
-      - aws s3 cp s3://caderneta-prod/lightsail_key /tmp/lightsail_key
-      - aws s3 cp s3://caderneta-prod/.env .env
+      # Check if image already exists in ECR
+      - |
+        if aws ecr describe-images --repository-name caderneta --image-ids imageTag=$COMMIT_HASH 2>/dev/null; then
+          echo "Image with tag $COMMIT_HASH already exists in ECR. Skipping build and push."
+        else
+          echo "Image not found in ECR. Proceeding with build and push..."
 
-      - echo "Login to ECR"
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
-      - docker build -t caderneta .
-      - docker tag caderneta:latest ${ECR}/caderneta:$COMMIT_HASH
+          # Retrieve the private key from s3 and write to file
+          aws s3 cp s3://caderneta-prod/lightsail_key /tmp/lightsail_key
+          aws s3 cp s3://caderneta-prod/.env .env
 
-      # Push to ECR
-      - docker push ${ECR}/caderneta:$COMMIT_HASH
+          echo "Login to ECR"
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
+          docker build -t caderneta .
+          docker tag caderneta:latest ${ECR}/caderneta:$COMMIT_HASH
+
+          # Push to ECR
+          docker push ${ECR}/caderneta:$COMMIT_HASH
+        fi
 
   post_build:
     commands:
