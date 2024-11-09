@@ -66,7 +66,7 @@ phases:
           docker compose down
 
           echo "Starting new containers..."
-          docker compose up --build -d
+          CADERNETA_IMAGE=${ECR}/caderneta:$COMMIT_HASH docker compose up -d
 
           echo "Pruning unused images..."
           docker image prune -f
