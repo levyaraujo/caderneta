@@ -22,9 +22,7 @@ services:
       - caderneta_redis_data:/data
 
   migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: 343339734338.dkr.ecr.us-east-1.amazonaws.com/caderneta
     depends_on:
       db:
         condition: service_healthy
@@ -34,9 +32,7 @@ services:
     restart: "no"
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: 343339734338.dkr.ecr.us-east-1.amazonaws.com/caderneta
     ports:
       - "8000:8000"
     depends_on:
