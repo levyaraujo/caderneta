@@ -56,17 +56,16 @@ phases:
         ssh -i /tmp/lightsail_key -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << ENDSSH
           set -e
 
+          export CADERNETA_IMAGE=${ECR}/caderneta:$COMMIT_HASH
+
           echo "Navigating to project directory..."
           cd ~/caderneta
-
-          echo "Pulling latest image..."
-          docker pull ${ECR}/caderneta:$COMMIT_HASH
 
           echo "Stopping current containers..."
           docker compose down
 
           echo "Starting new containers..."
-          CADERNETA_IMAGE=${ECR}/caderneta:$COMMIT_HASH docker compose up -d
+          docker compose up -d
 
           echo "Pruning unused images..."
           docker image prune -f
