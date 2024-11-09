@@ -6,7 +6,8 @@ phases:
       python: 3.12
     commands:
       - echo "Instalando Docker..."
-      - dnf install -y docker
+      - apt update
+      - apt install -y docker
 
   pre_build:
     commands:
