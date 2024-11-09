@@ -36,6 +36,7 @@ phases:
       - aws secretsmanager get-secret-value --secret-id CodeBuildLightsailSSHKey --query SecretString --output text > lightsail_key
 
       - chmod 600 lightsail_key
+      - eval "$(ssh-agent -s)"
       - ssh-add lightsail_key
       - ssh-add -l
 
