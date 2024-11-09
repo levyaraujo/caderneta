@@ -1,6 +1,7 @@
 import calendar
 import os
 from datetime import datetime
+from typing import Dict, List, Any
 
 import dotenv
 
@@ -24,18 +25,19 @@ STATIC = os.getenv("STATIC_URL")
 
 
 @bot.comando("ola", "Mostra ajuda", aliases=["oi"])
-def saudacao(*args, **kwargs):
+def saudacao(*args: List[str], **kwargs: Any) -> str:
     nome_usuario = kwargs.get("nome_usuario")
     return f"Olá, {nome_usuario}!\n{bot.ajuda()}"
 
 
 @bot.comando("ajuda", "Mostra comandos disponíveis")
-def ajuda(*args, **kwargs):
-    return bot.ajuda()
+def ajuda(*args: List[str], **kwargs: Any) -> str:
+    ajuda: str = bot.ajuda()
+    return ajuda
 
 
 @bot.comando("listar fluxo", "Lista fluxo de caixa no mês atual", aliases=["fluxo"])
-def listar_fluxo(*args, **kwargs):
+def listar_fluxo(*args: List[str], **kwargs: Any) -> str:
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
     transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(usuario_id=usuario.id, intervalo=intervalo)
@@ -52,7 +54,7 @@ def listar_fluxo(*args, **kwargs):
 
 
 @bot.comando("grafico fluxo", "Devolve gráfico de fluxo de caixa do mês atual")
-def grafico_fluxo(*args, **kwargs):
+def grafico_fluxo(*args: List[str], **kwargs: Any) -> str:
     uploader = Uploader()
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
@@ -64,12 +66,12 @@ def grafico_fluxo(*args, **kwargs):
 
     grafico = criar_grafico_fluxo_de_caixa(transacoes=transacoes)
     nome_arquivo = f"{grafico['nome_arquivo']}.png"
-    caminho_arquivo = uploader.upload_file(nome_arquivo, grafico["dados"])
+    caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
     return caminho_arquivo
 
 
 @bot.comando("grafico balanco", "Devolve gráfico de receitas e despesas", aliases=["balanco"])
-def grafico_balanco(*args, **kwargs):
+def grafico_balanco(*args: List[str], **kwargs: Any) -> str:
     now = datetime.now()
     uploader = Uploader()
     inicio = primeira_hora(now.replace(day=1))
@@ -91,13 +93,13 @@ def grafico_balanco(*args, **kwargs):
     grafico = criar_grafico_receitas_e_despesas(transacoes=transacoes)
     nome_arquivo = f"{grafico['nome_arquivo']}.png"
 
-    caminho_arquivo = uploader.upload_file(nome_arquivo, grafico["dados"])
+    caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
 
     return caminho_arquivo
 
 
 @bot.comando("lucro", "Devolve lucro mensal")
-def lucro(*args, **kwargs):
+def lucro(*args: List[str], **kwargs: Any) -> str:
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
     uploader = Uploader()
@@ -109,5 +111,10 @@ def lucro(*args, **kwargs):
 
     grafico = criar_grafico_lucro(transacoes=transacoes)
     nome_arquivo = f"{grafico['nome_arquivo']}.png"
-    caminho_arquivo = uploader.upload_file(nome_arquivo, grafico["dados"])
+    caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
     return caminho_arquivo
+
+
+@bot.comando("ping", "Reponde pong")
+def ping(*args: List[str], **kwargs: Any) -> str:
+    return "pong"
