@@ -38,5 +38,5 @@ async def responder_usuario(
             robo.responder(bot.ajuda(), telefone)
 
     except Exception:
-        logger.error(traceback.format_exc())
+        traceback.print_exc()
         robo.responder("Ocorreu um erro desconhecido. Por favor, tente novamente.", telefone)

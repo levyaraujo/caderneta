@@ -1,15 +1,17 @@
+import json
 import logging
 import os
 import traceback
 from abc import ABC, abstractmethod
 
+import httpx
 from dotenv import load_dotenv
 from twilio.rest import Client
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 import inspect
 
-from src.dominio.bot.exceptions import ComandoDesconhecido
+from src.dominio.bot.exceptions import ComandoDesconhecido, ErroAoEnviarMensagemWhatsApp
 from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.dominio.usuario.entidade import Usuario
 from src.infra.database.connection import get_session
@@ -22,7 +24,7 @@ logger = logging.getLogger("bot")
 
 class BotBase(ABC):
     @abstractmethod
-    def responder(self, mensagem: str, usuario: str):
+    def responder(self, mensagem: str, usuario: str) -> str | dict:
         pass
 
 
@@ -50,6 +52,51 @@ class TwilioBot(BotBase):
 class CLIBot(BotBase):
     def responder(self, mensagem: str, usuario: str):
         return mensagem
+
+
+class WhatsAppBot(BotBase):
+    def __init__(self):
+        self.__url = os.getenv("WHATSAPP_WEBHOOK_URL")
+        self.__token = os.getenv("META_TOKEN")
+
+    def responder(self, mensagem: str, telefone: str):
+        url = self.__url
+        headers = {
+            "Authorization": f"Bearer {self.__token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "preview_url": True,
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": telefone,
+            "type": "text",
+            "text": {"body": f"{mensagem}"},
+        }
+        if mensagem.startswith("http"):
+            payload = {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": telefone,
+                "type": "image",
+                "image": {"link": mensagem},
+            }
+        if mensagem.startswith("http") and mensagem.endswith(".mp3"):
+            payload = {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": telefone,
+                "type": "audio",
+                "audio": {"link": mensagem},
+            }
+        try:
+            resposta = httpx.post(url=str(url), data=payload, headers=headers)
+            erro = resposta.json().get("error")
+            if erro:
+                raise ErroAoEnviarMensagemWhatsApp(erro.get("error_data").get("details"))
+            return resposta.json()
+        except Exception:
+            traceback.print_exc()
 
 
 @dataclass
@@ -116,7 +163,7 @@ class GerenciadorComandos:
             return command.handler(*args, **kwargs)
         except Exception as e:
             logger.error(f"Erro ao executar comando {command_name}: {str(e)}", exc_info=e)
-            logging.error(traceback.format_exc())
+            logging.error(traceback.print_exc())
             return f"Erro ao executar comando {command_name}. Tente novamente."
 
     def _extract_command_name_and_args(self, parts: List[str]) -> Tuple[Optional[str], List[str]]:
@@ -129,9 +176,11 @@ class GerenciadorComandos:
 
     def ajuda(self) -> str:
         """Gera ajuda listando todos os comandos"""
-        help_text = "Estes são os comandos disponíveis:\n\n"
+        help_text = "Por aqui consigo te ajudar com os seguintes comandos:\n\n"
         unique_commands = {cmd.name: cmd for cmd in self.commands.values()}
         for cmd in unique_commands.values():
             aliases = f" (Também entendo: *{', '.join(cmd.aliases)}*)" if cmd.aliases else ""
             help_text += f"*{cmd.name}*: {cmd.description}{aliases}\n"
+
+        help_text += "\n\nAlém disso, você pode registrar suas receitas e despesas de forma simples.\n\nEx: *paguei 1350 aluguel* ou *vendi 2300 de buffet*"
         return help_text

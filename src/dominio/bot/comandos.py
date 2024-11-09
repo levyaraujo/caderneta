@@ -26,7 +26,7 @@ STATIC = os.getenv("STATIC_URL")
 @bot.comando("ola", "Mostra ajuda", aliases=["oi"])
 def saudacao(*args, **kwargs):
     nome_usuario = kwargs.get("nome_usuario")
-    return f"Olá, {nome_usuario}!\n\n\n{bot.ajuda()}"
+    return f"Olá, {nome_usuario}!\n{bot.ajuda()}"
 
 
 @bot.comando("ajuda", "Mostra comandos disponíveis")
