@@ -33,7 +33,8 @@ phases:
 
 
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
-      - docker compose build -t caderneta .
+      - docker build -t .
+      - docker tag caderneta:latest ${ECR}/caderneta:latest
 
       # Push to ECR
       - docker push ${ECR}/caderneta:latest
@@ -64,7 +65,7 @@ phases:
           docker compose down
 
           echo "Starting new containers..."
-          docker compose up -d
+          docker compose up --build -d
 
           echo "Pruning unused images..."
           docker image prune -f
