@@ -26,12 +26,13 @@ phases:
   build:
     commands:
       - echo "Login to ECR"
-      - $(aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR})
       - echo "Starting build..."
       # Retrieve the private key from s3 and write to file
       - aws s3 cp s3://caderneta-prod/lightsail_key /tmp/lightsail_key
       - aws s3 cp s3://caderneta-prod/.env .env
 
+
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
       - docker compose build
       - docker tag caderneta:latest ${ECR}/caderneta:latest
 
@@ -55,7 +56,7 @@ phases:
           echo "Navigating to project directory..."
           cd ~/caderneta
 
-          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ECR}
+          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin ${ECR}
 
           echo "Pulling latest image..."
           docker pull ${ECR}/caderneta:latest
