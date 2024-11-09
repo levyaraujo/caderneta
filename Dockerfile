@@ -13,8 +13,7 @@ FROM python:3.12.6-slim-bullseye
 
 WORKDIR /app
 
-RUN mkdir -p /opt/caderneta/static
-
+COPY --from=builder /usr/local/bin/poetry /usr/local/bin/poetry
 COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
 
 COPY . .
@@ -22,8 +21,7 @@ COPY . .
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN useradd -m appuser && \
-    chown -R appuser:appuser /app /opt/caderneta/static
+RUN useradd -m appuser
 USER appuser
 
 EXPOSE 8000
