@@ -6,8 +6,6 @@ phases:
       python: 3.12
     commands:
       - echo "Instalando Docker..."
-      - rm -r /var/cache/dnf
-      - dnf update -y
       - dnf install -y docker
 
   pre_build:
