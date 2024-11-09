@@ -41,20 +41,20 @@ class OnboardingHandler:
         self.redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
         self.uow = uow
 
-    def start_onboarding(self, phone_number: str) -> str:
+    def start_onboarding(self, phone_number: str, nome_usuario: str) -> str:
         if not self._get_user_context(phone_number):
             context = UserContext(
                 state=OnboardingState.WAITING_FULL_NAME,
                 data=UserData(telefone=phone_number),
             )
             self._save_user_context(phone_number, context)
-            return "Olá! Bem-vindo ao nosso chatbot! 😊\nPara começar, por favor me diga seu nome completo:"
+            return f"Olá, {nome_usuario}! Bem-vindo ao *Caderneta*! 😊\nSou um gerenciador financeiro para pequenas empresas via... *WhatsApp*!\n\nPara começar, me diga seu nome completo."
         return self._get_current_question(phone_number)
 
-    def handle_message(self, phone_number: str, message: str) -> str:
+    def handle_message(self, phone_number: str, message: str, nome_usuario: str) -> str:
         context = self._get_user_context(phone_number)
         if not context:
-            return self.start_onboarding(phone_number)
+            return self.start_onboarding(phone_number, nome_usuario)
 
         if context.state == OnboardingState.COMPLETED:
             criar_usuario(UsuarioModel(**asdict(context.data)), uow=self.uow)  # noqa
@@ -102,7 +102,9 @@ class OnboardingHandler:
         return ""
 
     def _generate_completion_message(self) -> str:
-        return "Cadastro concluído com sucesso! ✅\n\n" "Agora você pode utilizar nossos serviços! 🎉"
+        from src.dominio.bot.comandos import bot
+
+        return f"Cadastro concluído com sucesso! ✅\n\nAgora você pode utilizar nossos serviços! 🎉\n\n{bot.ajuda()}"
 
     def get_user_data(self, phone_number: str) -> Optional[UserData]:
         context = self._get_user_context(phone_number)
