@@ -113,8 +113,3 @@ def lucro(*args: List[str], **kwargs: Any) -> str:
     nome_arquivo = f"{grafico['nome_arquivo']}.png"
     caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
     return caminho_arquivo
-
-
-@bot.comando("teste", "Reponde pong")
-def ping(*args: List[str], **kwargs: Any) -> str:
-    return "teste teste"
