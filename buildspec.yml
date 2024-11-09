@@ -26,29 +26,35 @@ phases:
   build:
     commands:
       - echo "Starting build..."
+      # Retrieve the private key from s3 and write to file
+      - aws s3 cp s3://caderneta-prod/lightsail_key /tmp/lightsail_key
+      - aws s3 cp s3://caderneta-prod/.env .env
       - docker compose build --no-cache
 
   post_build:
     commands:
       - echo "Deploying to Lightsail..."
 
-      # Retrieve the private key from s3 and write to file
-      - aws s3 cp s3://caderneta-prod/lightsail_key /tmp/lightsail_key
-
       - chmod 600 /tmp/lightsail_key
       - eval "$(ssh-agent -s)"
       - ssh-add /tmp/lightsail_key
       - ssh-add -l
 
-      # Deploy
+    # Deploy
       - scp -i /tmp/lightsail_key -o StrictHostKeyChecking=no -vvv docker-compose.yml ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
       - scp -i /tmp/lightsail_key -o StrictHostKeyChecking=no -vvv Dockerfile ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST}:~/caderneta/
-      - |
+      - >
         ssh -i /tmp/lightsail_key -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << 'EOF'
+          set -e
+          echo "Navigating to project directory..."
           cd ~/caderneta
+          echo "Bringing down any existing containers..."
           docker compose down
+          echo "Starting containers with no-cache option..."
           docker compose up -d --no-cache
+          echo "Pruning unused images..."
           docker image prune -f
+          echo "Deployment completed successfully."
         EOF
 
       # Clean up
