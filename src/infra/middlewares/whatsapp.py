@@ -1,14 +1,14 @@
 import json
 import logging
 import traceback
-from typing import Coroutine, Any, Callable
+from typing import Callable
 
-from starlette.exceptions import HTTPException
 from starlette import status
+from starlette.exceptions import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
-from twilio.twiml.messaging_response import MessagingResponse
+from httpx import Response as HTTPXResponse
 
 from src.dominio.bot.entidade import WhatsAppBot
 from src.dominio.usuario.onboard import OnboardingHandler
@@ -22,45 +22,77 @@ logger = logging.getLogger("onboard_middleware")
 
 class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
     """
-    Middleware para processar requisições de onboarding de usuários.
+    Middleware para processar requisições de onboarding de usuários com deduplicação de webhooks.
     """
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Coroutine[Any, Any, Response] | Response:
-        if "/bot/whatsapp" not in request.url.path:
-            return await call_next(request)
+    def __init__(self, app):
+        super().__init__(app)
+        self.bot = WhatsAppBot()
 
-        dados = await request.json()
-        dados = parse_whatsapp_payload(dados)
+    async def _process_webhook(self, request: Request) -> Response | JSONResponse:
+        """Process the webhook data and return appropriate response"""
         try:
-            request.state.usuario = None
+            raw_data = await request.body()
+            dados = json.loads(raw_data)
+            logger.info("Received data: %s", json.dumps(dados, indent=2))
 
-            if not dados:
-                return await call_next(request)
+            parsed_data = parse_whatsapp_payload(dados)
+            if not parsed_data:
+                return JSONResponse(
+                    status_code=status.HTTP_200_OK,
+                    content={"status": "skipped"}
+                )
 
             repo = RepoUsuarioLeitura(session=get_session())
-            usuario = repo.buscar_por_telefone(dados.telefone)
+            usuario = repo.buscar_por_telefone(parsed_data.telefone)
 
             if not usuario:
                 uow = UnitOfWork(session_factory=get_session)
-                bot = WhatsAppBot()
                 onboard = OnboardingHandler(uow=uow)
-                pergunta_onboard = onboard.handle_message(dados.telefone, dados.mensagem, dados.nome)
-                resposta = bot.responder(pergunta_onboard, dados.telefone)
-                return JSONResponse(content=resposta)
+                pergunta_onboard = onboard.handle_message(
+                    parsed_data.telefone,
+                    parsed_data.mensagem,
+                    parsed_data.nome
+                )
+                resposta = self.bot.responder(pergunta_onboard, parsed_data.telefone)
+                return JSONResponse(content=resposta.get("content"), status_code=resposta.get("status_code"))
 
+            request.state.dados_whatsapp = parsed_data
             request.state.usuario = usuario
+
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON payload")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid JSON payload"
+            )
+        except Exception as e:
+            logger.error(f"Error processing webhook: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error processing message"
+            )
+
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable
+    ) -> Response:
+        """Main dispatch method for the middleware"""
+        if "/bot/whatsapp" not in request.url.path or request.method == "GET":
             return await call_next(request)
 
-        except Exception:
-            traceback.print_exc()
-            dados = await request.json()
-            dados = parse_whatsapp_payload(dados)
-            bot = WhatsAppBot()
+        response = await self._process_webhook(request)
+        if response is not None:
+            return response
 
-            if dados:
-                resposta = bot.responder(
-                    "Desculpe, ocorreu um erro ao processar sua mensagem.\nPor favor, tente novamente mais tarde.",
-                    dados.telefone,
-                )
-                return JSONResponse(content=resposta)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro ao processar mensagem")
+        try:
+            return await call_next(request)
+        except Exception as e:
+            logger.error(f"Error in middleware chain: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error"
+            )
