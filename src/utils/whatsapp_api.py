@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 from datetime import datetime
 
 from src.utils.formatos import formatar_telefone
+from src.utils.validadores import limpar_texto
 
 
 @dataclass
@@ -90,7 +91,7 @@ def parse_whatsapp_payload(payload: Dict) -> WhatsAppPayload:
             messages=messages,
             statuses=statuses,
             nome=nome_usuario,
-            mensagem=mensagem,
+            mensagem=limpar_texto(mensagem),
             telefone=telefone,
         )
     except KeyError:
