@@ -18,15 +18,14 @@ phases:
 
   pre_build:
     commands:
-      - echo "Configurando Docker..."
+      - echo "Setting up Docker..."
       - nohup dockerd &
       - sleep 5
       - docker info
 
   build:
     commands:
-      - echo "Starting build..."
-
+      - echo "Starting build for ARM architecture..."
       - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 
       # Check if image already exists in ECR
@@ -36,13 +35,15 @@ phases:
         else
           echo "Image not found in ECR. Proceeding with build and push..."
 
-          # Retrieve the private key from s3 and write to file
-          aws s3 cp s3://caderneta-prod/lightsail_key /tmp/lightsail_key
+          # Retrieve .env from S3
           aws s3 cp s3://caderneta-prod/.env .env
 
-          echo "Login to ECR"
+          echo "Logging in to ECR"
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
-          docker build -t caderneta .
+
+          # Build and tag Docker image for ARM64
+          docker buildx create --use
+          docker buildx build --platform linux/arm64 -t caderneta .
           docker tag caderneta:latest ${ECR}/caderneta:$COMMIT_HASH
 
           # Push to ECR
@@ -51,39 +52,21 @@ phases:
 
   post_build:
     commands:
-      - echo "Deploying to Lightsail..."
-      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - echo "Obtendo task definition atual..."
+      - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition ${TASK_DEFINITION_FAMILY})
 
-      - chmod 600 /tmp/lightsail_key
-      - eval "$(ssh-agent -s)"
-      - ssh-add /tmp/lightsail_key
-      - ssh-add -l
+      - echo "Atualizando imagem da task definition"
+      - IMAGE=$(${ECR}/caderneta/$COMMIT_HASH)
+      - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$IMAGE" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) |  del(.registeredAt)  | del(.registeredBy)')
 
-      # Deploy
-      - |
-        ssh -i /tmp/lightsail_key -o StrictHostKeyChecking=no ${LIGHTSAIL_USERNAME}@${LIGHTSAIL_HOST} << ENDSSH
-          set -e
+      - echo "Registrando nova task definition"
+      - NEW_TASK_INFO=$(aws ecs register-task-definition --region us-east-1 --cli-input-json "$NEW_TASK_DEFINITION")
 
-          export CADERNETA_IMAGE=${ECR}/caderneta:$COMMIT_HASH
+      - echo "Atualizando service"
+      - NEW_REVISION=$(echo $NEW_TASK_INFO | jq '.taskDefinition.revision')
+      - aws ecs update-service --cluster ${ECS_CLUSTER} --service ${SERVICE_NAME} --task-definition ${TASK_DEFINITION_FAMILY}:${NEW_REVISION} --force-new-deployment --region us-east-1
 
-          echo "Navigating to project directory..."
-          cd ~/caderneta
-
-          echo "Stopping current containers..."
-          docker compose -f src/infra/docker-compose.yml down
-
-          echo "Starting new containers..."
-          docker compose up -f src/infra/docker-compose.yml -d
-
-          echo "Pruning unused images..."
-          docker image prune -f
-
-          echo "Deployment complete"
-        ENDSSH
-
-      # Clean up
       - echo "Deployment completed successfully."
-      - rm -rf /tmp/lightsail_key
 
 artifacts:
   files:
