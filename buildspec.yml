@@ -44,7 +44,6 @@ phases:
           # Build and tag Docker image for ARM64
           docker buildx create --use
           docker buildx build --platform linux/arm64 -t caderneta .
-          docker tag caderneta:latest ${ECR}/caderneta:$COMMIT_HASH
 
           # Push to ECR
           docker push ${ECR}/caderneta:$COMMIT_HASH
