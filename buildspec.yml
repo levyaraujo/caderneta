@@ -18,7 +18,7 @@ phases:
 
   pre_build:
     commands:
-      - echo "Configuring Docker..."
+      - echo "Configurando Docker..."
       - nohup dockerd &
       - sleep 5
       - docker info
@@ -70,10 +70,10 @@ phases:
           cd ~/caderneta
 
           echo "Stopping current containers..."
-          docker compose down
+          docker compose -f src/infra/docker-compose.yml down
 
           echo "Starting new containers..."
-          docker compose up -d
+          docker compose up -f src/infra/docker-compose.yml -d
 
           echo "Pruning unused images..."
           docker image prune -f

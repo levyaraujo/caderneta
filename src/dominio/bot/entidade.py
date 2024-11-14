@@ -3,9 +3,11 @@ import logging
 import os
 import traceback
 from abc import ABC, abstractmethod
+from time import sleep
 
 import httpx
 from dotenv import load_dotenv
+from starlette.responses import JSONResponse
 from twilio.rest import Client
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
@@ -94,7 +96,10 @@ class WhatsAppBot(BotBase):
             erro = resposta.json().get("error")
             if erro:
                 raise ErroAoEnviarMensagemWhatsApp(erro.get("error_data").get("details"))
-            return resposta.json()
+            return {
+                "status_code": resposta.status_code,
+                "content": resposta.json()
+            }
         except Exception:
             traceback.print_exc()
 

@@ -3,8 +3,7 @@ services:
     image: postgres:16-alpine3.20
     env_file:
       - .env
-    ports:
-      - "5432:5432"
+    network_mode: host
     volumes:
       - caderneta_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -12,39 +11,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    restart: no
 
   cache:
     image: redis:7.4-alpine3.20
-    ports:
-      - '6379:6379'
+    network_mode: host
     volumes:
       - caderneta_redis_data:/data
 
   migrate:
-    image: ${CADERNETA_IMAGE}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
     depends_on:
       db:
         condition: service_healthy
     env_file:
       - .env
     command: poetry run alembic upgrade head
-    restart: "no"
-
-  app:
-    image: ${CADERNETA_IMAGE}
-    ports:
-      - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-    env_file:
-      - .env
-    volumes:
-      - /opt/caderneta/static:/opt/caderneta/static
-    restart: unless-stopped
+    restart: on-failure
 
 volumes:
   caderneta_postgres_data:

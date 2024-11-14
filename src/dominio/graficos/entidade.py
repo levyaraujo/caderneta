@@ -340,41 +340,54 @@ class GraficoLucro(GraficoBase):
             vendas_angle = 0
             custos_angle = 0
 
-        if vendas > 0:
-            # Calculate the proportion of the circle each part should occupy
-            total = vendas + custos
-            vendas_angle = (vendas / total) * 360
-            custos_angle = (custos / total) * 360
-        else:
-            vendas_angle = 0
-            custos_angle = 0
-
-            # Draw vendas portion (green) - starts from 270 (bottom) and goes clockwise
-        if vendas_angle > 0:
+        if vendas == 0:
             draw.arc(
                 [
                     (center_x - radius, center_y - radius),
                     (center_x + radius, center_y + radius),
                 ],
-                270,
-                # Start from bottom
-                270 + vendas_angle,  # Go clockwise
-                fill="#4ade80",
-                width=thickness,
-            )
-
-            # Draw custos portion (red) - starts where vendas ends and completes the circle back to bottom
-        if custos_angle > 0:
-            draw.arc(
-                [
-                    (center_x - radius, center_y - radius),
-                    (center_x + radius, center_y + radius),
-                ],
-                270 + vendas_angle,  # Start where vendas portion ends
-                630,  # Complete the circle (270 + 360)
+                0,
+                360,
                 fill="#ff4d4d",
                 width=thickness,
             )
+        if custos == 0:
+            draw.arc(
+                [
+                    (center_x - radius, center_y - radius),
+                    (center_x + radius, center_y + radius),
+                ],
+                0,
+                360,
+                fill="#4ade80",
+                width=thickness,
+            )
+        else:
+            if vendas_angle > 0:
+                draw.arc(
+                    [
+                        (center_x - radius, center_y - radius),
+                        (center_x + radius, center_y + radius),
+                    ],
+                    270,
+                    270 + vendas_angle,  # Go clockwise
+                    fill="#4ade80",
+                    width=thickness,
+                )
+
+            # Draw custos portion (red) - starts where vendas ends and completes the circle back to bottom
+            if custos_angle > 0:
+                draw.arc(
+                    [
+                        (center_x - radius, center_y - radius),
+                        (center_x + radius, center_y + radius),
+                    ],
+                    270 + vendas_angle,  # Start where vendas portion ends
+                    630,
+                    fill="#ff4d4d",
+                    width=thickness,
+                )
+
 
         # Draw center text
         title_text = "SEU LUCRO"
