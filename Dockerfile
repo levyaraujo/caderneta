@@ -2,8 +2,6 @@ FROM python:3.12.6-slim-bullseye
 
 WORKDIR /app
 
-RUN mkdir -p /opt/caderneta/static
-
 RUN pip install --no-cache-dir poetry
 
 COPY pyproject.toml poetry.lock ./
