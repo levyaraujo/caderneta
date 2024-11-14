@@ -1,11 +1,10 @@
 import os
+
+import dotenv
 import sentry_sdk
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
-
-import dotenv
 
 dotenv.load_dotenv(".env")
 
@@ -41,8 +40,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(TwilioOnboardMiddleware)
 app.add_middleware(WhatsAppOnboardMiddleware)
+app.add_middleware(TwilioOnboardMiddleware)
 
 app.include_router(BotRouter)
 app.include_router(UsuarioRouter)

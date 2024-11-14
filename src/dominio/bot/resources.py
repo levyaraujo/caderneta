@@ -52,15 +52,14 @@ async def verificacao_whatsapp_webhook(request: Request, response: Response):
 async def whatsapp_webhook(request: Request):
     uow = UnitOfWork(session_factory=get_session)
     bot = WhatsAppBot()
-    dados = await request.json()
     usuario = request.state.usuario
-    dados_whatsapp = parse_whatsapp_payload(dados)
-    if dados_whatsapp and not dados_whatsapp.statuses:
-        return await responder_usuario(
-            mensagem=dados_whatsapp.mensagem,
-            usuario=usuario,
-            uow=uow,
-            robo=bot,
-            telefone=dados_whatsapp.telefone,
-            nome_usuario=dados_whatsapp.nome,
-        )
+    dados_whatsapp = request.state.dados_whatsapp
+    resposta = await responder_usuario(
+        mensagem=dados_whatsapp.mensagem,
+        usuario=usuario,
+        uow=uow,
+        robo=bot,
+        telefone=dados_whatsapp.telefone,
+        nome_usuario=dados_whatsapp.nome,
+    )
+    return resposta
