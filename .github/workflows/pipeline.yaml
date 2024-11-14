@@ -1,4 +1,4 @@
-name: Caderneta CI/CD
+name: Caderneta CI
 on:
   pull_request:
     branches:
@@ -70,7 +70,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event.pull_request.merged
 
     steps:
       - name: Checkout code
@@ -112,7 +112,7 @@ jobs:
   deploy:
    needs: build
    runs-on: self-hosted
-   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+   if: github.event.pull_request.merged
 
    steps:
    - name: Deploy to Lightsail
