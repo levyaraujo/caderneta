@@ -9,8 +9,20 @@ phases:
     commands:
       - echo "Rodando migrations"
       - aws s3 cp s3://caderneta-prod/.env .env
+        
+      # Load environment variables
+      - export $(cat .env | grep -v '^#' | xargs)
+
       - pip install poetry==1.8.4
       - poetry config virtualenvs.create false
+        
+      # Verify DATABASE_URL is set
+      - |
+        if [ -z "$DATABASE_URL" ]; then
+          echo "ERROR: DATABASE_URL is not set"
+          exit 1
+        fi
+
       - poetry install --no-interaction --no-root --only main
       - poetry run alembic upgrade head
 
