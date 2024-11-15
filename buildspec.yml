@@ -9,7 +9,7 @@ phases:
     commands:
       - echo "Rodando migrations"
       - aws s3 cp s3://caderneta-prod/.env .env
-      - pip install poetry=1.8.4
+      - pip install poetry==1.8.4
       - poetry config virtualenvs.create false
       - poetry install --no-interaction --no-root --only main
       - alembic upgrade head
