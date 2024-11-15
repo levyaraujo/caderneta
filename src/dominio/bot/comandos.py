@@ -15,6 +15,7 @@ from src.dominio.transacao.entidade import Real
 from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
 from src.utils.datas import intervalo_mes_atual, ultima_hora, primeira_hora
+from src.utils.formatos import formatar_telefone
 from src.utils.uploader import Uploader
 
 bot = GerenciadorComandos()
@@ -113,3 +114,15 @@ def lucro(*args: List[str], **kwargs: Any) -> str:
     nome_arquivo = f"{grafico['nome_arquivo']}.png"
     caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
     return caminho_arquivo
+
+
+@bot.comando("adicionar bpo", "Adiciona bpo", aliases=["bpo", "addbpo", "add bpo"])
+def adicionar_bpo(*args: List[str], **kwargs: Any) -> str:
+    usuario: Usuario = kwargs.get("usuario")
+    if len(args) == 0:
+        return "Você precisa fornecer o número WhatsApp do BPO.\n\nEx: *adicionar bpo 11999344729*"
+
+    telefone: str = args[0]
+    telefone_bpo = formatar_telefone(telefone)
+
+    return f"BPO {telefone} adicionado com sucesso!"
