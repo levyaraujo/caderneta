@@ -5,6 +5,13 @@ phases:
     runtime-versions:
       python: 3.12
 
+  pre_build:
+    commands:
+      - echo "Rodando migrations"
+      - aws s3 cp s3://caderneta-prod/.env .env
+      - pip install alembic
+      - alembic run upgrade head
+
   build:
     commands:
       - echo "Starting build for ARM architecture..."
