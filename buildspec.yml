@@ -10,7 +10,7 @@ phases:
       - echo "Rodando migrations"
       - aws s3 cp s3://caderneta-prod/.env .env
       - pip install alembic
-      - alembic run upgrade head
+      - alembic upgrade head
 
       # Setup Docker BuildX
       - docker context create buildx-context
