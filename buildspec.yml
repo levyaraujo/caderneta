@@ -12,7 +12,7 @@ phases:
       - pip install poetry==1.8.4
       - poetry config virtualenvs.create false
       - poetry install --no-interaction --no-root --only main
-      - alembic upgrade head
+      - poetry run alembic upgrade head
 
       # Setup Docker BuildX
       - docker context create buildx-context
