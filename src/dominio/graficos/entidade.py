@@ -388,7 +388,6 @@ class GraficoLucro(GraficoBase):
                     width=thickness,
                 )
 
-
         # Draw center text
         title_text = "SEU LUCRO"
         value_text = f"{Real(resultado)}"

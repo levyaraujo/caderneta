@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date
 from enum import Enum
-from typing import Optional
+from typing import Optional, Protocol
+
 
 class StatusAssinatura(Enum):
     ATIVA = "ativa"
@@ -20,13 +21,13 @@ class Assinatura:
     data_termino: Optional[datetime] = None
     status: StatusAssinatura = StatusAssinatura.TESTE
     id: Optional[int] = field(default=None)
-    data_proximo_pagamento: Optional[date] = field(default=None)
-    data_ultimo_pagamento: Optional[date] = field(default=None)
+    data_proximo_pagamento: Optional[datetime] = field(default=None)
+    data_ultimo_pagamento: Optional[datetime] = field(default=None)
     renovacao_automatica: bool = True
 
     def __post_init__(self):
         if self.data_proximo_pagamento is None:
-            self.data_proximo_pagamento = self.data_inicio.date()
+            self.data_proximo_pagamento = self.data_inicio
 
         self._validar_datas()
 
@@ -52,11 +53,30 @@ class Assinatura:
 
     def registrar_pagamento(self, data_pagamento: date = None) -> None:
         if data_pagamento is None:
-            data_pagamento = datetime.now().date()
+            data_pagamento = datetime.now()
 
         self.data_ultimo_pagamento = data_pagamento
         self.status = StatusAssinatura.ATIVA
 
         # Calcula próxima data de pagamento
         from dateutil.relativedelta import relativedelta
+
         self.data_proximo_pagamento = data_pagamento + relativedelta(months=1)
+
+
+class ProvedorPagamento(Protocol):
+    async def criar_assinatura(self, customer_email: str, payment_method_id: str, price_id: str) -> str:
+        """Cria uma assinatur e retorna o id"""
+        ...
+
+    async def cancelar_assinatura(self, subscription_id: str) -> None:
+        """Cancels subscription"""
+        ...
+
+    async def reativar_assinatura(self, subscription_id: str) -> None:
+        """Reactivates subscription"""
+        ...
+
+    async def obter_status_assinatura(self, subscription_id: str) -> str:
+        """Gets current subscription status"""
+        ...
