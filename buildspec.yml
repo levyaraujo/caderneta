@@ -12,6 +12,11 @@ phases:
       - pip install alembic
       - alembic run upgrade head
 
+      # Setup Docker BuildX
+      - docker context create buildx-context
+      - docker buildx create buildx-context --use
+      - docker buildx inspect --bootstrap
+
   build:
     commands:
       - echo "Starting build for ARM architecture..."
@@ -22,18 +27,33 @@ phases:
       - |
         if aws ecr describe-images --repository-name caderneta --image-ids imageTag=$COMMIT_HASH 2>/dev/null; then
           echo "Image with tag $COMMIT_HASH already exists in ECR. Skipping build and push."
+          export SKIP_BUILD=true
         else
           echo "Image not found in ECR. Proceeding with build and push..."
-
-          # Retrieve .env from S3
-          aws s3 cp s3://caderneta-prod/.env .env
-
+          export SKIP_BUILD=false
+        fi
+        
+        # Build and push if image doesn't exist
+        - |
+        if [ "$SKIP_BUILD" = "false" ]; then
           echo "Logging in to ECR"
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
-
-          # Build and tag Docker image for ARM64
-          docker buildx create --use
-          docker buildx build --provenance=false --platform linux/arm64 -t $IMAGE_URI --push . --no-cache
+        
+          echo "Building and pushing Docker image for ARM64..."
+          docker buildx build \
+            --platform linux/arm64 \
+            --provenance=false \
+            --builder buildx-context \
+            --push \
+            --cache-from type=registry,ref=$ECR/caderneta:cache \
+            --cache-to type=registry,ref=$ECR/caderneta:cache,mode=max \
+            -t $IMAGE_URI \
+            .
+        
+          if [ $? -ne 0 ]; then
+            echo "Docker build and push failed"
+            exit 1
+          fi
         fi
 
   post_build:
