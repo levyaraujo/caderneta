@@ -1,4 +1,4 @@
-FROM python:3.12.6-slim-bullseye AS builder
+FROM public.ecr.aws/docker/library/python:3.12-slim-bullseye AS builder
 
 WORKDIR /app
 
@@ -6,15 +6,12 @@ RUN pip install --no-cache-dir poetry
 
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.in-project true
-
-RUN poetry install --no-interaction --no-root --only main
+RUN poetry config virtualenvs.in-project true \
+    && poetry install --no-interaction --no-root --only main
 
 COPY . .
 
-RUN poetry install --no-interaction
-
-FROM python:3.12.6-slim-bullseye
+FROM public.ecr.aws/docker/library/python:3.12-slim-bullseye
 
 WORKDIR /app
 
