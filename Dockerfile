@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM python:3.12.6-slim-bullseye AS builder
+FROM python:3.12.6-slim-bullseye AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY . .
 
 RUN poetry install --no-interaction
 
-FROM --platform=$TARGETPLATFORM python:3.12.6-slim-bullseye
+FROM python:3.12.6-slim-bullseye
 
 WORKDIR /app
 
