@@ -46,9 +46,7 @@ phases:
           echo "Image not found in ECR. Proceeding with build and push..."
           export SKIP_BUILD=false
         fi
-        
-        # Build and push if image doesn't exist
-        - |
+      - |
         if [ "$SKIP_BUILD" = "false" ]; then
           echo "Logging in to ECR"
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
@@ -63,7 +61,7 @@ phases:
             --cache-to type=registry,ref=$ECR/caderneta:cache,mode=max \
             -t $IMAGE_URI \
             .
-        
+      
           if [ $? -ne 0 ]; then
             echo "Docker build and push failed"
             exit 1
