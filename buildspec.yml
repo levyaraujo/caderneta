@@ -28,8 +28,8 @@ phases:
 
       # Setup Docker BuildX
       - docker context create buildx-context
-      - docker buildx create buildx-context --use
-      - docker buildx inspect --bootstrap
+      - docker buildx create --name builder --driver docker-container --bootstrap
+      - docker buildx use builder
 
   build:
     commands:
