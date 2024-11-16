@@ -5,6 +5,35 @@ phases:
     runtime-versions:
       python: 3.12
 
+<<<<<<< Updated upstream
+=======
+  pre_build:
+    commands:
+      - echo "Rodando migrations"
+      - aws s3 cp s3://caderneta-prod/.env .env
+        
+      # Load environment variables
+      - export $(cat .env | grep -v '^#' | xargs)
+
+      - pip install poetry==1.8.4
+      - poetry config virtualenvs.create false
+        
+      # Verify DATABASE_URL is set
+      - |
+        if [ -z "$DATABASE_URL" ]; then
+          echo "ERROR: DATABASE_URL is not set"
+          exit 1
+        fi
+
+      - poetry install --no-interaction --no-root --only main
+      - poetry run alembic upgrade head
+
+      # Setup Docker BuildX with proper platform support
+      - docker context create buildx-context
+      - docker --context=buildx-context buildx create --name multiarch-builder --driver docker-container --use
+      - docker --context=buildx-context buildx inspect --bootstrap
+
+>>>>>>> Stashed changes
   build:
     commands:
       - echo "Starting build for ARM architecture..."
@@ -13,6 +42,7 @@ phases:
 
       # Check if image already exists in ECR
       - |
+<<<<<<< Updated upstream
         if aws ecr describe-images --repository-name caderneta --image-ids imageTag=$COMMIT_HASH 2>/dev/null; then
           echo "Image with tag $COMMIT_HASH already exists in ECR. Skipping build and push."
         else
@@ -27,6 +57,34 @@ phases:
           # Build and tag Docker image for ARM64
           docker buildx create --use
           docker buildx build --provenance=false --platform linux/arm64 -t $IMAGE_URI --push . --no-cache
+=======
+        if aws ecr describe-images --repository-name caderneta --image-ids imageTag=$COMMIT_HASH >/dev/null 2>&1; then
+            SKIP_BUILD=true
+        else
+            SKIP_BUILD=false
+        fi
+      - |
+        if [ "$SKIP_BUILD" = "false" ]; then
+          echo "Logging in to ECR"
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
+        
+          echo "Building and pushing Docker image for ARM64..."
+          docker --context=buildx-context buildx build \
+            --platform linux/arm64 \
+            --build-arg TARGETPLATFORM=linux/arm64 \
+            --provenance=false \
+            --builder multiarch-builder \
+            --cache-from type=registry,ref=$LATEST_URI \
+            --cache-to type=inline \
+            --push \
+            -t $IMAGE_URI \
+            .
+      
+          if [ $? -ne 0 ]; then
+            echo "Docker build and push failed"
+            exit 1
+          fi
+>>>>>>> Stashed changes
         fi
 
   post_build:
