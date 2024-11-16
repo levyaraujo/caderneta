@@ -9,13 +9,13 @@ phases:
     commands:
       - echo "Rodando migrations"
       - aws s3 cp s3://caderneta-prod/.env .env
-        
+
       # Load environment variables
       - export $(cat .env | grep -v '^#' | xargs)
 
       - pip install poetry==1.8.4
       - poetry config virtualenvs.create false
-        
+
       # Verify DATABASE_URL is set
       - |
         if [ -z "$DATABASE_URL" ]; then
@@ -50,16 +50,17 @@ phases:
         if [ "$SKIP_BUILD" = "false" ]; then
           echo "Logging in to ECR"
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
-        
+
           echo "Building and pushing Docker image for ARM64..."
           docker --context=buildx-context buildx build \
             --platform linux/arm64 \
+            --build-arg TARGETPLATFORM=linux/arm64 \
             --provenance=false \
-            --builder buildx-context \
+            --builder multiarch-builder \
             --push \
             -t $IMAGE_URI \
             .
-      
+
           if [ $? -ne 0 ]; then
             echo "Docker build and push failed"
             exit 1
