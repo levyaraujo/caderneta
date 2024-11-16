@@ -2,7 +2,7 @@ FROM --platform=$BUILDPLATFORM python:3.12.6-slim-bullseye AS builder
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir poetry==1.9.0
+RUN pip install --no-cache-dir poetry
 
 COPY pyproject.toml poetry.lock ./
 
