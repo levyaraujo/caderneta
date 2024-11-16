@@ -13,8 +13,11 @@ FROM --platform=$TARGETPLATFORM python:3.12.6-slim-bullseye
 
 WORKDIR /app
 
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/lib/python3.12/dist-packages /usr/local/lib/python3.12/dist-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+
+ENV PATH=/usr/local/lib/python3.12/dist-packages:$PATH
+ENV PATH=/usr/local/bin:$PATH
 
 COPY . .
 
