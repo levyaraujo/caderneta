@@ -28,8 +28,8 @@ phases:
 
       # Setup Docker BuildX
       - docker context create buildx-context
-      - docker buildx create --name builder --driver docker-container --bootstrap
-      - docker buildx use builder
+      - docker --context=buildx-context buildx create --name multiarch-builder --use
+      - docker --context=buildx-context buildx inspect --bootstrap
 
   build:
     commands:
@@ -52,7 +52,7 @@ phases:
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
         
           echo "Building and pushing Docker image for ARM64..."
-          docker buildx build \
+          docker --context=buildx-context buildx build \
             --platform linux/arm64 \
             --provenance=false \
             --builder buildx-context \
