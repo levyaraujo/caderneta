@@ -57,8 +57,6 @@ phases:
             --provenance=false \
             --builder buildx-context \
             --push \
-            --cache-from type=registry,ref=$ECR/caderneta:cache \
-            --cache-to type=registry,ref=$ECR/caderneta:cache,mode=max \
             -t $IMAGE_URI \
             .
       
