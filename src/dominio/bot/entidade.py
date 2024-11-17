@@ -96,10 +96,7 @@ class WhatsAppBot(BotBase):
             erro = resposta.json().get("error")
             if erro:
                 raise ErroAoEnviarMensagemWhatsApp(erro.get("error_data").get("details"))
-            return {
-                "status_code": resposta.status_code,
-                "content": resposta.json()
-            }
+            return {"status_code": resposta.status_code, "content": resposta.json()}
         except Exception:
             traceback.print_exc()
 

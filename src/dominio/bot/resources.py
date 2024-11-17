@@ -39,10 +39,13 @@ async def verificacao_whatsapp_webhook(request: Request, response: Response):
         mode = params.get("hub.mode")
         token = params.get("hub.verify_token")
         challenge = params.get("hub.challenge")
+        token_verificacao = os.getenv("WHATSAPP_TOKEN_VERIFICACAO")
 
-        if mode == "subscribe" and token == os.getenv("WHATSAPP_TOKEN_VERIFICACAO"):
+        if mode == "subscribe" and token == token_verificacao:
             return JSONResponse(content=int(challenge), status_code=200)
-        raise HTTPException(status_code=403, detail="Verification failed.")
+        raise HTTPException(
+            status_code=403, detail=f"Verificação do WhatsApp API falhou: {token_verificacao} != {token}"
+        )
     except Exception as error:
         logging.error(error)
         return "An internal server error occurred", 500
