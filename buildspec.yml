@@ -11,7 +11,7 @@ phases:
       - export DATABASE_URL=$DATABASE_URL
 
       - echo "Instalando dependências"
-      - pip install alembic sqlalchemy pydantic "pydantic[email]"
+      - pip install alembic sqlalchemy pydantic "pydantic[email]" python-dotenv
 
       # Verify DATABASE_URL is set
       - |
