@@ -97,10 +97,7 @@ class WhatsAppBot(BotBase):
             if erro:
                 logger.error(json.dumps(erro, indent=2))
                 raise ErroAoEnviarMensagemWhatsApp("Houve um erro ao enviar mensagem para o usuário")
-            return {
-                "status_code": resposta.status_code,
-                "content": resposta.json()
-            }
+            return {"status_code": resposta.status_code, "content": resposta.json()}
         except Exception:
             traceback.print_exc()
 
