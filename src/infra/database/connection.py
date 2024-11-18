@@ -1,8 +1,7 @@
 from contextlib import contextmanager
-from os import getenv, path
+from os import getenv
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker, scoped_session
-from dotenv import load_dotenv
 
 DATABASE_URL = getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL, echo=False)
