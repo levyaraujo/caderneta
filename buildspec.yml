@@ -21,7 +21,7 @@ phases:
         fi
 
       - echo "Rodando migrations"
-      - poetry run alembic upgrade head
+      - alembic upgrade head
 
   build:
     commands:
