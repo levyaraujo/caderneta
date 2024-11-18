@@ -26,14 +26,9 @@ phases:
       - poetry install --no-interaction --no-root --only main
       - poetry run alembic upgrade head
 
-      # Setup Docker BuildX
-      - docker context create buildx-context
-      - docker --context=buildx-context buildx create --name multiarch-builder --use
-      - docker --context=buildx-context buildx inspect --bootstrap
-
   build:
     commands:
-      - echo "Starting build for ARM architecture..."
+      - echo "Começando build Docker"
       - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - export IMAGE_URI="${ECR}/caderneta:${COMMIT_HASH}"
 
@@ -51,15 +46,9 @@ phases:
           echo "Logging in to ECR"
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR
 
-          echo "Building and pushing Docker image for ARM64..."
-          docker --context=buildx-context buildx build \
-            --platform linux/arm64 \
-            --build-arg TARGETPLATFORM=linux/arm64 \
-            --provenance=false \
-            --builder multiarch-builder \
-            --push \
-            -t $IMAGE_URI \
-            .
+          echo "Building and pushing Docker image..."
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
 
           if [ $? -ne 0 ]; then
             echo "Docker build and push failed"

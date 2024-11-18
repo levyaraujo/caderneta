@@ -3,6 +3,7 @@ from datetime import datetime, date
 from enum import Enum
 from typing import Optional
 
+
 class StatusAssinatura(Enum):
     ATIVA = "ativa"
     CANCELADA = "cancelada"
@@ -59,4 +60,5 @@ class Assinatura:
 
         # Calcula próxima data de pagamento
         from dateutil.relativedelta import relativedelta
+
         self.data_proximo_pagamento = data_pagamento + relativedelta(months=1)
