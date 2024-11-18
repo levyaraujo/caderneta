@@ -12,7 +12,6 @@ from fastapi import APIRouter, status, Request
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.utils.validadores import limpar_texto
-from src.utils.whatsapp_api import parse_whatsapp_payload
 
 BotRouter = APIRouter(prefix="/bot", tags=["twilio", "whatsapp"])
 

@@ -95,7 +95,8 @@ class WhatsAppBot(BotBase):
             resposta = httpx.post(url=str(url), data=payload, headers=headers)
             erro = resposta.json().get("error")
             if erro:
-                raise ErroAoEnviarMensagemWhatsApp(erro.get("error_data").get("details"))
+                logger.error(json.dumps(erro, indent=2))
+                raise ErroAoEnviarMensagemWhatsApp("Houve um erro ao enviar mensagem para o usuário")
             return {
                 "status_code": resposta.status_code,
                 "content": resposta.json()
