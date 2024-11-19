@@ -13,6 +13,7 @@ from src.utils.validadores import validar_email
 
 REDIS_HOST = os.getenv("REDIS_HOST")
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 
 
 class OnboardingState(Enum):
@@ -38,7 +39,7 @@ class UserContext:
 
 class OnboardingHandler:
     def __init__(self, redis_host=REDIS_HOST, redis_port=REDIS_PORT, uow: UnitOfWork = None):
-        self.redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
+        self.redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=0, password=REDIS_PASSWORD)
         self.uow = uow
 
     def start_onboarding(self, phone_number: str, nome_usuario: str) -> str:

@@ -1,12 +1,9 @@
 import os
 
-import dotenv
 import sentry_sdk
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
-
-dotenv.load_dotenv(".env")
 
 from src.infra.middlewares.whatsapp import WhatsAppOnboardMiddleware
 from src.dominio.bot.resources import BotRouter
