@@ -1,24 +1,18 @@
+import inspect
 import json
 import logging
 import os
 import traceback
 from abc import ABC, abstractmethod
-from time import sleep
-
-import httpx
-from dotenv import load_dotenv
-from starlette.responses import JSONResponse
-from twilio.rest import Client
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
-import inspect
+
+import httpx
+from twilio.rest import Client
 
 from src.dominio.bot.exceptions import ComandoDesconhecido, ErroAoEnviarMensagemWhatsApp
 from src.dominio.transacao.repo import RepoTransacaoLeitura
-from src.dominio.usuario.entidade import Usuario
 from src.infra.database.connection import get_session
-
-load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("bot")
@@ -31,7 +25,7 @@ class BotBase(ABC):
 
 
 class TwilioBot(BotBase):
-    def __init__(self):
+    def __init__(self) -> None:
         self.__account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         self.__auth_token = os.getenv("TWILIO_AUTH_TOKEN")
         self.__bot_number = os.getenv("TWILIO_PHONE_NUMBER")
@@ -42,31 +36,27 @@ class TwilioBot(BotBase):
         mensagem = "" if media_url else mensagem
 
         logger.info(f"Enviando mensagem de whatsapp:+{self.__bot_number} para {telefone}: {mensagem}")
-        resposta = self.__cliente.messages.create(
+        request = self.__cliente.messages.create(
             from_=f"whatsapp:+{self.__bot_number}",
             to=telefone,
             body=mensagem,
             media_url=media_url,
         )
-        return resposta.body
+        resposta: str = request.body
+        return resposta
 
 
 class CLIBot(BotBase):
-    def responder(self, mensagem: str, usuario: str):
+    def responder(self, mensagem: str, usuario: str) -> str | dict:
         return mensagem
 
 
 class WhatsAppBot(BotBase):
-    def __init__(self):
+    def __init__(self) -> None:
         self.__url = os.getenv("WHATSAPP_WEBHOOK_URL")
         self.__token = os.getenv("META_TOKEN")
 
-    def responder(self, mensagem: str, telefone: str):
-        url = self.__url
-        headers = {
-            "Authorization": f"Bearer {self.__token}",
-            "Content-Type": "application/json",
-        }
+    def responder(self, mensagem: str, telefone: str) -> dict:
         payload = {
             "preview_url": True,
             "messaging_product": "whatsapp",
@@ -91,7 +81,19 @@ class WhatsAppBot(BotBase):
                 "type": "audio",
                 "audio": {"link": mensagem},
             }
+        url: str = self.__url
+        return self.enviar_requisicao(url, payload)
+
+    def enviar_mensagem_interativa(self, mensagem: dict) -> dict:
+        url: str = self.__url
+        return self.enviar_requisicao(url, mensagem)
+
+    def enviar_requisicao(self, url: str, payload: dict) -> dict:
         try:
+            headers = {
+                "Authorization": f"Bearer {self.__token}",
+                "Content-Type": "application/json",
+            }
             resposta = httpx.post(url=str(url), data=payload, headers=headers)
             erro = resposta.json().get("error")
             if erro:
@@ -110,12 +112,12 @@ class Comando:
     icon: str
     aliases: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.aliases = self.aliases
 
 
 class GerenciadorComandos:
-    def __init__(self):
+    def __init__(self) -> None:
         self.commands: Dict[str, Comando] = {}
         self.prefix = "!"
         self.repo_transacao_leitura: RepoTransacaoLeitura = RepoTransacaoLeitura(session=get_session())
@@ -151,9 +153,6 @@ class GerenciadorComandos:
             return ""
 
         command_name, args = self._extract_command_name_and_args(parts)
-        if not command_name:
-            logger.warning(f"Comando {parts[0]} não existe")
-            raise ComandoDesconhecido("Comando não existe")
 
         command = self.commands.get(command_name)
         if not command:
@@ -166,7 +165,7 @@ class GerenciadorComandos:
             return command.handler(*args, **kwargs)
         except Exception as e:
             logger.error(f"Erro ao executar comando {command_name}: {str(e)}", exc_info=e)
-            logging.error(traceback.print_exc())
+            traceback.print_exc()
             return f"Erro ao executar comando {command_name}. Tente novamente."
 
     def _extract_command_name_and_args(self, parts: List[str]) -> Tuple[Optional[str], List[str]]:
