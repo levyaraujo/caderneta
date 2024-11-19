@@ -44,7 +44,7 @@ def salvar_transacao(transacao: Transacao, uow: UnitOfWork):
         raise ErroAoCriarTransacao(f"Erro ao criar transação. Usuario: {transacao.usuario.email}")
 
 
-def comando_criar_transacao(usuario: Usuario, tipo: str, mensagem: str, uow: UnitOfWork) -> str:
+def comando_criar_transacao(usuario: Usuario, tipo: str, mensagem: str, uow: UnitOfWork, telefone: str) -> dict:
     parser = ConstrutorTransacao(acao=TipoTransacao[tipo])
     acao = "pagamento" if tipo == "DEBITO" else "recebimento"
     transacao_comando = parser.parse_message(mensagem)
@@ -56,9 +56,30 @@ def comando_criar_transacao(usuario: Usuario, tipo: str, mensagem: str, uow: Uni
         caixa=transacao_comando.data,
     )
     salvar_transacao(transacao=transacao, uow=uow)
-    resposta = (
+    mensagem = (
         f"Entendi! Houve um {acao} de {Real(transacao_comando.valor)} no dia {transacao_comando.data_formatada} "
         f"na categoria *{transacao_comando.categoria}*."
     )
 
+    resposta = resposta_comando_transacao(telefone, mensagem)
+
     return resposta
+
+
+def resposta_comando_transacao(telefone: str, mensagem: str):
+    return {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": telefone,
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {"text": mensagem},
+            "action": {
+                "buttons": [
+                    {"type": "reply", "reply": {"id": "apagar", "title": "Apagar"}},
+                    {"type": "reply", "reply": {"id": "lucro", "title": "Lucro"}},
+                ]
+            },
+        },
+    }
