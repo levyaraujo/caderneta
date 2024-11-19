@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytest
 
+from src.dominio.bot.entidade import CLIBot
 from src.dominio.transacao.entidade import Transacao
 from src.dominio.usuario.entidade import Usuario
 from src.infra.database.connection import metadata, GET_DEFAULT_SESSION_CONTEXT, engine
@@ -74,3 +75,8 @@ def clean_tables(session):
     for table in reversed(metadata.sorted_tables):
         session.execute(table.delete())
     session.commit()
+
+
+@pytest.fixture(scope="session")
+def cli_bot():
+    return CLIBot()

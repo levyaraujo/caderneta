@@ -7,6 +7,8 @@ from freezegun import freeze_time
 
 from src.dominio.bot.comandos import bot
 from src.dominio.bot.exceptions import ComandoDesconhecido
+from src.dominio.processamento.entidade import ClassificadorTexto
+from src.dominio.transacao.services import comando_criar_transacao
 from src.dominio.transacao.tipos import TipoTransacao
 from src.infra.database.uow import UnitOfWork
 from src.libs.tipos import Intervalo
@@ -97,3 +99,29 @@ async def test_grafico_fluxo(mock_usuario, transacao_gen, session):
     print(resposta)
 
     assert resposta.startswith(os.getenv("STATIC_URL"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mensagem", ["sakdgafkbasfjh", "nada"])
+async def test_integracao_resposta_usuario(mensagem, cli_bot, mock_usuario, session):
+    from src.dominio.bot.resources import responder_usuario
+
+    uow = UnitOfWork(session_factory=lambda: session)
+
+    usuario = mock_usuario
+    resposta = await responder_usuario(
+        mensagem=mensagem, usuario=usuario, telefone=usuario.telefone, nome_usuario=usuario.nome, robo=cli_bot, uow=uow
+    )
+
+    assert resposta == f"Comando {mensagem} não existe\n\n Digite *ajuda* e veja os comandos disponíveis."
+
+
+@pytest.mark.parametrize("comando", ["vendi 150 vestido"])
+def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, session):
+    usuario = mock_usuario
+    uow = UnitOfWork(session_factory=lambda: session)
+    classificador = ClassificadorTexto()
+    tipo, _ = classificador.classificar_mensagem(comando)
+    resposta = comando_criar_transacao(usuario, tipo.upper(), comando, uow, usuario.telefone)
+
+    assert isinstance(resposta, dict)
