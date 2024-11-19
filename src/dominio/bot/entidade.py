@@ -54,6 +54,9 @@ class CLIBot(BotBase):
     def responder(self, mensagem: str, usuario: str) -> str | dict:
         return mensagem
 
+    def enviar_mensagem_interativa(self, mensagem: dict) -> str | dict:
+        return mensagem
+
 
 class WhatsAppBot(BotBase):
     def __init__(self) -> None:
