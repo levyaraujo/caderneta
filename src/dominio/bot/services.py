@@ -39,7 +39,7 @@ async def responder_usuario(
             if tipo == "debito" or tipo == "credito":
                 resposta = comando_criar_transacao(usuario, tipo.upper(), mensagem, uow, telefone)
 
-                return robo.responder(resposta, telefone)
+                return robo.enviar_mensagem_interativa(resposta)
         except NaoEhTransacao:
             robo.responder("Não entendi sua mensagem 🫤", telefone)
             robo.responder(bot.ajuda(), telefone)

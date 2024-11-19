@@ -23,6 +23,10 @@ class BotBase(ABC):
     def responder(self, mensagem: str, usuario: str) -> str | dict:
         pass
 
+    @abstractmethod
+    def enviar_mensagem_interativa(self, mensagem: dict) -> str | dict:
+        pass
+
 
 class TwilioBot(BotBase):
     def __init__(self) -> None:
