@@ -1,5 +1,6 @@
 import logging
 import traceback
+from typing import Any
 
 from src.dominio.bot.comandos import bot
 from src.dominio.bot.entidade import BotBase
@@ -20,17 +21,23 @@ async def responder_usuario(
     nome_usuario: str,
     robo: BotBase,
     uow: UnitOfWork,
-):
+) -> Any:
     try:
         resposta = await bot.processar_mensagem(mensagem, nome_usuario=nome_usuario, usuario=usuario, uow=uow)
         return robo.responder(resposta, telefone)
 
     except ComandoDesconhecido:
+        comandos = mensagem.split(" ")
+        if len(comandos) == 1:
+            return robo.responder(
+                f"Comando {comandos[0]} não existe\n\n Digite *ajuda* e veja os comandos disponíveis.", telefone
+            )
+
         try:
             classifier = ClassificadorTexto()
             tipo, _ = classifier.classificar_mensagem(mensagem)
             if tipo == "debito" or tipo == "credito":
-                resposta = comando_criar_transacao(usuario, tipo.upper(), mensagem, uow)
+                resposta = comando_criar_transacao(usuario, tipo.upper(), mensagem, uow, telefone)
 
                 return robo.responder(resposta, telefone)
         except NaoEhTransacao:
@@ -39,4 +46,4 @@ async def responder_usuario(
 
     except Exception:
         traceback.print_exc()
-        robo.responder("Ocorreu um erro desconhecido. Por favor, tente novamente.", telefone)
+        return robo.responder("Ocorreu um erro desconhecido. Por favor, tente novamente.", telefone)
