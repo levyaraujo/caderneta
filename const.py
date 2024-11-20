@@ -49,4 +49,4 @@ TRANSACAO_CREDITO = [
     "reci",
 ]
 
-REGEX_WAMID = r"^wamid\.[A-Za-z0-9+/]+=$"
+REGEX_WAMID = r"^wamid\.[A-Za-z0-9+/]+={0,2}$"
