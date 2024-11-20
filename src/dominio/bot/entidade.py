@@ -93,6 +93,7 @@ class Comando:
     description: str
     icon: str
     aliases: List[str] = field(default_factory=list)
+    oculto: bool = False
 
     def __post_init__(self) -> None:
         self.aliases = self.aliases
@@ -148,7 +149,8 @@ class GerenciadorComandos:
                     continue
 
         if not command:
-            logging.warning(f"Comando {command_name} não existe")
+            if command_name:
+                logging.warning(f"Comando {command_name} não existe")
             raise ComandoDesconhecido("Comando não existe")
 
         try:
@@ -178,8 +180,9 @@ class GerenciadorComandos:
         help_text = "Por aqui consigo te ajudar com os seguintes comandos:\n\n"
         unique_commands = {cmd.name: cmd for cmd in self.commands.values()}
         for cmd in unique_commands.values():
-            aliases = f" (Também entendo: *{', '.join(cmd.aliases)}*)" if cmd.aliases else ""
-            help_text += f"*{cmd.name}*: {cmd.description}{aliases}\n"
+            if cmd.oculto is False:
+                aliases = f" (Também entendo: *{', '.join(cmd.aliases)}*)" if cmd.aliases else ""
+                help_text += f"*{cmd.name}*: {cmd.description}{aliases}\n"
 
         help_text += "\n\nAlém disso, você pode registrar suas receitas e despesas de forma simples.\nEx: *paguei 1350 aluguel* ou *vendi 2300 de buffet*"
         return help_text
