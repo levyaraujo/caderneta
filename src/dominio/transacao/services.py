@@ -55,16 +55,16 @@ def comando_criar_transacao(usuario: Usuario, tipo: str, mensagem: str, uow: Uni
     )
     salvar_transacao(transacao=transacao, uow=uow)
     mensagem = (
-        f"Entendi! Houve um {acao} de {Real(transacao_comando.valor)} no dia {transacao_comando.data_formatada} "
+        f"Entendi! Houve um {acao} de *{Real(transacao_comando.valor)}* no dia {transacao_comando.data_formatada} "
         f"na categoria *{transacao_comando.categoria}*."
     )
 
-    resposta = resposta_comando_transacao(telefone, mensagem)
+    resposta = resposta_comando_transacao(telefone, mensagem, transacao.id)
 
     return resposta
 
 
-def resposta_comando_transacao(telefone: str, mensagem: str):
+def resposta_comando_transacao(telefone: str, mensagem: str, transacao_id: int):
     return {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -75,8 +75,9 @@ def resposta_comando_transacao(telefone: str, mensagem: str):
             "body": {"text": mensagem},
             "action": {
                 "buttons": [
-                    {"type": "reply", "reply": {"id": "apagar", "title": "Apagar"}},
+                    {"type": "reply", "reply": {"id": f"apagar-{transacao_id}", "title": "Apagar"}},
                     {"type": "reply", "reply": {"id": "lucro", "title": "Lucro"}},
+                    {"type": "reply", "reply": {"id": "fluxo", "title": "Fluxo"}},
                 ]
             },
         },

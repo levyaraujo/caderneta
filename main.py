@@ -2,17 +2,22 @@ import logging
 import os
 import sys
 
+import dotenv
 import sentry_sdk
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
+dotenv.load_dotenv(".env")
+
 from src.infra.middlewares.whatsapp import WhatsAppOnboardMiddleware
 from src.dominio.bot.resources import BotRouter
 from src.dominio.usuario.resources import UsuarioRouter
+from src.infra.scheduler import iniciar_scheduler
+
 
 BUCKET = os.getenv("BUCKET")
-app = FastAPI()
+app = FastAPI(lifespan=iniciar_scheduler)
 
 logging.basicConfig(
     level=logging.INFO,

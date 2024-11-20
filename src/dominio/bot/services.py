@@ -28,7 +28,7 @@ async def responder_usuario(
         comandos = mensagem.split(" ")
         if len(comandos) == 1:
             return robo.responder(
-                f"Comando {comandos[0]} não existe\n\n Digite *ajuda* e veja os comandos disponíveis.", telefone
+                f"Comando {comandos[0]} não existe\n\nDigite *ajuda* e veja os comandos disponíveis.", telefone
             )
 
         try:
