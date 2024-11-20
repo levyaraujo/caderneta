@@ -8,6 +8,7 @@ import pytz
 from fastapi import FastAPI
 
 from src.dominio.processamento.entidade import ClassificadorTexto
+from src.infra.migration import run_migrations
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,8 +28,7 @@ def treinar_modelo():
     return
 
 
-@asynccontextmanager
-async def iniciar_scheduler(app: FastAPI):
+async def iniciar_scheduler():
     scheduler.add_job(
         treinar_modelo,
         trigger=CronTrigger(hour=6),  # Isso será executado 3h da manhã em UTC-3
@@ -39,4 +39,10 @@ async def iniciar_scheduler(app: FastAPI):
 
     scheduler.start()
     logger.info("Scheduler iniciado com sucesso")
+
+
+@asynccontextmanager
+async def iniciar_servicos(app: FastAPI):
+    await iniciar_scheduler()
+    run_migrations()
     yield

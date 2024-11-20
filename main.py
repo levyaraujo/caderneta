@@ -13,11 +13,10 @@ dotenv.load_dotenv(".env")
 from src.infra.middlewares.whatsapp import WhatsAppOnboardMiddleware
 from src.dominio.bot.resources import BotRouter
 from src.dominio.usuario.resources import UsuarioRouter
-from src.infra.scheduler import iniciar_scheduler
-
+from src.infra.scheduler import iniciar_servicos
 
 BUCKET = os.getenv("BUCKET")
-app = FastAPI(lifespan=iniciar_scheduler)
+app = FastAPI(lifespan=iniciar_servicos)
 
 logging.basicConfig(
     level=logging.INFO,
