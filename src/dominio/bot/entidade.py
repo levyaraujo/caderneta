@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
 import httpx
-from twilio.rest import Client
 
 from src.dominio.bot.exceptions import ComandoDesconhecido, ErroAoEnviarMensagemWhatsApp
 from src.dominio.transacao.repo import RepoTransacaoLeitura
@@ -23,28 +22,6 @@ class BotBase(ABC):
     @abstractmethod
     def enviar_mensagem_interativa(self, mensagem: dict) -> str | dict:
         pass
-
-
-class TwilioBot(BotBase):
-    def __init__(self) -> None:
-        self.__account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-        self.__auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-        self.__bot_number = os.getenv("TWILIO_PHONE_NUMBER")
-        self.__cliente = Client(self.__account_sid, self.__auth_token)
-
-    def responder(self, mensagem: str, telefone: str) -> str:
-        media_url = mensagem if mensagem.startswith("http") else None
-        mensagem = "" if media_url else mensagem
-
-        logging.info(f"Enviando mensagem de whatsapp:+{self.__bot_number} para {telefone}: {mensagem}")
-        request = self.__cliente.messages.create(
-            from_=f"whatsapp:+{self.__bot_number}",
-            to=telefone,
-            body=mensagem,
-            media_url=media_url,
-        )
-        resposta: str = request.body
-        return resposta
 
 
 class CLIBot(BotBase):
