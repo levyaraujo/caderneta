@@ -10,8 +10,6 @@ from src.infra.database.uow import UnitOfWork
 
 UsuarioRouter = APIRouter(prefix="/usuario", tags=["usuario"])
 
-logger = logging.getLogger("usuario_resources")
-
 
 @UsuarioRouter.post("", status_code=status.HTTP_201_CREATED)
 def usuario_onboard(usuario: UsuarioModel):
@@ -20,11 +18,11 @@ def usuario_onboard(usuario: UsuarioModel):
         usuario_criado = criar_usuario(usuario, uow)
         return {"message": "Usuario cadastrado com sucesso!"}
     except UsuarioJaExiste as erro:
-        logger.info(f"Usuário {usuario.email} já existe no sistema")
+        logging.info(f"Usuário {usuario.email} já existe no sistema")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(erro))
 
     except ErroAoCriarUsuario as erro:
-        logger.error(f"Um erro ocorreu ao criar o usuário {usuario.email}: {erro}")
+        logging.error(f"Um erro ocorreu ao criar o usuário {usuario.email}: {erro}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erro ao criar usuário",

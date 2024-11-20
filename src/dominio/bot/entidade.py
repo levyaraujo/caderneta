@@ -14,9 +14,6 @@ from src.dominio.bot.exceptions import ComandoDesconhecido, ErroAoEnviarMensagem
 from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.infra.database.connection import get_session
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("bot")
-
 
 class BotBase(ABC):
     @abstractmethod
@@ -39,7 +36,7 @@ class TwilioBot(BotBase):
         media_url = mensagem if mensagem.startswith("http") else None
         mensagem = "" if media_url else mensagem
 
-        logger.info(f"Enviando mensagem de whatsapp:+{self.__bot_number} para {telefone}: {mensagem}")
+        logging.info(f"Enviando mensagem de whatsapp:+{self.__bot_number} para {telefone}: {mensagem}")
         request = self.__cliente.messages.create(
             from_=f"whatsapp:+{self.__bot_number}",
             to=telefone,
@@ -104,7 +101,7 @@ class WhatsAppBot(BotBase):
             resposta = httpx.post(url=str(url), data=payload, headers=headers)
             erro = resposta.json().get("error")
             if erro:
-                logger.error(json.dumps(erro, indent=2))
+                logging.error(json.dumps(erro, indent=2))
                 raise ErroAoEnviarMensagemWhatsApp("Houve um erro ao enviar mensagem para o usuário")
             return {"status_code": resposta.status_code, "content": resposta.json()}
         except Exception:
@@ -163,7 +160,7 @@ class GerenciadorComandos:
 
         command = self.commands.get(command_name)
         if not command:
-            logger.warning(f"Comando {command_name} não existe")
+            logging.warning(f"Comando {command_name} não existe")
             raise ComandoDesconhecido("Comando não existe")
 
         try:
@@ -171,7 +168,7 @@ class GerenciadorComandos:
                 return await command.handler(*args, **kwargs)
             return command.handler(*args, **kwargs)
         except Exception as e:
-            logger.error(f"Erro ao executar comando {command_name}: {str(e)}", exc_info=e)
+            logging.error(f"Erro ao executar comando {command_name}: {str(e)}", exc_info=True)
             traceback.print_exc()
             return f"Erro ao executar comando {command_name}. Tente novamente."
 
