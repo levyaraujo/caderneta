@@ -18,6 +18,7 @@ from src.dominio.transacao.repo import RepoTransacaoEscrita
 from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
 from src.infra.database.connection import get_session
+from src.infra.database.uow import UnitOfWork
 from src.utils.datas import intervalo_mes_atual, ultima_hora, primeira_hora
 from src.utils.uploader import Uploader
 
@@ -120,15 +121,17 @@ def lucro(*args: List[str], **kwargs: Any) -> str:
 
 
 @bot.comando(REGEX_WAMID, "Remove transação por wamid")
-def remover_transacao(*args: Tuple[str], **kwargs: Any):
+def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
     wamid_transacao = str(args[0])
-    repo_transacao_escrita = RepoTransacaoEscrita(session=get_session())
     usuario: Usuario = kwargs.get("usuario")
+    uow = UnitOfWork(session_factory=get_session)
 
     try:
-        transacao = bot.repo_transacao_leitura.buscar_por_wamid(wamid_transacao, usuario.id)
+        with uow:
+            transacao = bot.repo_transacao_leitura.buscar_por_wamid(wamid_transacao, usuario.id)
 
-        repo_transacao_escrita.remover(transacao)
+            uow.repo_escrita.remover(transacao)
+            uow.commit()
         return "Transação removida com sucesso! ✅"
 
     except Exception as e:
