@@ -1,7 +1,6 @@
 import logging
 
 from passlib.context import CryptContext
-from passlib.hash import argon2
 from pydantic import SecretStr
 
 from src.dominio.usuario.entidade import Usuario, UsuarioModel
@@ -9,8 +8,6 @@ from src.dominio.usuario.exceptions import ErroAoCriarUsuario, UsuarioJaExiste
 from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
-
-logger = logging.getLogger("usuario_services")
 
 pwd_context = CryptContext(
     schemes=["argon2"],
@@ -57,5 +54,5 @@ def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork) -> UsuarioModel | None
             uow.commit()
             return usuario
     except Exception as e:
-        logger.error(f"Erro ao criar transacao: {e}")
+        logging.exception(f"Erro ao criar transacao: {e}")
         raise ErroAoCriarUsuario(f"Erro ao o usuario {usuario.email}: {e}")

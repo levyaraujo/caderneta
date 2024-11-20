@@ -10,10 +10,7 @@ from plotly import graph_objects as go
 
 from src.dominio.transacao.entidade import Real, Transacao
 from src.dominio.transacao.tipos import TipoTransacao
-import httpx
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("graficos")
 STATIC = os.getenv("BUCKET")
 
 
@@ -72,7 +69,7 @@ class GraficoBase(IGrafico):
             buffer.seek(0)
             return buffer.getvalue()
         except Exception as e:
-            logger.error(f"Erro ao gerar gráfico em bytes: {str(e)}")
+            logging.error(f"Erro ao gerar gráfico em bytes", exc_info=True)
             raise
 
     @abstractmethod

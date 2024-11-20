@@ -9,8 +9,6 @@ from src.infra.database.uow import UnitOfWork
 from src.libs.tipos import Intervalo
 from src.dominio.transacao.entidade import Transacao, Real
 
-logger = logging.getLogger("transacao.servicos")
-
 
 def _calcular_caixa(transacoes: List[Transacao], intervalo: Intervalo) -> float:
     transacoes_no_periodo = [transacao for transacao in transacoes if intervalo.contem(transacao.caixa)]
@@ -40,7 +38,7 @@ def salvar_transacao(transacao: Transacao, uow: UnitOfWork):
             uow.repo_escrita.adicionar(transacao)
             uow.commit()
     except Exception as e:
-        logger.error(f"Erro ao criar transação para o usuario {transacao.usuario.email}: {e}")
+        logging.error(f"Erro ao criar transação para o usuario {transacao.usuario.email}: {e}")
         raise ErroAoCriarTransacao(f"Erro ao criar transação. Usuario: {transacao.usuario.email}")
 
 

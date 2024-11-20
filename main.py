@@ -1,4 +1,6 @@
+import logging
 import os
+import sys
 
 import sentry_sdk
 from fastapi import FastAPI
@@ -13,6 +15,13 @@ from src.infra.middlewares.twilio import TwilioOnboardMiddleware
 BUCKET = os.getenv("BUCKET")
 app = FastAPI()
 
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    format="{asctime} - {levelname} - {message}",
+    style="{",
+    datefmt="%d/%m/%Y %H:%M",
+)
 
 sentry_sdk.init(
     dsn="https://9e11244046c4b957853cc51bd10a478b@o4508257512521728.ingest.us.sentry.io/4508257514618880",
