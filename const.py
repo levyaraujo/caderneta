@@ -1,4 +1,4 @@
-from typing import Dict, Callable, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 
@@ -48,3 +48,5 @@ TRANSACAO_CREDITO = [
     "entrou",
     "reci",
 ]
+
+REGEX_WAMID = r"^wamid\.[A-Za-z0-9+/]+=$"

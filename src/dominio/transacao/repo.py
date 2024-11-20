@@ -1,5 +1,6 @@
 from typing import List
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from src.dominio.transacao.entidade import Transacao
@@ -27,3 +28,10 @@ class RepoTransacaoLeitura(RepoBase[Transacao]):
 
     def buscar_por_id(self, entidade: Transacao):
         return self.session.query(Transacao).filter(Transacao.id == entidade.id).first()
+
+    def buscar_por_wamid(self, wamid: str, usuario_id: int):
+        return (
+            self.session.query(Transacao)
+            .filter(func.lower(Transacao.wamid) == func.lower(wamid), Transacao.usuario_id == usuario_id)
+            .first()
+        )

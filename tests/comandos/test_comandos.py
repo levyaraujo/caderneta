@@ -13,6 +13,7 @@ from src.dominio.transacao.tipos import TipoTransacao
 from src.infra.database.uow import UnitOfWork
 from src.libs.tipos import Intervalo
 from tests.comandos.dados_teste import DADOS_TESTE_COMANDOS
+from tests.conftest import gerar_wamid
 
 
 @pytest.mark.parametrize(
@@ -113,15 +114,42 @@ async def test_integracao_resposta_usuario(mensagem, cli_bot, mock_usuario, sess
         mensagem=mensagem, usuario=usuario, telefone=usuario.telefone, nome_usuario=usuario.nome, robo=cli_bot, uow=uow
     )
 
-    assert resposta == f"Comando {mensagem} não existe\n\n Digite *ajuda* e veja os comandos disponíveis."
+    assert resposta == f"Comando {mensagem} não existe\n\nDigite *ajuda* e veja os comandos disponíveis."
 
 
 @pytest.mark.parametrize("comando", ["vendi 150 vestido"])
-def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, session):
+def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, session, mock_payload_whatsapp):
     usuario = mock_usuario
+    dados_whatsapp = mock_payload_whatsapp
     uow = UnitOfWork(session_factory=lambda: session)
     classificador = ClassificadorTexto()
     tipo, _ = classificador.classificar_mensagem(comando)
-    resposta = comando_criar_transacao(usuario, tipo.upper(), comando, uow, usuario.telefone)
+    resposta = comando_criar_transacao(usuario, tipo.upper(), comando, uow, usuario.telefone, dados_whatsapp)
 
     assert isinstance(resposta, dict)
+
+
+@pytest.mark.asyncio
+async def test_remover_transacao_por_wamid(mock_usuario, session, transacao_gen, gerar_wamid):
+    uow = UnitOfWork(session_factory=lambda: session)
+    usuario = mock_usuario
+
+    wamid = gerar_wamid
+
+    with uow:
+        transacao = transacao_gen(
+            usuario,
+            100.0,
+            "Loja A",
+            TipoTransacao.CREDITO,
+            caixa=datetime.now(),
+            wamid=wamid,
+        )
+        uow.repo_escrita.adicionar(transacao)
+        uow.commit()
+
+    intervalo = Intervalo(inicio=datetime(2024, 10, 1), fim=datetime(2024, 10, 31))
+    assert (
+        await bot.processar_mensagem(wamid, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
+        == "Transação removida com sucesso! ✅"
+    )

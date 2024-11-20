@@ -42,6 +42,7 @@ pre-commit = "^4.0.1"
 pytest-asyncio = "^0.24.0"
 imagehash = "^4.3.1"
 types-python-dateutil = "^2.9.0.20241003"
+coverage = "^7.6.7"
 
 
 [build-system]

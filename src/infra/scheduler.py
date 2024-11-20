@@ -1,9 +1,9 @@
+import sys
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import logging
-from datetime import datetime
 import pytz
 from fastapi import FastAPI
 
@@ -13,6 +13,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%d/%m/%Y %H:%M",
+    stream=sys.stdout,
 )
 logger = logging.getLogger(__name__)
 

@@ -31,6 +31,7 @@ dados_teste = [
             ],
         },
         "350 fornecedor pix",
+        "wamid.HBgMNTU5NDgxMzYyNjAwFQIAEhgWM0VCMENCNzRGRDEwNUJBRUU0MzZDNQA=",
     ),
     (
         {
@@ -71,6 +72,7 @@ dados_teste = [
             ],
         },
         "lucro",
+        "wamid.HBgMNTU5NDgxMzYyNjAwFQIAEhgWM0VCMDU1RjlFODAwQjVERDkzNDQwOAA=",
     ),
     (
         {
@@ -111,5 +113,6 @@ dados_teste = [
             ],
         },
         "apagar",
+        "wamid.HBgMNTU5NDgxMzYyNjAwFQIAEhgWM0VCMERBMkExOEQ4NzZFMTExOTRGNQA=",
     ),
 ]
