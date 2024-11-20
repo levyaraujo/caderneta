@@ -25,10 +25,6 @@ from const import TRANSACAO_DEBITO, TRANSACAO_CREDITO
 from src.dominio.processamento.exceptions import NaoEhTransacao
 from src.dominio.transacao.tipos import TipoTransacao
 
-logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger("TextClassifier")
-
 nltk.download("punkt", quiet=True)
 nltk.download("stopwords", quiet=True)
 nltk.download("wordnet", quiet=True)
@@ -72,10 +68,10 @@ class ClassificadorTexto:
     def _carregar_dataframe(self) -> pd.DataFrame:
         try:
             df = pd.read_csv(self.csv_path, on_bad_lines="skip")
-            logger.info(f"Data loaded successfully. Number of samples: {len(df)}")
+            logging.info(f"Data loaded successfully. Number of samples: {len(df)}")
             return df
         except Exception as e:
-            logger.error(f"Error loading data: {e}")
+            logging.error(f"Error loading data: {e}")
             raise
 
     def pre_processar_texto(self, text: str) -> str:
@@ -138,12 +134,12 @@ class ClassificadorTexto:
                 )
                 self.df = pd.concat([self.df, nova_linha], ignore_index=True)
                 self.df.to_csv(self.csv_path, index=True)
-                logger.info(f"Dataframe atualizado com a nova classificação: {previsao}")
+                logging.info(f"Dataframe atualizado com a nova classificação: {previsao}")
 
             return previsao, probs_dict
 
         except NotFittedError as erro:
-            logger.info(f"Model not fitted yet: {erro}")
+            logging.info(f"Model not fitted yet: {erro}")
             self.treinar_modelo()
             self.salvar_modelo()
             return self.classificar_mensagem(mensagem, atualizar_df)
@@ -165,7 +161,7 @@ class ClassificadorTexto:
         joblib.dump(self.vectorizer, self.vectorizer_joblib)
         joblib.dump(self.classifier, self.classifier_joblib)
         self.df.to_csv(self.csv_path, index=False)
-        logger.info(f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}")
+        logging.info(f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}")
 
 
 @dataclass
