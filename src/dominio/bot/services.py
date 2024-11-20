@@ -1,6 +1,6 @@
 import logging
 import traceback
-from typing import Any
+from typing import Any, Optional
 
 from src.dominio.bot.comandos import bot
 from src.dominio.bot.entidade import BotBase
@@ -10,6 +10,7 @@ from src.dominio.processamento.exceptions import NaoEhTransacao
 from src.dominio.transacao.services import comando_criar_transacao
 from src.dominio.usuario.entidade import Usuario
 from src.infra.database.uow import UnitOfWork
+from src.utils.whatsapp_api import WhatsAppPayload
 
 
 async def responder_usuario(
@@ -19,6 +20,7 @@ async def responder_usuario(
     nome_usuario: str,
     robo: BotBase,
     uow: UnitOfWork,
+    dados_whatsapp: Optional[WhatsAppPayload] = None,
 ) -> Any:
     try:
         resposta = await bot.processar_mensagem(mensagem, nome_usuario=nome_usuario, usuario=usuario, uow=uow)
@@ -35,7 +37,7 @@ async def responder_usuario(
             classifier = ClassificadorTexto()
             tipo, _ = classifier.classificar_mensagem(mensagem)
             if tipo == "debito" or tipo == "credito":
-                resposta = comando_criar_transacao(usuario, tipo.upper(), mensagem, uow, telefone)
+                resposta = comando_criar_transacao(usuario, tipo.upper(), mensagem, uow, telefone, dados_whatsapp)
 
                 return robo.enviar_mensagem_interativa(resposta)
         except NaoEhTransacao:

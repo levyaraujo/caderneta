@@ -8,6 +8,7 @@ from src.dominio.usuario.entidade import Usuario
 from src.infra.database.uow import UnitOfWork
 from src.libs.tipos import Intervalo
 from src.dominio.transacao.entidade import Transacao, Real
+from src.utils.whatsapp_api import WhatsAppPayload
 
 
 def _calcular_caixa(transacoes: List[Transacao], intervalo: Intervalo) -> float:
@@ -42,7 +43,9 @@ def salvar_transacao(transacao: Transacao, uow: UnitOfWork):
         raise ErroAoCriarTransacao(f"Erro ao criar transação. Usuario: {transacao.usuario.email}")
 
 
-def comando_criar_transacao(usuario: Usuario, tipo: str, mensagem: str, uow: UnitOfWork, telefone: str) -> dict:
+def comando_criar_transacao(
+    usuario: Usuario, tipo: str, mensagem: str, uow: UnitOfWork, telefone: str, dados_whatsapp: WhatsAppPayload
+) -> dict:
     parser = ConstrutorTransacao(acao=TipoTransacao[tipo])
     acao = "pagamento" if tipo == "DEBITO" else "recebimento"
     transacao_comando = parser.parse_message(mensagem)
@@ -52,6 +55,7 @@ def comando_criar_transacao(usuario: Usuario, tipo: str, mensagem: str, uow: Uni
         tipo=transacao_comando.tipo,
         categoria=transacao_comando.categoria,
         caixa=transacao_comando.data,
+        wamid=dados_whatsapp.wamid,
     )
     salvar_transacao(transacao=transacao, uow=uow)
     mensagem = (
@@ -59,12 +63,12 @@ def comando_criar_transacao(usuario: Usuario, tipo: str, mensagem: str, uow: Uni
         f"na categoria *{transacao_comando.categoria}*."
     )
 
-    resposta = resposta_comando_transacao(telefone, mensagem, transacao.id)
+    resposta = resposta_comando_transacao(telefone, mensagem, transacao.wamid)
 
     return resposta
 
 
-def resposta_comando_transacao(telefone: str, mensagem: str, transacao_id: int):
+def resposta_comando_transacao(telefone: str, mensagem: str, id_mensagem: str):
     return {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -75,7 +79,7 @@ def resposta_comando_transacao(telefone: str, mensagem: str, transacao_id: int):
             "body": {"text": mensagem},
             "action": {
                 "buttons": [
-                    {"type": "reply", "reply": {"id": f"apagar-{transacao_id}", "title": "Apagar"}},
+                    {"type": "reply", "reply": {"id": f"{id_mensagem}", "title": "Apagar"}},
                     {"type": "reply", "reply": {"id": "lucro", "title": "Lucro"}},
                     {"type": "reply", "reply": {"id": "fluxo", "title": "Fluxo"}},
                 ]

@@ -7,7 +7,7 @@ from datetime import datetime
 
 from src.dominio.transacao.services import _calcular_caixa, _calcular_competencia
 from src.libs.tipos import Intervalo
-from src.dominio.transacao.exceptions import TipoTransacaoInvalido
+from src.dominio.transacao.exceptions import TipoTransacaoInvalido, WamIdInvalido
 from src.dominio.transacao.entidade import Transacao, TipoTransacao
 
 
@@ -117,3 +117,23 @@ def test_fluxo_caixa(mock_usuario, transacao_gen):
     )
 
     assert caixa == 1350
+
+
+@pytest.mark.parametrize(
+    "wamid", ["nada", "ashfasgfuigua", "wamid.HBgMNTU5NDgxMzYyNjAwFQIAEhgWM0VCMERBMkExOEQ4NzZFMTExOTRGNQA"]
+)
+def test_wamid_transacao_invalido(mock_usuario, wamid):
+    usuario = mock_usuario
+
+    with pytest.raises(WamIdInvalido) as excinfo:
+        transacao = Transacao(
+            usuario=usuario,
+            valor=150,
+            categoria="aidasasf",
+            tipo=TipoTransacao.DEBITO,
+            descricao="asodihasjklfnasfr",
+            caixa=datetime.now(),
+            wamid=wamid,
+        )
+
+    assert str(excinfo.value) == f"wamid inválido: {wamid}"

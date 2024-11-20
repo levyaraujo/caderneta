@@ -2,6 +2,7 @@ import inspect
 import json
 import logging
 import os
+import re
 import traceback
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -134,8 +135,18 @@ class GerenciadorComandos:
             return ""
 
         command_name, args = self._extract_command_name_and_args(parts)
-
         command = self.commands.get(command_name)
+
+        if not command:
+            for cmd_name, cmd in self.commands.items():
+                try:
+                    # Check if the command name is a regex pattern
+                    if re.match(cmd_name, command_name):
+                        command = cmd
+                        break
+                except Exception:
+                    continue
+
         if not command:
             logging.warning(f"Comando {command_name} não existe")
             raise ComandoDesconhecido("Comando não existe")
@@ -153,6 +164,11 @@ class GerenciadorComandos:
         """Extrai nome do comando (incluindo comandos com múltiplas palavras) e seus argumentos"""
         for i in range(len(parts), 0, -1):
             command_name = " ".join(parts[:i]).lower()
+            eh_remocao_de_transacao = command_name.startswith("wamid")
+
+            if eh_remocao_de_transacao:
+                return command_name, [command_name]
+
             if command_name in self.commands:
                 return command_name, parts[i:]
         return None, []
