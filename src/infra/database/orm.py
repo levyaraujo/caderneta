@@ -38,6 +38,7 @@ transacoes = Table(
     Column("descricao", String),
     Column("caixa", DateTime),
     Column("competencia", DateTime),
+    Column("wamid", String),
 )
 
 

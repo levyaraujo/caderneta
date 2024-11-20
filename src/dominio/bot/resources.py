@@ -10,7 +10,6 @@ from fastapi import APIRouter, status, Request
 
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
-from src.utils.validadores import limpar_texto
 
 BotRouter = APIRouter(prefix="/bot", tags=["twilio", "whatsapp"])
 
@@ -47,5 +46,6 @@ async def whatsapp_webhook(request: Request):
         robo=bot,
         telefone=dados_whatsapp.telefone,
         nome_usuario=dados_whatsapp.nome,
+        dados_whatsapp=dados_whatsapp,
     )
     return resposta
