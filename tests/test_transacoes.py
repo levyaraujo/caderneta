@@ -119,9 +119,7 @@ def test_fluxo_caixa(mock_usuario, transacao_gen):
     assert caixa == 1350
 
 
-@pytest.mark.parametrize(
-    "wamid", ["nada", "ashfasgfuigua", "wamid.HBgMNTU5NDgxMzYyNjAwFQIAEhgWM0VCMERBMkExOEQ4NzZFMTExOTRGNQA"]
-)
+@pytest.mark.parametrize("wamid", ["nada", "ashfasgfuigua", "wamid."])
 def test_wamid_transacao_invalido(mock_usuario, wamid):
     usuario = mock_usuario
 
