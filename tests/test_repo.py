@@ -38,7 +38,7 @@ def test_remover_usuario(session, mock_usuario):
     assert session.query(Usuario).filter_by(id=usuario.id).first() is None
 
 
-def test_adicionar_transacao(session, mock_usuario):
+def test_adicionar_transacao(session, mock_usuario, gerar_wamid):
     uow = UnitOfWork(session_factory=lambda: session)
     repo_transacao_leitura = RepoTransacaoLeitura(session=session)
     usuario = mock_usuario
@@ -49,6 +49,7 @@ def test_adicionar_transacao(session, mock_usuario):
         categoria="roupas",
         descricao="Test",
         caixa=datetime.now(),
+        wamid=gerar_wamid,
     )
     with uow:
         uow.repo_escrita.adicionar(usuario)

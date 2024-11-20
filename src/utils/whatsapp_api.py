@@ -44,7 +44,7 @@ class WhatsAppPayload:
     mensagem: str
     telefone: str
     object: str
-    entry: List[Dict]
+    wamid: str
     contacts: Optional[List[Contato]] = None
     messages: Optional[List[Mensagem]] = None
     statuses: Optional[List[Status]] = None
@@ -91,15 +91,10 @@ def parse_whatsapp_payload(payload: Dict) -> WhatsAppPayload:
             if message_data["interactive"]["type"] == "button_reply":
                 mensagem = message_data["interactive"]["button_reply"]["id"]
 
+        wamid = message_data["id"]
+
         return WhatsAppPayload(
-            object=payload["object"],
-            entry=payload["entry"],
-            contacts=contacts,
-            messages=messages,
-            statuses=statuses,
-            nome=nome_usuario,
-            mensagem=limpar_texto(mensagem),
-            telefone=telefone,
+            object=payload["object"], nome=nome_usuario, mensagem=limpar_texto(mensagem), telefone=telefone, wamid=wamid
         )
     except KeyError:
         pass

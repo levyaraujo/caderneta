@@ -4,3 +4,7 @@ class TipoTransacaoInvalido(Exception):
 
 class ErroAoCriarTransacao(Exception):
     pass
+
+
+class WamIdInvalido(Exception):
+    pass
