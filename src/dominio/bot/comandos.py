@@ -120,7 +120,7 @@ def lucro(*args: List[str], **kwargs: Any) -> str:
     return caminho_arquivo
 
 
-@bot.comando(REGEX_WAMID, "Remove transação por wamid")
+@bot.comando(REGEX_WAMID, "Remove transação por wamid", oculto=True)
 def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
     wamid_transacao = str(args[0])
     usuario: Usuario = kwargs.get("usuario")

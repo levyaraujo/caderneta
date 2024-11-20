@@ -8,7 +8,6 @@ from starlette.exceptions import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
-from httpx import Response as HTTPXResponse
 
 from src.dominio.bot.entidade import WhatsAppBot
 from src.dominio.usuario.onboard import OnboardingHandler
@@ -16,6 +15,8 @@ from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.utils.whatsapp_api import parse_whatsapp_payload
+
+logger = logging.getLogger("onboard_middleware")
 
 
 class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
@@ -32,7 +33,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
         try:
             raw_data = await request.body()
             dados = json.loads(raw_data)
-            logging.info("Received data: %s", json.dumps(dados, indent=2))
+            logger.info("Received data:\n %s", json.dumps(dados, indent=2))
 
             parsed_data = parse_whatsapp_payload(dados)
             if not parsed_data:
@@ -52,11 +53,11 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
             request.state.usuario = usuario
 
         except json.JSONDecodeError:
-            logging.error("Invalid JSON payload")
+            logger.error("Invalid JSON payload")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON payload")
         except Exception as e:
-            logging.error(f"Error processing webhook: {str(e)}")
-            logging.error(traceback.format_exc())
+            logger.error(f"Error processing webhook: {str(e)}")
+            logger.error(traceback.format_exc())
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error processing message")
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -71,6 +72,6 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except Exception as e:
-            logging.error(f"Error in middleware chain: {str(e)}")
-            logging.error(traceback.format_exc())
+            logger.error(f"Error in middleware chain: {str(e)}")
+            logger.error(traceback.format_exc())
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
