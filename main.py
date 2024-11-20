@@ -10,7 +10,6 @@ from starlette.staticfiles import StaticFiles
 from src.infra.middlewares.whatsapp import WhatsAppOnboardMiddleware
 from src.dominio.bot.resources import BotRouter
 from src.dominio.usuario.resources import UsuarioRouter
-from src.infra.middlewares.twilio import TwilioOnboardMiddleware
 
 BUCKET = os.getenv("BUCKET")
 app = FastAPI()
@@ -47,7 +46,6 @@ app.add_middleware(
 )
 
 app.add_middleware(WhatsAppOnboardMiddleware)
-app.add_middleware(TwilioOnboardMiddleware)
 
 app.include_router(BotRouter)
 app.include_router(UsuarioRouter)
