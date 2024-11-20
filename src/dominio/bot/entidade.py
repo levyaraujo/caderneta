@@ -188,5 +188,5 @@ class GerenciadorComandos:
             aliases = f" (Também entendo: *{', '.join(cmd.aliases)}*)" if cmd.aliases else ""
             help_text += f"*{cmd.name}*: {cmd.description}{aliases}\n"
 
-        help_text += "\n\nAlém disso, você pode registrar suas receitas e despesas de forma simples.\n\nEx: *paguei 1350 aluguel* ou *vendi 2300 de buffet*"
+        help_text += "\n\nAlém disso, você pode registrar suas receitas e despesas de forma simples.\nEx: *paguei 1350 aluguel* ou *vendi 2300 de buffet*"
         return help_text

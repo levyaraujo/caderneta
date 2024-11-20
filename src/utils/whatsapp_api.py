@@ -61,16 +61,16 @@ class WhatsAppPayload:
                     status.timestamp = datetime.fromtimestamp(int(status.timestamp))
 
 
-# Example usage
 def parse_whatsapp_payload(payload: Dict) -> WhatsAppPayload:
     """
-    Parse a WhatsApp Business API webhook payload into structured dataclasses.
+    Formata payload do WhatsApp Business API e transforma em um dataclass estruturado.
+    Lida tanto com mensagens de texto, como respostas de botões interativos.
 
     Args:
-        payload (Dict): The raw webhook payload from WhatsApp Business API
+        payload (Dict): Payload cru do webhook vindo do WhatsApp Business API
 
     Returns:
-        WhatsAppPayload: Structured representation of the webhook data
+        WhatsAppPayload: Representação estruturada como classe do payload.
     """
     try:
         contacts = [Contato(**contact) for contact in payload.get("contacts", [])]
@@ -81,8 +81,15 @@ def parse_whatsapp_payload(payload: Dict) -> WhatsAppPayload:
         telefone = base["contacts"][0]["wa_id"]
         telefone = formatar_telefone(telefone)
         mensagem = ""
-        if str(base["messages"][0]["type"]).lower() == "text":
-            mensagem = str(base["messages"][0]["text"]["body"]).lower()
+
+        message_data = base["messages"][0]
+        message_type = str(message_data["type"]).lower()
+
+        if message_type == "text":
+            mensagem = str(message_data["text"]["body"]).lower()
+        elif message_type == "interactive":
+            if message_data["interactive"]["type"] == "button_reply":
+                mensagem = message_data["interactive"]["button_reply"]["id"]
 
         return WhatsAppPayload(
             object=payload["object"],
