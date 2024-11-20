@@ -11,8 +11,6 @@ from src.dominio.transacao.services import comando_criar_transacao
 from src.dominio.usuario.entidade import Usuario
 from src.infra.database.uow import UnitOfWork
 
-logger = logging.getLogger("bot_services")
-
 
 async def responder_usuario(
     mensagem: str,
