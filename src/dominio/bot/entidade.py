@@ -111,11 +111,12 @@ class GerenciadorComandos:
         description: str,
         icon: str = "",
         aliases: List[str] | None = None,
+        oculto: bool = False,
     ) -> Callable[[Callable], Callable]:
         """Decorator to register commands"""
 
         def decorator(func: Callable):
-            cmd = Comando(name, func, description, icon, aliases or [])
+            cmd = Comando(name, func, description, icon, aliases or [], oculto)
             self.registrar_comando(cmd)
             return func
 
