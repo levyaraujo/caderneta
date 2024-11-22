@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import nltk
 
-load_dotenv(".env.test")
+load_dotenv(".env")
 
 nltk.download("punkt", quiet=True)
 nltk.download("stopwords", quiet=True)

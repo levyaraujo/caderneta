@@ -11,11 +11,11 @@ from src.dominio.transacao.tipos import TipoTransacao
 from tests.parser.dados_teste import DADOS_TESTE_PARSER
 
 
-def test_classifier_esta_carregando_arquivos_corretos():
+def test_modelo_esta_carregando_arquivos_corretos():
     classifier = ClassificadorTexto()
-    assert "tests/parser/test.csv" in classifier.csv_path
-    assert "tests/parser/vectorizer.joblib" in classifier.vectorizer_joblib
-    assert "tests/parser/classifier.joblib" in classifier.classifier_joblib
+    assert classifier.csv_path == "/opt/caderneta/static/dados_categorizados.csv"
+    assert classifier.vectorizer_joblib == "/opt/caderneta/static/vectorizer.joblib"
+    assert classifier.classifier_joblib == "/opt/caderneta/static/classifier.joblib"
 
 
 @pytest.mark.parametrize("mensagem, esperado", DADOS_TESTE_PARSER)

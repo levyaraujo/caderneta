@@ -8,15 +8,10 @@ import pytz
 from fastapi import FastAPI
 
 from src.dominio.processamento.entidade import ClassificadorTexto
+from src.infra.log import setup_logging
 from src.infra.migration import run_migrations
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%d/%m/%Y %H:%M",
-    stream=sys.stdout,
-)
-logger = logging.getLogger(__name__)
+logger = setup_logging()
 
 scheduler = BackgroundScheduler(timezone=pytz.UTC)
 

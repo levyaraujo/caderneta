@@ -13,6 +13,9 @@ import httpx
 from src.dominio.bot.exceptions import ComandoDesconhecido, ErroAoEnviarMensagemWhatsApp
 from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.infra.database.connection import get_session
+from src.infra.log import setup_logging
+
+logger = setup_logging()
 
 
 class BotBase(ABC):
@@ -30,7 +33,7 @@ class CLIBot(BotBase):
         return mensagem
 
     def enviar_mensagem_interativa(self, mensagem: dict) -> str | dict:
-        return mensagem
+        return mensagem["interactive"]["body"]["text"]
 
 
 class WhatsAppBot(BotBase):
@@ -79,7 +82,7 @@ class WhatsAppBot(BotBase):
             resposta = httpx.post(url=str(url), data=payload, headers=headers)
             erro = resposta.json().get("error")
             if erro:
-                logging.error(json.dumps(erro, indent=2))
+                logger.error(json.dumps(erro, indent=2))
                 raise ErroAoEnviarMensagemWhatsApp("Houve um erro ao enviar mensagem para o usuário")
             return {"status_code": resposta.status_code, "content": resposta.json()}
         except Exception:
@@ -151,7 +154,7 @@ class GerenciadorComandos:
 
         if not command:
             if command_name:
-                logging.warning(f"Comando {command_name} não existe")
+                logger.warning(f"Comando {command_name} não existe")
             raise ComandoDesconhecido("Comando não existe")
 
         try:
@@ -159,7 +162,7 @@ class GerenciadorComandos:
                 return await command.handler(*args, **kwargs)
             return command.handler(*args, **kwargs)
         except Exception as e:
-            logging.error(f"Erro ao executar comando {command_name}: {str(e)}", exc_info=True)
+            logger.error(f"Erro ao executar comando {command_name}: {str(e)}", exc_info=True)
             traceback.print_exc()
             return f"Erro ao executar comando {command_name}. Tente novamente."
 
