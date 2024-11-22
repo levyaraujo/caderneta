@@ -8,4 +8,4 @@ ruff-fix:
 	poetry run ruff format && poetry run ruff check --config ruff.toml --fix
 
 cli:
-	PYTHONPATH=$(PWD) poetry run typer cli.py run
+	PYTHONPATH=$(PWD) poetry run typer cli.py run $(EMAIL)

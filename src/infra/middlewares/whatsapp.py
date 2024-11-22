@@ -14,9 +14,10 @@ from src.dominio.usuario.onboard import OnboardingHandler
 from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
+from src.infra.log import setup_logging
 from src.utils.whatsapp_api import parse_whatsapp_payload
 
-logger = logging.getLogger("onboard_middleware")
+logger = setup_logging()
 
 
 class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
@@ -33,7 +34,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
         try:
             raw_data = await request.body()
             dados = json.loads(raw_data)
-            logger.info("Received data:\n %s", json.dumps(dados, indent=2))
+            logger.info(f"Dados WhatsApp:\n {json.dumps(dados, indent=2)}")
 
             parsed_data = parse_whatsapp_payload(dados)
             if not parsed_data:

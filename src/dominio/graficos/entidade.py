@@ -11,7 +11,7 @@ from plotly import graph_objects as go
 from src.dominio.transacao.entidade import Real, Transacao
 from src.dominio.transacao.tipos import TipoTransacao
 
-STATIC = os.getenv("BUCKET")
+STATIC = os.getenv("STATIC")
 
 
 class GraficoConfig:
@@ -309,6 +309,7 @@ class GraficoLucro(GraficoBase):
             font_venda_despesa = ImageFont.truetype(font_path, 25)
             font_lucro = ImageFont.truetype(font_path, 40)
         except Exception as erro:
+            logging.error(erro, exc_info=True)
             font_title = ImageFont.load_default()
             font_lucro = font_title
             font_venda_despesa = font_title

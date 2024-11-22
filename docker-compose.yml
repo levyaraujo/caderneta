@@ -19,19 +19,6 @@ services:
     volumes:
       - caderneta_redis_data:/data
 
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    network_mode: host
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - .env
-    command: poetry run alembic upgrade head
-    restart: on-failure
-
 volumes:
   caderneta_postgres_data:
   caderneta_redis_data:

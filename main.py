@@ -15,7 +15,7 @@ from src.dominio.bot.resources import BotRouter
 from src.dominio.usuario.resources import UsuarioRouter
 from src.infra.scheduler import iniciar_servicos
 
-BUCKET = os.getenv("BUCKET")
+BUCKET = os.getenv("BUCKET_URL")
 app = FastAPI(lifespan=iniciar_servicos)
 
 logging.basicConfig(
