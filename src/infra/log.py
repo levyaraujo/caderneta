@@ -1,22 +1,20 @@
 import logging
-import sys
 
-formatter = logging.Formatter(
-    fmt="%(levelname)s | %(asctime)s | %(process)d | %(threadName)s | %(filename)s:%(lineno)d | %(message)s",
-    datefmt="%d/%m/%Y %H:%M:%S",
-)
+import sys
 
 
 def setup_logging(log_level=logging.INFO):
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
+    """
+    Reconfigure logging explicitly to avoid suppression in async contexts.
+    """
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+    logger.handlers.clear()
 
-    root_logger = logging.getLogger()
-    root_logger.setLevel(log_level)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(log_level)
+    formatter = logging.Formatter("%(levelname)s | %(asctime)s | %(message)s", datefmt="%d/%m/%Y %H:%M:%S")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
-    root_logger.handlers.clear()
-
-    root_logger.addHandler(console_handler)
-
-    logger = logging.getLogger(__name__)
-    return logger
+    return logging.getLogger()
