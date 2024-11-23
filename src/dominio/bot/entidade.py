@@ -43,7 +43,6 @@ class WhatsAppBot(BotBase):
 
     def responder(self, mensagem: str, telefone: str) -> dict:
         payload = {
-            "preview_url": True,
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
             "to": telefone,
@@ -52,6 +51,7 @@ class WhatsAppBot(BotBase):
         }
         if mensagem.startswith("http"):
             payload = {
+                "preview_url": True,
                 "messaging_product": "whatsapp",
                 "recipient_type": "individual",
                 "to": telefone,

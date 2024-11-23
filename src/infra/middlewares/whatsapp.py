@@ -34,7 +34,6 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
         try:
             raw_data = await request.body()
             dados = json.loads(raw_data)
-            logger.info(f"Dados WhatsApp:\n {json.dumps(dados, indent=2)}")
 
             parsed_data = parse_whatsapp_payload(dados)
             if not parsed_data:
