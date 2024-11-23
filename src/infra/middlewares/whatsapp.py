@@ -35,6 +35,8 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
             raw_data = await request.body()
             dados = json.loads(raw_data)
 
+            logger.info("Dados WhatsApp: %s", json.dumps(dados, indent=2))
+
             parsed_data = parse_whatsapp_payload(dados)
             if not parsed_data:
                 return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "skipped"})
@@ -57,7 +59,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON payload")
         except Exception as e:
             logger.error(f"Error processing webhook: {str(e)}")
-            logger.error(traceback.format_exc())
+            traceback.print_exc()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error processing message")
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

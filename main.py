@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 
 import dotenv
 import sentry_sdk
@@ -17,14 +16,6 @@ from src.infra.scheduler import iniciar_servicos
 
 BUCKET = os.getenv("BUCKET")
 app = FastAPI(lifespan=iniciar_servicos)
-
-logging.basicConfig(
-    level=logging.INFO,
-    stream=sys.stdout,
-    format="{asctime} - {levelname} - {message}",
-    style="{",
-    datefmt="%d/%m/%Y %H:%M",
-)
 
 sentry_sdk.init(
     dsn="https://9e11244046c4b957853cc51bd10a478b@o4508257512521728.ingest.us.sentry.io/4508257514618880",

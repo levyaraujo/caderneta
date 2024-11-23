@@ -39,5 +39,4 @@ async def iniciar_scheduler():
 @asynccontextmanager
 async def iniciar_servicos(app: FastAPI):
     await iniciar_scheduler()
-    run_migrations()
     yield
