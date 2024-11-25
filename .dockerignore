@@ -19,3 +19,8 @@ tests/
 *.log
 .vscode/
 .idea/
+cli.py
+LICENSE
+Makefile
+ruff.toml
+migrations

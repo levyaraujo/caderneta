@@ -24,13 +24,15 @@ class PasswordHasher:
     def hash_password(password: str | SecretStr) -> str:
         if isinstance(password, SecretStr):
             password = password.get_secret_value()
-        return pwd_context.hash(password)
+        senha_hash: str = pwd_context.hash(password)
+        return senha_hash
 
     @staticmethod
     def verify_password(plain_password: str | SecretStr, hashed_password: str) -> bool:
         if isinstance(plain_password, SecretStr):
             plain_password = plain_password.get_secret_value()
-        return pwd_context.verify(plain_password, hashed_password)
+        senha_esta_correta: bool = pwd_context.verify(plain_password, hashed_password)
+        return senha_esta_correta
 
 
 def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork) -> UsuarioModel | None:
@@ -39,11 +41,11 @@ def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork) -> UsuarioModel | None
         nome=usuario.nome,
         sobrenome=usuario.sobrenome,
         telefone=usuario.telefone,
-        email=usuario.email,
+        email=str(usuario.email),
         senha=senha_encriptada,
     )
     repo_usuario = RepoUsuarioLeitura(session=get_session())
-    usuario_existe = repo_usuario.buscar_por_email(usuario.email)
+    usuario_existe = repo_usuario.buscar_por_email(str(usuario.email))
 
     if usuario_existe:
         raise UsuarioJaExiste("O usuário já existe no sistema")
