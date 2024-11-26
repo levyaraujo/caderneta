@@ -17,13 +17,12 @@ async def responder_usuario(
     mensagem: str,
     usuario: Usuario,
     telefone: str,
-    nome_usuario: str,
     robo: BotBase,
     uow: UnitOfWork,
     dados_whatsapp: Optional[WhatsAppPayload] = None,
 ) -> Any:
     try:
-        resposta = await bot.processar_mensagem(mensagem, nome_usuario=nome_usuario, usuario=usuario, uow=uow)
+        resposta = await bot.processar_mensagem(mensagem, nome_usuario=usuario.nome, usuario=usuario, uow=uow)
         return robo.responder(resposta, telefone)
 
     except ComandoDesconhecido:

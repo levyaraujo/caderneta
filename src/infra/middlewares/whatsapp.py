@@ -47,7 +47,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
             if not usuario:
                 uow = UnitOfWork(session_factory=get_session)
                 onboard = OnboardingHandler(uow=uow)
-                pergunta_onboard = onboard.handle_message(parsed_data.telefone, parsed_data.mensagem, parsed_data.nome)
+                pergunta_onboard = onboard.handle_message(parsed_data.telefone, parsed_data.mensagem)
                 resposta = self.bot.responder(pergunta_onboard, parsed_data.telefone)
                 return JSONResponse(content=resposta.get("content"), status_code=resposta.get("status_code"))
 

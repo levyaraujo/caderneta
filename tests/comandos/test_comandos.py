@@ -111,7 +111,7 @@ async def test_integracao_resposta_usuario(mensagem, cli_bot, mock_usuario, sess
 
     usuario = mock_usuario
     resposta = await responder_usuario(
-        mensagem=mensagem, usuario=usuario, telefone=usuario.telefone, nome_usuario=usuario.nome, robo=cli_bot, uow=uow
+        mensagem=mensagem, usuario=usuario, telefone=usuario.telefone, robo=cli_bot, uow=uow
     )
 
     assert resposta == f"Comando {mensagem} não existe\n\nDigite *ajuda* e veja os comandos disponíveis."

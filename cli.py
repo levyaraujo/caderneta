@@ -76,7 +76,6 @@ class ChatSession:
                     mensagem,
                     self.usuario,
                     self.usuario.telefone,
-                    self.usuario.nome,
                     self.bot,
                     uow=self.uow,
                     dados_whatsapp=dados_whatsapp,
@@ -100,15 +99,15 @@ def chat():
     uow = UnitOfWork(session_factory=get_session)
     repo = RepoUsuarioLeitura(session=get_session())
 
-    email = typer.prompt("Digite seu email")
-    usuario = repo.buscar_por_email(email)
+    telefone = typer.prompt("Digite seu telefone")
+    usuario = repo.buscar_por_telefone(f"55{telefone}")
+    mensagem = "olá"
 
-    if not usuario:
-        telefone = typer.prompt("Digite seu telefone")
-        usuario = Usuario(nome="Usuario", sobrenome="CLI", telefone=telefone, email=email)
-        with uow:
-            uow.repo_escrita.adicionar(usuario)
-            uow.commit()
+    while not usuario:
+        onboard = OnboardingHandler(uow=uow)
+        pergunta_onboard = onboard.handle_message(telefone, mensagem)
+        mensagem = typer.prompt(pergunta_onboard)
+        usuario = repo.buscar_por_telefone(telefone)
 
     chat_session = ChatSession(usuario, uow)
     asyncio.run(chat_session.run())
