@@ -1,6 +1,7 @@
 import logging
 import os
 import traceback
+from typing import Any
 
 from starlette.exceptions import HTTPException
 from starlette.responses import Response, JSONResponse
@@ -16,12 +17,12 @@ BotRouter = APIRouter(prefix="/bot", tags=["twilio", "whatsapp"])
 
 
 @BotRouter.get("/whatsapp", status_code=status.HTTP_200_OK)
-async def verificacao_whatsapp_webhook(request: Request, response: Response):
+async def verificacao_whatsapp_webhook(request: Request, response: Response) -> JSONResponse:
     try:
         params = dict(request.query_params)
         mode = params.get("hub.mode")
         token = params.get("hub.verify_token")
-        challenge = params.get("hub.challenge")
+        challenge = params.get("hub.challenge", "")
         token_verificacao = os.getenv("WHATSAPP_TOKEN_VERIFICACAO")
 
         if mode == "subscribe" and token == token_verificacao:
@@ -30,12 +31,12 @@ async def verificacao_whatsapp_webhook(request: Request, response: Response):
             status_code=403, detail=f"Verificação do WhatsApp API falhou: {token_verificacao} != {token}"
         )
     except Exception as error:
-        logging.error(error)
-        return "An internal server error occurred", 500
+        logging.error(error, exc_info=True)
+        raise HTTPException(status_code=500, detail="Erro ao verificar WhatsApp API")
 
 
 @BotRouter.post("/whatsapp", status_code=status.HTTP_200_OK)
-async def whatsapp_webhook(request: Request):
+async def whatsapp_webhook(request: Request) -> Any:
     uow = UnitOfWork(session_factory=get_session)
     bot = WhatsAppBot()
     usuario = request.state.usuario
@@ -46,7 +47,6 @@ async def whatsapp_webhook(request: Request):
         uow=uow,
         robo=bot,
         telefone=dados_whatsapp.telefone,
-        nome_usuario=dados_whatsapp.nome,
         dados_whatsapp=dados_whatsapp,
     )
     return resposta
