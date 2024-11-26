@@ -138,4 +138,4 @@ Vamos começar? Me diga seu nome completo para personalizar sua experiência. �
 
     def _save_user_context(self, phone_number: str, context: UserContext):
         context_dict = {"state": context.state.name, "data": asdict(context.data)}  # noqa
-        self.redis_client.set(phone_number, json.dumps(context_dict))
+        self.redis_client.set(phone_number, json.dumps(context_dict), ex=900)
