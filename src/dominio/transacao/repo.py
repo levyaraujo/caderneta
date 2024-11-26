@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Iterator
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -15,21 +15,37 @@ class RepoTransacaoEscrita(RepoEscrita):
 
 class RepoTransacaoLeitura(RepoBase[Transacao]):
     def buscar_por_intervalo_e_usuario(self, intervalo: Intervalo, usuario_id: int) -> List[Transacao]:
-        return (
+        transacoes: List[Transacao] = (
             self.session.query(Transacao)
             .filter(
-                Transacao.usuario_id == usuario_id,  # type: ignore
+                Transacao.usuario_id == usuario_id,
                 Transacao.caixa >= intervalo.inicio,
                 Transacao.caixa <= intervalo.fim,
             )
             .order_by(Transacao.caixa)
             .all()
         )
+        return transacoes
 
-    def buscar_por_id(self, entidade: Transacao):
+    def buscar_por_intervalo_e_usuario_ordenando_por_data_e_valor(
+        self, intervalo: Intervalo, usuario_id: int
+    ) -> List[Transacao]:
+        transacoes: List[Transacao] = (
+            self.session.query(Transacao)
+            .filter(
+                Transacao.usuario_id == usuario_id,
+                Transacao.caixa >= intervalo.inicio,
+                Transacao.caixa <= intervalo.fim,
+            )
+            .order_by(Transacao.caixa, Transacao.valor)
+            .all()
+        )
+        return transacoes
+
+    def buscar_por_id(self, entidade: Transacao) -> Transacao:
         return self.session.query(Transacao).filter(Transacao.id == entidade.id).first()
 
-    def buscar_por_wamid(self, wamid: str, usuario_id: int):
+    def buscar_por_wamid(self, wamid: str, usuario_id: int) -> Transacao:
         return (
             self.session.query(Transacao)
             .filter(func.lower(Transacao.wamid) == func.lower(wamid), Transacao.usuario_id == usuario_id)

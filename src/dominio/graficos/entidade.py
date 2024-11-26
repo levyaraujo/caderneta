@@ -91,15 +91,6 @@ class GraficoLinha(GraficoBase):
         self.hover_texts = hover_texts
 
     def criar(self) -> GraficoRetorno:
-        if len(self.legendas) == len(self.valores) == len(self.hover_texts or []):
-            self.legendas, self.valores, self.hover_texts = zip(
-                *sorted(zip(self.legendas, self.valores, self.hover_texts or []))
-            )
-        else:
-            self.legendas = self.legendas or []
-            self.valores = self.valores or []
-            self.hover_texts = self.hover_texts or []
-
         trace = go.Scatter(
             x=self.legendas,
             y=self.valores,

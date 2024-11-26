@@ -64,7 +64,9 @@ def grafico_fluxo(*args: List[str], **kwargs: Any) -> str:
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
 
-    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(usuario_id=usuario.id, intervalo=intervalo)
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario_ordenando_por_data_e_valor(
+        usuario_id=usuario.id, intervalo=intervalo
+    )
 
     if not transacoes:
         return "Você ainda não registrou nenhuma despesa ou receita este mês"
