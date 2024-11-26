@@ -42,20 +42,33 @@ class OnboardingHandler:
         self.redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=0, password=REDIS_PASSWORD)
         self.uow = uow
 
-    def start_onboarding(self, phone_number: str, nome_usuario: str) -> str:
+    def start_onboarding(self, phone_number: str) -> str:
+        mensagem_boas_vindas = f"""
+Olá, empreendedor! 🚀💼
+
+Bem-vindo ao *Caderneta* - Seu parceiro inteligente em gestão financeira! 📊💰
+
+Imagina controlar suas finanças com simplicidade e precisão, direto do seu WhatsApp? Estamos aqui para transformar sua gestão financeira em algo descomplicado e estratégico.
+
+Com o *Caderneta*, você vai:
+- Acompanhar receitas e despesas em tempo real
+- Gerar relatórios financeiros instantâneos
+- Tomar decisões inteligentes sobre seu negócio
+
+Vamos começar? Me diga seu nome completo para personalizar sua experiência. 😊"""
         if not self._get_user_context(phone_number):
             context = UserContext(
                 state=OnboardingState.WAITING_FULL_NAME,
                 data=UserData(telefone=phone_number),
             )
             self._save_user_context(phone_number, context)
-            return f"Olá, {nome_usuario}! Bem-vindo ao *Caderneta*! 😊\nSou um gerenciador financeiro para pequenas empresas via... *WhatsApp*!\n\nPara começar, me diga seu nome completo."
+            return mensagem_boas_vindas
         return self._get_current_question(phone_number)
 
-    def handle_message(self, phone_number: str, message: str, nome_usuario: str) -> str:
+    def handle_message(self, phone_number: str, message: str) -> str:
         context = self._get_user_context(phone_number)
         if not context:
-            return self.start_onboarding(phone_number, nome_usuario)
+            return self.start_onboarding(phone_number)
 
         if context.state == OnboardingState.COMPLETED:
             criar_usuario(UsuarioModel(**asdict(context.data)), uow=self.uow)  # noqa
