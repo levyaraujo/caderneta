@@ -9,10 +9,17 @@ from src.dominio.transacao.tipos import TipoTransacao
 def criar_grafico_fluxo_de_caixa(transacoes: List[Transacao], formato="png"):
     config = GraficoConfig(titulo="Fluxo de Caixa", formato=formato)
     transacoes.sort(key=lambda transacao: transacao.caixa)
-    legendas = [transacao.caixa for transacao in transacoes]
-    valores = [
-        transacao.valor if transacao.tipo == TipoTransacao.CREDITO else -transacao.valor for transacao in transacoes
-    ]
+
+    fluxo_diario = defaultdict(float)
+    for transacao in transacoes:
+        data = transacao.caixa.date()
+        valor = transacao.valor if transacao.tipo == TipoTransacao.CREDITO else -transacao.valor
+        fluxo_diario[data] += valor
+
+    datas_ordenadas = sorted(fluxo_diario.keys())
+    legendas = datas_ordenadas
+    valores = [fluxo_diario[data] for data in datas_ordenadas]
+
     grafico = GraficoFactory.criar_grafico("linha", config, legendas=legendas, valores=valores)
     return grafico.criar()
 
