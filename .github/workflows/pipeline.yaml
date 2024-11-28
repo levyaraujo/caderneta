@@ -58,9 +58,6 @@ jobs:
           CADERNETA_URL: http://localhost:8000
           ENV: testing
           PYTHONPATH: ${PWD}
-          CSV_TREINAMENTO: tests/parser/test.csv
-          CLASSIFIER_PATH: tests/parser/classifier.joblib
-          VECTORIZER_PATH: tests/parser/vectorizer.joblib
           FRONT: https://caderneta.tunn.dev
           STATIC_URL: https://caderneta-back.tunn.dev/static
           BUCKET: /tmp/.caderneta-static
