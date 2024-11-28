@@ -18,3 +18,4 @@ def test_criar_usuario_service(session):
     assert usuario.sobrenome == usuario_criado.sobrenome
     assert usuario.telefone == usuario_criado.telefone
     assert usuario.email == usuario_criado.email
+    assert usuario_criado.assinatura
