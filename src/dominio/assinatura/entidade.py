@@ -15,27 +15,25 @@ class StatusAssinatura(Enum):
 @dataclass
 class Assinatura:
     usuario_id: int
+    stripe_id: str
     plano: str
     valor_mensal: float
     data_inicio: datetime
     data_termino: Optional[datetime] = None
     status: StatusAssinatura = StatusAssinatura.TESTE
     id: Optional[int] = field(default=None)
-    data_proximo_pagamento: Optional[date] = field(default=None)
-    data_ultimo_pagamento: Optional[date] = field(default=None)
+    data_proximo_pagamento: Optional[datetime] = field(default=None)
+    data_ultimo_pagamento: Optional[datetime] = field(default=None)
     renovacao_automatica: bool = True
 
-    def __post_init__(self):
-        if self.data_proximo_pagamento is None:
-            self.data_proximo_pagamento = self.data_inicio.date()
-
+    def __post_init__(self) -> None:
         self._validar_datas()
 
-    def _validar_datas(self):
+    def _validar_datas(self) -> None:
         if self.data_termino and self.data_termino < self.data_inicio:
             raise ValueError("Data de término não pode ser anterior à data de início")
 
-        if self.data_ultimo_pagamento and self.data_ultimo_pagamento > datetime.now().date():
+        if self.data_ultimo_pagamento and self.data_ultimo_pagamento > datetime.now():
             raise ValueError("Data do último pagamento não pode ser futura")
 
     def cancelar(self) -> None:
@@ -51,9 +49,9 @@ class Assinatura:
         self.data_termino = None
         self.renovacao_automatica = True
 
-    def registrar_pagamento(self, data_pagamento: date = None) -> None:
+    def registrar_pagamento(self, data_pagamento: Optional[datetime] = None) -> None:
         if data_pagamento is None:
-            data_pagamento = datetime.now().date()
+            data_pagamento = datetime.now()
 
         self.data_ultimo_pagamento = data_pagamento
         self.status = StatusAssinatura.ATIVA

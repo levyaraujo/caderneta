@@ -5,6 +5,25 @@ on:
       - main
 
 jobs:
+  download-test-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download test data from S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1 # Change to your S3 bucket region
+        run: |
+          mkdir -p test_data
+          aws s3 cp s3://caderneta-staging/dados.zip test_data/dados.zip
+          unzip test_data/dados.zip
+
+      - name: Upload test data as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-data
+          path: test_data/
+
   tests:
     runs-on: ubuntu-latest
     services:
@@ -42,6 +61,17 @@ jobs:
           pip install poetry
           poetry install --no-root --with dev
 
+      - name: Download test data artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: test-data
+
+      - name: Verifica dados de teste
+        run: ls -la
+
+      - name: Unzipa dados teste
+        run: unzip dados.zip -d test_data
+
       - name: Run migrations
         env:
           DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
@@ -58,11 +88,13 @@ jobs:
           CADERNETA_URL: http://localhost:8000
           ENV: testing
           PYTHONPATH: ${PWD}
-          CSV_TREINAMENTO: tests/parser/test.csv
-          CLASSIFIER_PATH: tests/parser/classifier.joblib
-          VECTORIZER_PATH: tests/parser/vectorizer.joblib
-          FRONT: https://caderneta.tunn.dev
+          CSV_TREINAMENTO: test_data/dados_categorizados.csv
+          CLASSIFIER_PATH: test_data/classifier.joblib
+          VECTORIZER_PATH: test_data/vectorizer.joblib
           STATIC_URL: https://caderneta-back.tunn.dev/static
           BUCKET: /tmp/.caderneta-static
+          PLANO_CADERNETA: price_1QPbFYDIhQ6ZuZkkw38co6cy
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
           poetry run pytest -vv
