@@ -82,7 +82,7 @@ jobs:
           CADERNETA_URL: http://localhost:8000
           ENV: testing
           PYTHONPATH: ${PWD}
-          CSV_TREINAMENTO: test_data/test.csv
+          CSV_TREINAMENTO: test_data/dados_categorizados.csv
           CLASSIFIER_PATH: test_data/classifier.joblib
           VECTORIZER_PATH: test_data/vectorizer.joblib
           STATIC_URL: https://caderneta-back.tunn.dev/static
