@@ -12,10 +12,10 @@ UsuarioRouter = APIRouter(prefix="/usuario", tags=["usuario"])
 
 
 @UsuarioRouter.post("", status_code=status.HTTP_201_CREATED)
-def usuario_onboard(usuario: UsuarioModel):
+def usuario_onboard(usuario: UsuarioModel) -> dict:
     uow = UnitOfWork(session_factory=get_session)
     try:
-        usuario_criado = criar_usuario(usuario, uow)
+        criar_usuario(usuario, uow)
         return {"message": "Usuario cadastrado com sucesso!"}
     except UsuarioJaExiste as erro:
         logging.info(f"Usuário {usuario.email} já existe no sistema")

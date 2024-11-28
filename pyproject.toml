@@ -31,6 +31,7 @@ kaleido = "0.2.1"
 sentry-sdk = {extras = ["fastapi"], version = "^2.18.0"}
 stripe = "^11.2.0"
 apscheduler = "^3.10.4"
+resend = "^2.4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
@@ -65,4 +66,4 @@ warn_unused_ignores = true
 warn_return_any = true
 strict_optional = true
 ignore_missing_imports = true
-exclude = ["venv", ".venv", "tests"]
+exclude = ["venv", ".venv", "tests", "migrations"]

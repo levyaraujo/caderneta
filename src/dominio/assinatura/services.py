@@ -1,22 +1,25 @@
-import traceback
-
-from fastapi import Request, HTTPException
-from typing import Dict, Any
-import stripe
+import logging
 import os
-from pydantic import BaseModel
+import traceback
+from datetime import datetime, timedelta
+from time import sleep
+from typing import Dict, Any, Tuple
 
+import stripe
+from stripe import Customer, Subscription
+
+from src.dominio.assinatura.entidade import Assinatura
+from src.dominio.usuario.entidade import Usuario
+from src.dominio.usuario.repo import RepoUsuarioLeitura
+from src.infra.database.connection import get_session
+from src.infra.database.uow import UnitOfWork
 from src.infra.log import setup_logging
+from tests.conftest import session
 
 logger = setup_logging()
 
 stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
 webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
-
-
-class WebhookResponse(BaseModel):
-    status: str
-    message: str = ""
 
 
 async def handle_successful_payment(payment_intent: Dict[str, Any]) -> None:
@@ -56,28 +59,6 @@ async def handle_failed_payment(payment_intent: Dict[str, Any]) -> None:
     pass
 
 
-async def handle_subscription_created(subscription: Dict[str, Any]) -> None:
-    """Handle new subscription"""
-    customer_id = subscription["customer"]
-    subscription_id = subscription["id"]
-    plan_id = subscription["plan"]["id"]
-
-    logger.info(f"New subscription {subscription_id} for customer {customer_id} to plan {plan_id}")
-
-    # Here you would typically:
-    # 1. Update customer status in database
-    # await db.subscriptions.insert_one({
-    #     "subscription_id": subscription_id,
-    #     "customer_id": customer_id,
-    #     "plan_id": plan_id,
-    #     "status": "active"
-    # })
-
-    # 2. Send welcome email
-    # await send_welcome_email_async(customer_id)
-    pass
-
-
 async def handle_subscription_updated(subscription: Dict[str, Any]) -> None:
     """Handle subscription updates"""
     customer_id = subscription["customer"]
@@ -95,49 +76,70 @@ async def handle_subscription_updated(subscription: Dict[str, Any]) -> None:
     pass
 
 
+async def handle_trial_will_end(subscription: Dict[str, Any]) -> None:
+    customer_id = subscription["customer"]
+    subscription_id = subscription["id"]
+    status = subscription["status"]
+
+    print("enviar mensagem avisando que período de testes está acabando")
+
+
 EVENT_HANDLERS = {
     "payment_intent.succeeded": handle_successful_payment,
     "payment_intent.payment_failed": handle_failed_payment,
-    "customer.subscription.created": handle_subscription_created,
     "customer.subscription.updated": handle_subscription_updated,
+    "customer.subscription.trial_will_end": handle_trial_will_end,
 }
 
 
-async def handle_webhook(request: Request) -> WebhookResponse:
-    """
-    Handle incoming Stripe webhooks
-    """
-    # Get the raw request body
-    payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
+def criar_cliente_stripe(usuario: Usuario) -> Customer:
+    cliente_existe = stripe.Customer.list(email=usuario.email, limit=1).get("data")
 
-    if not sig_header:
-        raise HTTPException(status_code=400, detail="No Stripe signature header")
+    if cliente_existe:
+        return cliente_existe[0]
+    novo_cliente = stripe.Customer.create(
+        name=f"{usuario.nome} {usuario.sobrenome}", email=usuario.email, phone=usuario.telefone
+    )
+    return novo_cliente
 
+
+def criar_assinatura(cliente: Customer) -> Tuple[Subscription, Assinatura]:
+    repo_usuario = RepoUsuarioLeitura(session=get_session())
+    usuario = repo_usuario.buscar_por_email(cliente.email)
+    PLANO = os.getenv("PLANO_CADERNETA")
+    dados = {
+        "customer": cliente.id,
+        "items": [{"price": PLANO}],
+        "trial_period_days": 14,
+        "payment_behavior": "allow_incomplete",
+    }
     try:
-        # Verify webhook signature
-        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
-    except ValueError as e:
-        logger.error(f"Invalid payload: {str(e)}")
-        raise HTTPException(status_code=400, detail="Invalid payload")
-    except stripe.error.SignatureVerificationError as e:
-        logger.error(f"Invalid signature: {str(e)}")
-        raise HTTPException(status_code=400, detail="Invalid signature")
-
-    # Get the event type and handler
-    event_type = event["type"]
-    handler = EVENT_HANDLERS.get(event_type)
-
-    try:
-        if handler:
-            # Execute the appropriate handler
-            await handler(event["data"]["object"])
-            return WebhookResponse(status="success", message=f"Handled {event_type} event")
-        else:
-            # Log unhandled event type
-            logger.info(f"Unhandled event type: {event_type}")
-            return WebhookResponse(status="success", message=f"Unhandled event type: {event_type}")
-
+        assinatura_stripe = stripe.Subscription.create(**dados)
+        assinatura = criar_assinatura_entidade(assinatura_stripe.id, usuario)
+        return assinatura_stripe, assinatura
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise Exception(e)
+
+
+def criar_assinatura_entidade(id_stripe: str, usuario: Usuario) -> Assinatura:
+    uow = UnitOfWork(session_factory=get_session)
+    inicio = datetime.now()
+    fim_do_teste = inicio + timedelta(days=14)
+
+    with uow:
+        assinatura = Assinatura(
+            stripe_id=id_stripe,
+            usuario_id=usuario.id,
+            plano="Caderneta Básico",
+            data_inicio=inicio,
+            data_ultimo_pagamento=inicio,
+            data_proximo_pagamento=fim_do_teste,
+            valor_mensal=14.99,
+        )
+        usuario.assinatura = assinatura
+
+        uow.repo_escrita.adicionar(assinatura)
+
+        uow.commit()
+        return assinatura

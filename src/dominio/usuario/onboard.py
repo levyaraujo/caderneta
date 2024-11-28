@@ -4,16 +4,17 @@ import redis
 import json
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
-from typing import Optional
+from typing import Optional, Generator
 
 from src.dominio.usuario.entidade import UsuarioModel
 from src.dominio.usuario.services import criar_usuario
 from src.infra.database.uow import UnitOfWork
+from src.infra.email import enviar_email_boas_vindas
 from src.utils.validadores import validar_email
 
-REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "1234")
 
 
 class OnboardingState(Enum):
@@ -38,7 +39,9 @@ class UserContext:
 
 
 class OnboardingHandler:
-    def __init__(self, redis_host=REDIS_HOST, redis_port=REDIS_PORT, uow: UnitOfWork = None):
+    def __init__(
+        self, redis_host: str = REDIS_HOST, redis_port: str | int = REDIS_PORT, uow: UnitOfWork = None
+    ) -> None:
         self.redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=0, password=REDIS_PASSWORD)
         self.uow = uow
 
@@ -91,13 +94,16 @@ Vamos começar? Me diga seu nome completo para personalizar sua experiência. �
         return "Por favor, digite seu nome completo."
 
     def _handle_email(self, context: UserContext, email: str) -> str:
-        if validar_email(email):
+        try:
+            validar_email(email)
             context.data.email = email
             context.state = OnboardingState.COMPLETED
             self._save_user_context(context.data.telefone, context)
-            criar_usuario(UsuarioModel(**asdict(context.data)), uow=self.uow)  # noqa
+            usuario = criar_usuario(UsuarioModel(**asdict(context.data)), uow=self.uow)  # noqa
+            enviar_email_boas_vindas(usuario)
             return self._generate_completion_message()
-        return "Por favor, digite um email válido."
+        except ValueError as error:
+            return "Por favor, digite um email válido."
 
     def _validate_full_name(self, name: str) -> bool:
         if not name or not all(char.isalpha() or char.isspace() for char in name):
@@ -136,6 +142,8 @@ Vamos começar? Me diga seu nome completo para personalizar sua experiência. �
             return UserContext(state=OnboardingState[context_dict["state"]], data=user_data)
         return None
 
-    def _save_user_context(self, phone_number: str, context: UserContext):
+    def _save_user_context(self, phone_number: str, context: UserContext) -> str:
         context_dict = {"state": context.state.name, "data": asdict(context.data)}  # noqa
         self.redis_client.set(phone_number, json.dumps(context_dict), ex=900)
+
+        return phone_number

@@ -6,7 +6,8 @@ import re
 import traceback
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple
+from email.generator import Generator
+from typing import Callable, Dict, List, Optional, Tuple, Iterator
 
 import httpx
 
@@ -65,6 +66,14 @@ class WhatsAppBot(BotBase):
                 "to": telefone,
                 "type": "audio",
                 "audio": {"link": mensagem},
+            }
+        if mensagem.startswith("http") and "pdf" in mensagem:
+            payload = {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": telefone,
+                "type": "document",
+                "document": {"link": mensagem, "caption": "Aqui está a sua NF-e", "filename": "NF-e Caderneta.pdf"},
             }
         url: str = self.__url
         return self.enviar_requisicao(url, payload)
