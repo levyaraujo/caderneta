@@ -133,7 +133,7 @@ class ClassificadorTexto:
                     ]
                 )
                 self.df = pd.concat([self.df, nova_linha], ignore_index=True)
-                self.df.to_csv(self.csv_path, index=True)
+                self.df.to_csv(self.csv_path, index=False)
                 logging.info(f"Dataframe atualizado com a nova classificação: {previsao}")
 
             return previsao, probs_dict
