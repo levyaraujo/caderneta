@@ -1,8 +1,6 @@
-import logging
 import os
 import traceback
 from datetime import datetime, timedelta
-from time import sleep
 from typing import Dict, Any, Tuple
 
 import stripe
@@ -14,7 +12,6 @@ from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.infra.log import setup_logging
-from tests.conftest import session
 
 logger = setup_logging()
 
