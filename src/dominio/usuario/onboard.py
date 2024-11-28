@@ -9,7 +9,7 @@ from typing import Optional, Generator
 from src.dominio.usuario.entidade import UsuarioModel
 from src.dominio.usuario.services import criar_usuario
 from src.infra.database.uow import UnitOfWork
-from src.infra.email import enviar_email_boas_vindas
+from src.infra.emails import enviar_email_boas_vindas
 from src.utils.validadores import validar_email
 
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")

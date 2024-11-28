@@ -1,4 +1,7 @@
 import os
+import random
+import string
+
 import resend
 from resend import Email
 
@@ -117,6 +120,7 @@ html_content = """
       <p>&copy; 2024 Caderneta. Todos os direitos reservados.</p>
     </div>
   </div>
+  <span style="opacity: 0">%s </span>
 </body>
 </html>
 """
@@ -125,16 +129,19 @@ html_content = """
 resend.api_key = os.getenv("RESEND_API_KEY")
 
 
+def gerar_string_aleatoria(tamanho: int = 10) -> str:
+    return "".join(random.choices(string.ascii_letters + string.digits, k=tamanho))
+
+
 def enviar_email_boas_vindas(usuario: Usuario) -> Email:
-    # Configurar parâmetros do e-mail
+    string_aleatoria = gerar_string_aleatoria()
     params: resend.Emails.SendParams = {
         "from": "Caderneta <contato@caderneta.chat>",
-        f"to": [{usuario.email}],
+        "to": [usuario.email],
         "subject": "Bem-vindo à Caderneta!",
-        "html": html_content % usuario.nome,
+        "html": html_content % (usuario.nome, string_aleatoria),
     }
 
-    # Enviar e-mail
     email = resend.Emails.send(params)
 
     return email
