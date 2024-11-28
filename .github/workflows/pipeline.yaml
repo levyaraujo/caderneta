@@ -64,5 +64,7 @@ jobs:
           FRONT: https://caderneta.tunn.dev
           STATIC_URL: https://caderneta-back.tunn.dev/static
           BUCKET: /tmp/.caderneta-static
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
           poetry run pytest -vv
