@@ -32,4 +32,4 @@ COPY --from=builder /app .
 
 EXPOSE 8000
 
-CMD ["fastapi", "run"]
+CMD ["bash", "-c", "alembic upgrade head && fastapi run"]
