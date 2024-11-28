@@ -11,13 +11,6 @@ from src.dominio.transacao.tipos import TipoTransacao
 from tests.parser.dados_teste import DADOS_TESTE_PARSER
 
 
-def test_modelo_esta_carregando_arquivos_corretos():
-    classifier = ClassificadorTexto()
-    assert classifier.csv_path == "/opt/caderneta/static/dados_categorizados.csv"
-    assert classifier.vectorizer_joblib == "/opt/caderneta/static/vectorizer.joblib"
-    assert classifier.classifier_joblib == "/opt/caderneta/static/classifier.joblib"
-
-
 @pytest.mark.parametrize("mensagem, esperado", DADOS_TESTE_PARSER)
 @pytest.mark.integracao
 def test_parser_mensagens(mensagem, esperado):

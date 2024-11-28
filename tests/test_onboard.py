@@ -93,11 +93,10 @@ def test_handle_email_valid(onboarding_handler, mock_redis):
         {"state": "WAITING_EMAIL", "data": {"telefone": phone_number, "nome": "João", "sobrenome": "Silva Santos"}}
     )
 
-    with patch("src.dominio.usuario.onboard.criar_usuario") as mock_criar_usuario:
+    with patch("src.dominio.usuario.onboard.criar_usuario") as mock_criar_usuario, patch(
+        "src.dominio.usuario.onboard.enviar_email_boas_vindas"
+    ) as mock_enviar_email:
         response = onboarding_handler.handle_message(phone_number, "joao.silva@example.com")
-
-        # Verify user creation was called
-        mock_criar_usuario.assert_called_once()
 
         # Verify the created user model
         created_user = mock_criar_usuario.call_args[0][0]
@@ -105,6 +104,9 @@ def test_handle_email_valid(onboarding_handler, mock_redis):
         assert created_user.sobrenome == "Silva Santos"
         assert created_user.email == "joao.silva@example.com"
         assert created_user.telefone == phone_number
+
+        # Verify email sending was called
+        mock_enviar_email.assert_called_once()
 
     # Verify Redis context update
     assert mock_redis.set.called
