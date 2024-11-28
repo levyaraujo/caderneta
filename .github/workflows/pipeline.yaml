@@ -16,7 +16,7 @@ jobs:
         run: |
           mkdir -p test_data
           aws s3 cp s3://caderneta-staging/dados.zip test_data/dados.zip
-          unzip test_data/dados.zip -d test_data
+          unzip test_data/dados.zip
 
       - name: Upload test data as artifact
         uses: actions/upload-artifact@v3
@@ -66,6 +66,9 @@ jobs:
         with:
           name: test-data
 
+      - name: Verifica dados de teste
+        run: ls -la test_data/
+
       - name: Run migrations
         env:
           DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
@@ -87,6 +90,7 @@ jobs:
           VECTORIZER_PATH: test_data/vectorizer.joblib
           STATIC_URL: https://caderneta-back.tunn.dev/static
           BUCKET: /tmp/.caderneta-static
+          PLANO_CADERNETA: price_1QPbFYDIhQ6ZuZkkw38co6cy
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
