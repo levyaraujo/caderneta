@@ -1,12 +1,8 @@
 import os
 import resend
-import dotenv
 from resend import Email
 
 from src.dominio.usuario.entidade import Usuario
-
-# Carregar variáveis de ambiente do arquivo .env
-dotenv.load_dotenv("../../.env")
 
 # HTML completo para o e-mail
 html_content = """
