@@ -1,8 +1,11 @@
 import logging
+import traceback
 
 from passlib.context import CryptContext
 from pydantic import SecretStr
+from stripe import Subscription
 
+from src.dominio.assinatura.services import criar_cliente_stripe, criar_assinatura
 from src.dominio.usuario.entidade import Usuario, UsuarioModel
 from src.dominio.usuario.exceptions import ErroAoCriarUsuario, UsuarioJaExiste
 from src.dominio.usuario.repo import RepoUsuarioLeitura
@@ -35,7 +38,7 @@ class PasswordHasher:
         return senha_esta_correta
 
 
-def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork) -> UsuarioModel | None:
+def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork) -> Usuario | None:
     senha_encriptada = PasswordHasher.hash_password(usuario.senha) if usuario.senha else None
     entidade = Usuario(
         nome=usuario.nome,
@@ -54,7 +57,12 @@ def criar_usuario(usuario: UsuarioModel, uow: UnitOfWork) -> UsuarioModel | None
         with uow:
             uow.repo_escrita.adicionar(entidade)
             uow.commit()
-            return usuario
+
+            cliente_stripe = criar_cliente_stripe(entidade)
+            _, assinatura = criar_assinatura(cliente_stripe)
+
+        return entidade
+
     except Exception as e:
-        logging.exception(f"Erro ao criar transacao: {e}")
-        raise ErroAoCriarUsuario(f"Erro ao o usuario {usuario.email}: {e}")
+        traceback.print_exc()
+        raise ErroAoCriarUsuario(f"Erro ao criar o usuario {usuario.email}: {e}")
