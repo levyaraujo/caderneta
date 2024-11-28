@@ -67,7 +67,10 @@ jobs:
           name: test-data
 
       - name: Verifica dados de teste
-        run: ls -la test_data/
+        run: ls -la
+
+      - name: Unzipa dados teste
+        run: unzip dados.zip -d test_data
 
       - name: Run migrations
         env:
