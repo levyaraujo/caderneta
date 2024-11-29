@@ -7,6 +7,7 @@ import stripe
 from stripe import Customer, Subscription
 
 from src.dominio.assinatura.entidade import Assinatura
+from src.dominio.bot.entidade import WhatsAppBot
 from src.dominio.usuario.entidade import Usuario
 from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
@@ -75,10 +76,15 @@ async def handle_subscription_updated(subscription: Dict[str, Any]) -> None:
 
 async def handle_trial_will_end(subscription: Dict[str, Any]) -> None:
     customer_id = subscription["customer"]
-    subscription_id = subscription["id"]
-    status = subscription["status"]
+    cliente = stripe.Customer.retrieve(customer_id)
 
-    print("enviar mensagem avisando que período de testes está acabando")
+    bot = WhatsAppBot()
+    mensagem = f"Olá, {cliente.name[0]}! 👋 Percebemos que seu período de testes está chegando ao fim e queremos ajudar você a aproveitar ao máximo nossa plataforma! 🚀\n\n"
+    mensagem += "Nos últimos dias, você teve a oportunidade de experimentar todos os recursos que podem transformar sua rotina. Agora, é hora de decidir se quer continuar essa jornada de sucesso com a gente! 💪\n\n"
+    mensagem += "🎁 Como cortesia, estamos oferecendo 20% de desconto na primeira mensalidade se você realizar a contratação nos próximos 3 dias. Não perca essa chance!\n\n"
+    mensagem += "Quer saber mais detalhes ou tirar alguma dúvida? Estamos à disposição. Nos envie um email para contato@caderneta.chat"
+
+    bot.responder(mensagem, cliente.phone)
 
 
 EVENT_HANDLERS = {

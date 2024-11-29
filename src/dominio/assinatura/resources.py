@@ -47,6 +47,8 @@ async def handle_webhook(request: Request) -> WebhookResponse:
     event_type = event["type"]
     handler = EVENT_HANDLERS.get(event_type)
 
+    logger.info(f"Evento {event_type} recebido: {event['data']['object']}")
+
     try:
         if handler:
             # Execute the appropriate handler
