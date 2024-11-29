@@ -79,7 +79,7 @@ async def handle_trial_will_end(subscription: Dict[str, Any]) -> None:
     cliente = stripe.Customer.retrieve(customer_id)
 
     bot = WhatsAppBot()
-    mensagem = f"Olá, {cliente.name[0]}! 👋 Percebemos que seu período de testes está chegando ao fim e queremos ajudar você a aproveitar ao máximo nossa plataforma! 🚀\n\n"
+    mensagem = f"Olá, {cliente.name}! 👋 Percebemos que seu período de testes está chegando ao fim e queremos ajudar você a aproveitar ao máximo nossa plataforma! 🚀\n\n"
     mensagem += "Nos últimos dias, você teve a oportunidade de experimentar todos os recursos que podem transformar sua rotina. Agora, é hora de decidir se quer continuar essa jornada de sucesso com a gente! 💪\n\n"
     mensagem += "🎁 Como cortesia, estamos oferecendo 20% de desconto na primeira mensalidade se você realizar a contratação nos próximos 3 dias. Não perca essa chance!\n\n"
     mensagem += "Quer saber mais detalhes ou tirar alguma dúvida? Estamos à disposição. Nos envie um email para contato@caderneta.chat"
