@@ -138,7 +138,7 @@ def enviar_email_boas_vindas(usuario: Usuario) -> Email:
     params: resend.Emails.SendParams = {
         "from": "Caderneta <contato@caderneta.chat>",
         "to": [usuario.email],
-        "subject": "Bem-vindo à Caderneta!",
+        "subject": "Bem-vindo ao Caderneta!",
         "html": html_content % (usuario.nome, string_aleatoria),
     }
 
