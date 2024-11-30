@@ -8,6 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
 from src.dominio.assinatura.resources import StripeRouter
+from src.infra.middlewares.assinatura import AssinaturaMiddleware
 
 dotenv.load_dotenv(".env")
 
@@ -43,6 +44,7 @@ app.add_middleware(
 )
 
 app.add_middleware(WhatsAppOnboardMiddleware)
+app.add_middleware(AssinaturaMiddleware)
 
 app.include_router(BotRouter)
 app.include_router(UsuarioRouter)
