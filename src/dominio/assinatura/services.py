@@ -6,7 +6,8 @@ from typing import Dict, Any, Tuple
 import stripe
 from stripe import Customer, Subscription
 
-from src.dominio.assinatura.entidade import Assinatura
+from src.dominio.assinatura.entidade import Assinatura, StatusAssinatura
+from src.dominio.assinatura.repo import RepoAssinaturaLeitura
 from src.dominio.bot.entidade import WhatsAppBot
 from src.dominio.usuario.entidade import Usuario
 from src.dominio.usuario.repo import RepoUsuarioLeitura
@@ -20,24 +21,27 @@ stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
 webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
 
-async def handle_successful_payment(payment_intent: Dict[str, Any]) -> None:
-    """Handle successful payment"""
-    amount = payment_intent["amount"]
-    customer_id = payment_intent["customer"]
-    payment_id = payment_intent["id"]
+async def handle_invoice_paid(invoice: Dict[str, Any]) -> None:
+    """Handle paid invoice event"""
+    customer_id = invoice["customer"]
+    invoice_id = invoice["id"]
+    amount_paid = invoice["amount_paid"]
+    assinatura_id = invoice["subscription"]
 
-    logger.info(f"Payment {payment_id} succeeded: ${amount / 100:.2f} from customer {customer_id}")
+    logger.info(f"Invoice {invoice_id} paid: ${amount_paid / 100:.2f} for customer {customer_id}")
 
-    # Here you would typically:
-    # 1. Update your database (use async ORM like SQLAlchemy async or tortoise-orm)
-    # await db.payments.update_one({"payment_id": payment_id}, {"status": "succeeded"})
-
-    # 2. Send confirmation email (use async email library)
-    # await send_email_async(customer_id, "Payment Successful", "Thank you for your payment...")
-
-    # 3. Fulfill order
-    # await fulfill_order(payment_id)
-    pass
+    # Update subscription status
+    try:
+        uow = UnitOfWork(session_factory=get_session)
+        with uow:
+            repo_assinatura_leitura = RepoAssinaturaLeitura(session=get_session())
+            assinatura = repo_assinatura_leitura.buscar_por_stripe_subscription_id(assinatura_id)
+            if assinatura:
+                assinatura.registrar_pagamento()
+                uow.repo_escrita.adicionar(assinatura)
+                uow.commit()
+    except Exception as e:
+        logger.error(f"Error processing paid invoice: {e}")
 
 
 async def handle_failed_payment(payment_intent: Dict[str, Any]) -> None:
@@ -58,37 +62,52 @@ async def handle_failed_payment(payment_intent: Dict[str, Any]) -> None:
 
 
 async def handle_subscription_updated(subscription: Dict[str, Any]) -> None:
-    """Handle subscription updates"""
+    """Handle comprehensive subscription updates"""
     customer_id = subscription["customer"]
+    cliente = stripe.Customer.retrieve(customer_id)
     subscription_id = subscription["id"]
     status = subscription["status"]
 
-    logger.info(f"Subscription {subscription_id} updated for customer {customer_id}: {status}")
+    logger.info(f"Assinatura {subscription_id} atualizada para o usuário {cliente.email}: {status}")
 
-    # Here you would typically:
-    # 1. Update subscription status in database
-    # await db.subscriptions.update_one(
-    #     {"subscription_id": subscription_id},
-    #     {"status": status}
-    # )
-    pass
+    try:
+        uow = UnitOfWork(session_factory=get_session)
+        status = {
+            "active": StatusAssinatura.ATIVA,
+            "past_due": StatusAssinatura.PENDENTE,
+            "unpaid": StatusAssinatura.EXPIRADA,
+        }
+        with uow:
+            repo_assinatura_leitura = RepoAssinaturaLeitura(session=get_session())
+            assinatura = repo_assinatura_leitura.buscar_por_stripe_subscription_id(subscription_id)
+            if status == "canceled":
+                assinatura.cancelar()
+
+            uow.repo_escrita.adicionar(assinatura)
+            uow.commit()
+    except Exception as e:
+        traceback.print_exc()
+        logger.error(
+            f"Erro ao processar atualização de assinatura para o usuário {cliente.email}: {e}. Status assinatura: {status}"
+        )
 
 
 async def handle_trial_will_end(subscription: Dict[str, Any]) -> None:
     customer_id = subscription["customer"]
     cliente = stripe.Customer.retrieve(customer_id)
+    nome = cliente.name.split()[0]
 
     bot = WhatsAppBot()
-    mensagem = f"Olá, {cliente.name}! 👋 Percebemos que seu período de testes está chegando ao fim e queremos ajudar você a aproveitar ao máximo nossa plataforma! 🚀\n\n"
+    mensagem = f"Olá, {nome}! 👋 Percebemos que seu período de testes está chegando ao fim e queremos ajudar você a aproveitar ao máximo nossa plataforma! 🚀\n\n"
     mensagem += "Nos últimos dias, você teve a oportunidade de experimentar todos os recursos que podem transformar sua rotina. Agora, é hora de decidir se quer continuar essa jornada de sucesso com a gente! 💪\n\n"
-    mensagem += "🎁 Como cortesia, estamos oferecendo 20% de desconto na primeira mensalidade se você realizar a contratação nos próximos 3 dias. Não perca essa chance!\n\n"
+    mensagem += "🎁 Como cortesia, estamos oferecendo 15% de desconto na primeira mensalidade se você realizar a contratação nos próximos 3 dias. Não perca essa chance!\n\n"
     mensagem += "Quer saber mais detalhes ou tirar alguma dúvida? Estamos à disposição. Nos envie um email para contato@caderneta.chat"
 
     bot.responder(mensagem, cliente.phone)
 
 
 EVENT_HANDLERS = {
-    "payment_intent.succeeded": handle_successful_payment,
+    "invoice.paid": handle_invoice_paid,
     "payment_intent.payment_failed": handle_failed_payment,
     "customer.subscription.updated": handle_subscription_updated,
     "customer.subscription.trial_will_end": handle_trial_will_end,
