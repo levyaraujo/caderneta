@@ -59,10 +59,10 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
 
             assinatura = usuario.assinatura
 
-            if assinatura.status == StatusAssinatura.CANCELADA:
+            if assinatura.status != StatusAssinatura.ATIVA:
                 mensagem = (
                     f"Olá, {usuario.nome}! 👋\n\n"
-                    "Notamos que sua assinatura foi cancelada. 📅\n\n"
+                    "Notamos que sua assinatura chegou ao fim. 📅\n\n"
                     "Sentimos sua falta e gostaríamos de entender o motivo. "
                     "Há algo que possamos fazer para melhorar sua experiência?\n\n"
                     "Acesse o link abaixo e renove sua assinatura:\n"
