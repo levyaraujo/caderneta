@@ -1,7 +1,7 @@
 import json
 import logging
 import traceback
-from typing import Callable
+from typing import Callable, Any
 
 from starlette import status
 from starlette.exceptions import HTTPException
@@ -9,7 +9,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
+from src.dominio.assinatura.entidade import StatusAssinatura, Assinatura
+from src.dominio.assinatura.repo import RepoAssinaturaLeitura
 from src.dominio.bot.entidade import WhatsAppBot
+from src.dominio.usuario.entidade import Usuario
 from src.dominio.usuario.onboard import OnboardingHandler
 from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
@@ -25,7 +28,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
     Middleware para processar requisições de onboarding de usuários com deduplicação de webhooks.
     """
 
-    def __init__(self, app):
+    def __init__(self, app: Any) -> None:
         super().__init__(app)
         self.bot = WhatsAppBot()
 
@@ -53,6 +56,22 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
 
             request.state.dados_whatsapp = parsed_data
             request.state.usuario = usuario
+
+            assinatura = usuario.assinatura
+
+            if assinatura.status == StatusAssinatura.CANCELADA:
+                mensagem = (
+                    f"Olá, {usuario.nome}! 👋\n\n"
+                    "Notamos que sua assinatura foi cancelada. 📅\n\n"
+                    "Sentimos sua falta e gostaríamos de entender o motivo. "
+                    "Há algo que possamos fazer para melhorar sua experiência?\n\n"
+                    "Acesse o link abaixo e renove sua assinatura:\n"
+                    f"https://buy.stripe.com/7sI01Q1Mh0aq9YAeUV?prefilled_email={usuario.email}"
+                    "Se quiser tirar dúvidas, entre em contato conosco: contato@caderneta.chat\n\n"
+                )
+                resposta = self.bot.responder(mensagem, usuario.telefone)
+
+                return JSONResponse(content=resposta, status_code=resposta.get("status_code"))
 
         except json.JSONDecodeError:
             logger.error("Invalid JSON payload")
