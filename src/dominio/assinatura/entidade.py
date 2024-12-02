@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from enum import Enum
 from typing import Optional
+
+from dateutil.relativedelta import relativedelta
 
 
 class StatusAssinatura(Enum):
@@ -49,14 +51,13 @@ class Assinatura:
         self.data_termino = None
         self.renovacao_automatica = True
 
-    def registrar_pagamento(self, data_pagamento: Optional[datetime] = None) -> None:
-        if data_pagamento is None:
-            data_pagamento = datetime.now()
+    def renovar(self) -> None:
+        self.data_ultimo_pagamento = datetime.now()
+        self.data_proximo_pagamento = self.data_ultimo_pagamento + relativedelta(months=1)
+        self.data_termino = None
+        self.renovacao_automatica = True
 
+    def registrar_pagamento(self) -> None:
+        data_pagamento = datetime.now()
         self.data_ultimo_pagamento = data_pagamento
-        self.status = StatusAssinatura.ATIVA
-
-        # Calcula próxima data de pagamento
-        from dateutil.relativedelta import relativedelta
-
         self.data_proximo_pagamento = data_pagamento + relativedelta(months=1)
