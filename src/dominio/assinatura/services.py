@@ -72,7 +72,7 @@ async def handle_subscription_updated(subscription: Dict[str, Any]) -> None:
 
     try:
         uow = UnitOfWork(session_factory=get_session)
-        status = {
+        statuses = {
             "active": StatusAssinatura.ATIVA,
             "past_due": StatusAssinatura.PENDENTE,
             "unpaid": StatusAssinatura.EXPIRADA,
@@ -80,6 +80,7 @@ async def handle_subscription_updated(subscription: Dict[str, Any]) -> None:
         with uow:
             repo_assinatura_leitura = RepoAssinaturaLeitura(session=get_session())
             assinatura = repo_assinatura_leitura.buscar_por_stripe_subscription_id(subscription_id)
+            assinatura.status = statuses.get(status, StatusAssinatura.ATIVA)
             if status == "canceled":
                 assinatura.cancelar()
 
