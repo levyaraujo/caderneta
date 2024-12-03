@@ -107,7 +107,6 @@ class GraficoLinha(GraficoBase):
         )
 
         layout = go.Layout(
-            font={"size": 50},
             title={
                 "text": f"{self.config.titulo} {self.legendas[0].strftime('%m/%Y')}",
                 "x": 0.5,
@@ -270,6 +269,7 @@ class GraficoBarraEmpilhada(GraficoBase):
 
         layout = self._criar_layout_base()
         layout.update(
+            font={"size": 20},
             barmode="relative",
             margin=dict(l=40, r=30, t=40, b=40),
         )
