@@ -107,7 +107,7 @@ class GraficoLinha(GraficoBase):
         )
 
         layout = go.Layout(
-            font={"size": 25},
+            font={"size": 50},
             title={
                 "text": f"{self.config.titulo} {self.legendas[0].strftime('%m/%Y')}",
                 "x": 0.5,
