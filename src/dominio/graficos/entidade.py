@@ -249,6 +249,7 @@ class GraficoBarraEmpilhada(GraficoBase):
             largura = None
 
         trace_receitas = go.Bar(
+            font={"size": 20},
             x=periodo,
             y=receitas,
             hoverinfo="text",
@@ -258,6 +259,7 @@ class GraficoBarraEmpilhada(GraficoBase):
             width=largura,
         )
         trace_despesas = go.Bar(
+            font={"size": 20},
             x=periodo,
             y=despesas,
             hoverinfo="text",
@@ -269,7 +271,7 @@ class GraficoBarraEmpilhada(GraficoBase):
 
         layout = self._criar_layout_base()
         layout.update(
-            font={"size": 20},
+            font={"size": 15},
             barmode="relative",
             margin=dict(l=40, r=30, t=40, b=40),
         )
