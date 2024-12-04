@@ -1,13 +1,9 @@
 import logging
-
 import sys
 from logging import Logger
 
 
 def setup_logging(log_level: int | str = logging.INFO) -> Logger:
-    """
-    Reconfigure logging explicitly to avoid suppression in async contexts.
-    """
     logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
     logger.handlers.clear()
@@ -21,4 +17,4 @@ def setup_logging(log_level: int | str = logging.INFO) -> Logger:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    return logging.getLogger()
+    return logger
