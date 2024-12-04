@@ -160,7 +160,7 @@ def exportar(*args: Tuple[str], **kwargs: Any) -> str:
     df.to_excel(buffer, index=False, engine="openpyxl")
     excel_bytes = buffer.getvalue()
 
-    nome_do_arquivo = f"lancamentos_{usuario.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    nome_do_arquivo = f"lancamentos_{usuario.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xls"
 
     uploader = Uploader()
     url_arquivo: str = uploader.upload_file(nome_do_arquivo, excel_bytes)
