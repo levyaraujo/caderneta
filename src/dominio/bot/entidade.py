@@ -45,48 +45,6 @@ class WhatsAppBot(BotBase):
     def responder(
         self, mensagem: str, telefone: str, wamid: Optional[str] = None, reacao: Optional[str] = None
     ) -> dict:
-        payload = {
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": telefone,
-            "type": "text",
-            "text": {"body": f"{mensagem}"},
-        }
-        if wamid:
-            payload["context"] = {"message_id": wamid}
-        if mensagem.startswith("http"):
-            payload = {
-                "preview_url": True,
-                "messaging_product": "whatsapp",
-                "recipient_type": "individual",
-                "to": telefone,
-                "type": "image",
-                "image": {"link": mensagem},
-            }
-        if mensagem.startswith("http") and mensagem.endswith(".mp3"):
-            payload = {
-                "messaging_product": "whatsapp",
-                "recipient_type": "individual",
-                "to": telefone,
-                "type": "audio",
-                "audio": {"link": mensagem},
-            }
-        if mensagem.startswith("http") and mensagem.endswith(".xlsx"):
-            payload = {
-                "messaging_product": "whatsapp",
-                "recipient_type": "individual",
-                "to": telefone,
-                "type": "document",
-                "document": {"filename": "Exportação Lançamentos.xlsx", "link": mensagem},
-            }
-        if mensagem.startswith("http") and "pdf" in mensagem:
-            payload = {
-                "messaging_product": "whatsapp",
-                "recipient_type": "individual",
-                "to": telefone,
-                "type": "document",
-                "document": {"link": mensagem, "caption": "Aqui está a sua NF-e", "filename": "NF-e Caderneta.pdf"},
-            }
         if reacao:
             payload = {
                 "messaging_product": "whatsapp",
@@ -95,6 +53,49 @@ class WhatsAppBot(BotBase):
                 "type": "reaction",
                 "reaction": {"message_id": f"{wamid}", "emoji": reacao},
             }
+        else:
+            payload = {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": telefone,
+                "type": "text",
+                "text": {"body": f"{mensagem}"},
+            }
+            if wamid:
+                payload["context"] = {"message_id": wamid}
+            if mensagem.startswith("http"):
+                payload = {
+                    "preview_url": True,
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": telefone,
+                    "type": "image",
+                    "image": {"link": mensagem},
+                }
+            if mensagem.startswith("http") and mensagem.endswith(".mp3"):
+                payload = {
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": telefone,
+                    "type": "audio",
+                    "audio": {"link": mensagem},
+                }
+            if mensagem.startswith("http") and mensagem.endswith(".xlsx"):
+                payload = {
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": telefone,
+                    "type": "document",
+                    "document": {"filename": "Exportação Lançamentos.xlsx", "link": mensagem},
+                }
+            if mensagem.startswith("http") and "pdf" in mensagem:
+                payload = {
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": telefone,
+                    "type": "document",
+                    "document": {"link": mensagem, "caption": "Aqui está a sua NF-e", "filename": "NF-e Caderneta.pdf"},
+                }
         url: str = self.__url
         return self.enviar_requisicao(url, payload)
 
