@@ -135,10 +135,10 @@ def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
 
             uow.repo_escrita.remover(transacao)
             uow.commit()
-        robo.responder(mensagem="Lançamento removido com sucesso! ✅", wamid=transacao.wamid, telefone=usuario.telefone)
+        robo.responder(mensagem="Lançamento removido com sucesso! ✅", wamid=wamid_transacao, telefone=usuario.telefone)
         robo.responder(
             mensagem="Lançamento removido com sucesso! ✅",
-            wamid=transacao.wamid,
+            wamid=wamid_transacao,
             telefone=usuario.telefone,
             reacao="\u274c",
         )
