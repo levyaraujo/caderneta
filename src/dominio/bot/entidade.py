@@ -86,7 +86,7 @@ class WhatsAppBot(BotBase):
                     "recipient_type": "individual",
                     "to": telefone,
                     "type": "document",
-                    "document": {"filename": "Exportação Lançamentos.xlsx", "link": mensagem},
+                    "document": {"filename": "Exportação Lançamentos.xls", "link": mensagem},
                 }
             if mensagem.startswith("http") and "pdf" in mensagem:
                 payload = {
@@ -96,11 +96,11 @@ class WhatsAppBot(BotBase):
                     "type": "document",
                     "document": {"link": mensagem, "caption": "Aqui está a sua NF-e", "filename": "NF-e Caderneta.pdf"},
                 }
-        url: str = self.__url
+        url: str = f"{self.__url}/messages"
         return self.enviar_requisicao(url, payload)
 
     def enviar_mensagem_interativa(self, mensagem: dict) -> dict:
-        url: str = self.__url
+        url: str = f"{self.__url}/messages"
         return self.enviar_requisicao(url, mensagem)
 
     def enviar_requisicao(self, url: str, payload: dict) -> dict:
