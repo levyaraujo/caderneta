@@ -32,6 +32,8 @@ sentry-sdk = {extras = ["fastapi"], version = "^2.18.0"}
 stripe = "^11.2.0"
 apscheduler = "^3.10.4"
 resend = "^2.4.0"
+openpyxl = "^3.1.5"
+xlsxwriter = "^3.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"

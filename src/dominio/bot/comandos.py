@@ -139,3 +139,29 @@ def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
     except Exception as e:
         logging.error(f"Ocorreu um erro ao remover transação", exc_info=True)
         return "Não foi possível remover a transação."
+
+
+@bot.comando("exportar", "Exporta lançamento em formato excel")
+def exportar(*args: Tuple[str], **kwargs: Any) -> str:
+    import pandas as pd
+    from io import BytesIO
+    from datetime import datetime
+
+    usuario: Usuario = kwargs.get("usuario")
+
+    intervalo = intervalo_mes_atual()
+
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(intervalo=intervalo, usuario_id=usuario.id)
+    dados = [transacao.dicionario() for transacao in transacoes]
+
+    df = pd.DataFrame(dados)
+    buffer = BytesIO()
+    df.to_excel(buffer, index=False, engine="openpyxl")
+    excel_bytes = buffer.getvalue()
+
+    nome_do_arquivo = f"lancamentos_{usuario.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+
+    uploader = Uploader()
+    url_arquivo = uploader.upload_file(nome_do_arquivo, excel_bytes)
+
+    return url_arquivo
