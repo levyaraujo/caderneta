@@ -86,7 +86,7 @@ class WhatsAppBot(BotBase):
                     "recipient_type": "individual",
                     "to": telefone,
                     "type": "document",
-                    "document": {"filename": "Exportação Lançamentos.xls", "link": mensagem},
+                    "document": {"filename": "Exportação Lançamentos.xlsx", "link": mensagem},
                 }
             if mensagem.startswith("http") and "pdf" in mensagem:
                 payload = {
