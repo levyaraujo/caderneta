@@ -7,7 +7,7 @@ from typing import Dict, List, Any, Tuple
 import dotenv
 
 from const import REGEX_WAMID
-from src.dominio.bot.entidade import GerenciadorComandos
+from src.dominio.bot.entidade import GerenciadorComandos, WhatsAppBot
 from src.dominio.graficos.services import (
     criar_grafico_fluxo_de_caixa,
     criar_grafico_receitas_e_despesas,
@@ -127,6 +127,7 @@ def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
     wamid_transacao = str(args[0])
     usuario: Usuario = kwargs.get("usuario")
     uow = UnitOfWork(session_factory=get_session)
+    robo = WhatsAppBot()
 
     try:
         with uow:
@@ -134,7 +135,7 @@ def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
 
             uow.repo_escrita.remover(transacao)
             uow.commit()
-        return "Transação removida com sucesso! ✅"
+        robo.responder(mensagem="Lançamento removido com sucesso! ✅", wamid=transacao.wamid)
 
     except Exception as e:
         logging.error(f"Ocorreu um erro ao remover transação", exc_info=True)

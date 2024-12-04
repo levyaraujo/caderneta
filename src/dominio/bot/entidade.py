@@ -42,7 +42,7 @@ class WhatsAppBot(BotBase):
         self.__url = os.getenv("WHATSAPP_WEBHOOK_URL")
         self.__token = os.getenv("META_TOKEN")
 
-    def responder(self, mensagem: str, telefone: str) -> dict:
+    def responder(self, mensagem: str, telefone: str, wamid: Optional[str] = None) -> dict:
         payload = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
@@ -50,6 +50,8 @@ class WhatsAppBot(BotBase):
             "type": "text",
             "text": {"body": f"{mensagem}"},
         }
+        if wamid:
+            payload["context"] = {"message_id": wamid}
         if mensagem.startswith("http"):
             payload = {
                 "preview_url": True,
