@@ -135,13 +135,7 @@ def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
 
             uow.repo_escrita.remover(transacao)
             uow.commit()
-        robo.responder(mensagem="Lançamento removido com sucesso! ✅", wamid=wamid_transacao, telefone=usuario.telefone)
-        robo.responder(
-            mensagem="Lançamento removido com sucesso! ✅",
-            wamid=wamid_transacao,
-            telefone=usuario.telefone,
-            reacao="\u274c",
-        )
+        return "Lançamento removido com sucesso! ✅"
 
     except Exception as e:
         logging.error(f"Ocorreu um erro ao remover transação", exc_info=True)
@@ -169,6 +163,6 @@ def exportar(*args: Tuple[str], **kwargs: Any) -> str:
     nome_do_arquivo = f"lancamentos_{usuario.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
 
     uploader = Uploader()
-    url_arquivo = uploader.upload_file(nome_do_arquivo, excel_bytes)
+    url_arquivo: str = uploader.upload_file(nome_do_arquivo, excel_bytes)
 
     return url_arquivo
