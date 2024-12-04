@@ -136,6 +136,12 @@ def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
             uow.repo_escrita.remover(transacao)
             uow.commit()
         robo.responder(mensagem="Lançamento removido com sucesso! ✅", wamid=transacao.wamid, telefone=usuario.telefone)
+        robo.responder(
+            mensagem="Lançamento removido com sucesso! ✅",
+            wamid=transacao.wamid,
+            telefone=usuario.telefone,
+            reacao="\u274c",
+        )
 
     except Exception as e:
         logging.error(f"Ocorreu um erro ao remover transação", exc_info=True)

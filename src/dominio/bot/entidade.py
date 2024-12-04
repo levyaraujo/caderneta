@@ -42,7 +42,9 @@ class WhatsAppBot(BotBase):
         self.__url = os.getenv("WHATSAPP_WEBHOOK_URL")
         self.__token = os.getenv("META_TOKEN")
 
-    def responder(self, mensagem: str, telefone: str, wamid: Optional[str] = None) -> dict:
+    def responder(
+        self, mensagem: str, telefone: str, wamid: Optional[str] = None, reacao: Optional[str] = None
+    ) -> dict:
         payload = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
@@ -84,6 +86,14 @@ class WhatsAppBot(BotBase):
                 "to": telefone,
                 "type": "document",
                 "document": {"link": mensagem, "caption": "Aqui está a sua NF-e", "filename": "NF-e Caderneta.pdf"},
+            }
+        if reacao:
+            payload = {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": f"{telefone}",
+                "type": "reaction",
+                "reaction": {"message_id": f"{wamid}", "emoji": reacao},
             }
         url: str = self.__url
         return self.enviar_requisicao(url, payload)
