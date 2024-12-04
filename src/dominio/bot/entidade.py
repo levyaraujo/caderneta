@@ -67,6 +67,14 @@ class WhatsAppBot(BotBase):
                 "type": "audio",
                 "audio": {"link": mensagem},
             }
+        if mensagem.startswith("http") and mensagem.endswith(".xlsx"):
+            payload = {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": telefone,
+                "type": "document",
+                "document": {"filename": "Exportação Lançamentos.xlsx", "link": mensagem},
+            }
         if mensagem.startswith("http") and "pdf" in mensagem:
             payload = {
                 "messaging_product": "whatsapp",
