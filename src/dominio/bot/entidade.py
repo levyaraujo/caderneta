@@ -3,7 +3,9 @@ import json
 import logging
 import os
 import re
+import subprocess
 import traceback
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from email.generator import Generator
@@ -15,6 +17,7 @@ from src.dominio.bot.exceptions import ComandoDesconhecido, ErroAoEnviarMensagem
 from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.infra.database.connection import get_session
 from src.infra.log import setup_logging
+from src.utils.uploader import Uploader
 
 logger = setup_logging()
 
@@ -118,6 +121,47 @@ class WhatsAppBot(BotBase):
         except Exception:
             traceback.print_exc()
 
+    def transcrever_audio(self, audio: str) -> str:
+        import speech_recognition as sr
+
+        r = sr.Recognizer()
+
+        audio_file = audio
+
+        with sr.AudioFile(audio_file) as source:
+            audio = r.record(source)
+
+        try:
+            text = r.recognize_google(audio, language="pt-BR")
+            return text
+        except sr.UnknownValueError:
+            logger.error("Google Speech Recognition could not understand audio")
+        except sr.RequestError as e:
+            logger.error("Could not request results from Google Speech Recognition service; {0}".format(e))
+
+    def obter_url_audio(self, audio_id: str) -> str:
+        headers = {"Authorization": f"Bearer {self.__token}"}
+        resposta = httpx.get(f"{self.__url}/{audio_id}", headers=headers)
+        conteudo = resposta.json()
+
+        return conteudo["url"]
+
+    def download_audio(self, url) -> str:
+        headers = {"Authorization": f"Bearer {self.__token}"}
+        BUCKET = os.getenv("BUCKET", "/opt/caderneta/static")
+        uploader = Uploader()
+        resposta = httpx.get(url=url, headers=headers)
+        filename = f"{uuid.uuid4()}.wav"
+        uploader.upload_file(filename, resposta.content)
+
+        caminho_audio = os.path.join(BUCKET, filename)
+
+        ffmpeg_command = ["ffmpeg", "-i", caminho_audio, "-ar", "16000", "-ac", "1", "-f", "wav", caminho_audio]
+
+        subprocess.run(ffmpeg_command, check=True)
+
+        return caminho_audio
+
 
 @dataclass
 class Comando:
@@ -175,7 +219,6 @@ class GerenciadorComandos:
         if not command:
             for cmd_name, cmd in self.commands.items():
                 try:
-                    # Check if the command name is a regex pattern
                     if re.match(cmd_name, command_name):
                         command = cmd
                         break

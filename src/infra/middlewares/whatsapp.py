@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import traceback
 from typing import Callable, Any
 
@@ -18,6 +19,7 @@ from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.infra.log import setup_logging
+from src.utils.uploader import Uploader
 from src.utils.whatsapp_api import parse_whatsapp_payload
 
 logger = setup_logging()
@@ -37,10 +39,10 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
         try:
             raw_data = await request.body()
             dados = json.loads(raw_data)
+            parsed_data = parse_whatsapp_payload(dados)
 
             logger.info("Dados WhatsApp: %s", json.dumps(dados, indent=2))
 
-            parsed_data = parse_whatsapp_payload(dados)
             if not parsed_data:
                 return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "skipped"})
 
@@ -65,9 +67,9 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
                     "Notamos que sua assinatura chegou ao fim. 📅\n\n"
                     "Sentimos sua falta e gostaríamos de entender o motivo. "
                     "Há algo que possamos fazer para melhorar sua experiência?\n\n"
-                    "Acesse o link abaixo e renove sua assinatura:\n"
-                    f"https://buy.stripe.com/7sI01Q1Mh0aq9YAeUV?prefilled_email={usuario.email}"
                     "Se quiser tirar dúvidas, entre em contato conosco: contato@caderneta.chat\n\n"
+                    "Acesse o link abaixo e renove sua assinatura:\n"
+                    f"https://billing.stripe.com/p/login/4gwdTFckG4s80SI8ww?prefilled_email={usuario.email}"
                 )
                 resposta = self.bot.responder(mensagem, usuario.telefone)
 
