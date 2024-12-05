@@ -153,11 +153,13 @@ class WhatsAppBot(BotBase):
         uploader = Uploader()
         resposta = httpx.get(url=url, headers=headers)
         filename = f"{uuid.uuid4()}.wav"
+        filename_output = f"{uuid.uuid4()}.wav"
         uploader.upload_file(filename, resposta.content)
 
         caminho_audio = os.path.join(BUCKET, filename)
+        output = os.path.join(BUCKET, filename_output)
 
-        ffmpeg_command = ["ffmpeg", "-y", "-i", caminho_audio, "-ar", "16000", "-ac", "1", "-f", "wav", caminho_audio]
+        ffmpeg_command = ["ffmpeg", "-y", "-i", caminho_audio, "-ar", "16000", "-ac", "1", "-f", "wav", output]
 
         subprocess.run(ffmpeg_command, check=True)
 
