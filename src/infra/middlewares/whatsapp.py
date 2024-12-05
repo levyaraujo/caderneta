@@ -61,7 +61,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
 
             assinatura = usuario.assinatura
 
-            if assinatura.status != StatusAssinatura.ATIVA:
+            if assinatura.status != StatusAssinatura.ATIVA or assinatura.status != StatusAssinatura.TESTE:
                 mensagem = (
                     f"Olá, {usuario.nome}! 👋\n\n"
                     "Notamos que sua assinatura chegou ao fim. 📅\n\n"
