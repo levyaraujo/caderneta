@@ -2742,6 +2742,27 @@ files = [
 ]
 
 [[package]]
+name = "speechrecognition"
+version = "3.11.0"
+description = "Library for performing speech recognition, with support for several engines and APIs, online and offline."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "SpeechRecognition-3.11.0-py2.py3-none-any.whl", hash = "sha256:a5be29ae95852969045c3c0d1dc0ed49cf48246d899a39591abbc75ff17ccb86"},
+    {file = "speechrecognition-3.11.0.tar.gz", hash = "sha256:a5ecc0bb61d7d9bf0ca70427cd4fea07c38e26c647b5577137596033677b5f34"},
+]
+
+[package.dependencies]
+requests = ">=2.26.0"
+typing-extensions = "*"
+
+[package.extras]
+audio = ["PyAudio (>=0.2.11)"]
+dev = ["flake8", "rstcheck"]
+whisper-api = ["openai"]
+whisper-local = ["openai-whisper", "soundfile"]
+
+[[package]]
 name = "sqlalchemy"
 version = "2.0.36"
 description = "Database Abstraction Library"
@@ -3349,4 +3370,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "48aa6459bb88b8ac9b3b99ee1d4f3be2b511afd9132c2786b8b14f03df1580ac"
+content-hash = "cd6247d3caeed580a7a093d7cb872baf16422016a42c1e97a35c6b8dcc1af490"

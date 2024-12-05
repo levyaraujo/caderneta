@@ -41,8 +41,15 @@ async def whatsapp_webhook(request: Request) -> Any:
     bot = WhatsAppBot()
     usuario = request.state.usuario
     dados_whatsapp = request.state.dados_whatsapp
+
+    mensagem = dados_whatsapp.mensagem
+    if dados_whatsapp.audio:
+        audio_url = bot.obter_url_audio(dados_whatsapp.audio)
+        audio = bot.download_audio(audio_url)
+        mensagem = bot.transcrever_audio(audio)
+
     resposta = await responder_usuario(
-        mensagem=dados_whatsapp.mensagem,
+        mensagem=mensagem,
         usuario=usuario,
         uow=uow,
         robo=bot,

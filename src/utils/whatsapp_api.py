@@ -45,6 +45,7 @@ class WhatsAppPayload:
     telefone: str
     object: str
     wamid: str
+    audio: Optional[str] = None
     contacts: Optional[List[Contato]] = None
     messages: Optional[List[Mensagem]] = None
     statuses: Optional[List[Status]] = None
@@ -81,12 +82,15 @@ def parse_whatsapp_payload(payload: Dict) -> WhatsAppPayload:
         telefone = base["contacts"][0]["wa_id"]
         telefone = formatar_telefone(telefone)
         mensagem = ""
+        audio = None
 
         message_data = base["messages"][0]
         message_type = str(message_data["type"]).lower()
 
         if message_type == "text":
             mensagem = str(message_data["text"]["body"]).lower()
+        if message_type == "audio":
+            audio = str(message_data["audio"]["id"])
         elif message_type == "interactive":
             if message_data["interactive"]["type"] == "button_reply":
                 mensagem = message_data["interactive"]["button_reply"]["id"]
@@ -94,7 +98,12 @@ def parse_whatsapp_payload(payload: Dict) -> WhatsAppPayload:
         wamid = message_data["id"]
 
         return WhatsAppPayload(
-            object=payload["object"], nome=nome_usuario, mensagem=limpar_texto(mensagem), telefone=telefone, wamid=wamid
+            object=payload["object"],
+            nome=nome_usuario,
+            mensagem=limpar_texto(mensagem),
+            telefone=telefone,
+            wamid=wamid,
+            audio=audio,
         )
     except KeyError:
         pass
