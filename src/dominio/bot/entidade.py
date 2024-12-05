@@ -44,6 +44,7 @@ class WhatsAppBot(BotBase):
     def __init__(self) -> None:
         self.__url = os.getenv("WHATSAPP_WEBHOOK_URL")
         self.__token = os.getenv("META_TOKEN")
+        self.__id_numero = os.getenv("ID_NUMERO")
 
     def responder(
         self, mensagem: str, telefone: str, wamid: Optional[str] = None, reacao: Optional[str] = None
@@ -99,11 +100,11 @@ class WhatsAppBot(BotBase):
                     "type": "document",
                     "document": {"link": mensagem, "caption": "Aqui está a sua NF-e", "filename": "NF-e Caderneta.pdf"},
                 }
-        url: str = f"{self.__url}/messages"
+        url: str = f"{self.__url}/{self.__id_numero}/messages"
         return self.enviar_requisicao(url, payload)
 
     def enviar_mensagem_interativa(self, mensagem: dict) -> dict:
-        url: str = f"{self.__url}/messages"
+        url: str = f"{self.__url}/{self.__id_numero}/messages"
         return self.enviar_requisicao(url, mensagem)
 
     def enviar_requisicao(self, url: str, payload: dict) -> dict:
