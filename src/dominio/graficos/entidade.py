@@ -180,7 +180,7 @@ class GraficoPizza(GraficoBase):
             textinfo="percent+label",
             insidetextorientation="radial",
             hovertext=self.hover_texts,
-            insidetextfont=dict(size=22),
+            insidetextfont=dict(size=20),
         )
         layout = self._criar_layout_base()
         layout.update(font=dict(size=22))
