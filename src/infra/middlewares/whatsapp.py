@@ -1,6 +1,4 @@
 import json
-import logging
-import os
 import traceback
 from typing import Callable, Any
 
@@ -10,17 +8,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
-from src.dominio.assinatura.entidade import StatusAssinatura, Assinatura
-from src.dominio.assinatura.repo import RepoAssinaturaLeitura
+from src.dominio.assinatura.entidade import StatusAssinatura
 from src.dominio.bot.entidade import WhatsAppBot
-from src.dominio.usuario.entidade import Usuario
 from src.dominio.usuario.onboard import OnboardingHandler
 from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.infra.log import setup_logging
-from src.utils.uploader import Uploader
-from src.utils.whatsapp_api import parse_whatsapp_payload, Status
+from src.utils.whatsapp_api import parse_whatsapp_payload
 
 logger = setup_logging()
 

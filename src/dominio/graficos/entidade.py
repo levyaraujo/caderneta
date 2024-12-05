@@ -164,7 +164,7 @@ class GraficoPizza(GraficoBase):
         config: GraficoConfig,
         legendas: List[str],
         valores: List[float],
-        hover_texts: List[str],
+        hover_texts: List[str] | None = None,
     ):
         super().__init__(config)
         self.legendas = legendas

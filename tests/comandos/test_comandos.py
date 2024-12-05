@@ -151,5 +151,5 @@ async def test_remover_transacao_por_wamid(mock_usuario, session, transacao_gen,
     intervalo = Intervalo(inicio=datetime(2024, 10, 1), fim=datetime(2024, 10, 31))
     assert (
         await bot.processar_mensagem(wamid, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
-        == "Transação removida com sucesso! ✅"
+        == "Lançamento removido com sucesso! ✅"
     )
