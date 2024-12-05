@@ -20,7 +20,7 @@ from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.infra.log import setup_logging
 from src.utils.uploader import Uploader
-from src.utils.whatsapp_api import parse_whatsapp_payload
+from src.utils.whatsapp_api import parse_whatsapp_payload, Status
 
 logger = setup_logging()
 
@@ -61,7 +61,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
 
             assinatura = usuario.assinatura
 
-            if assinatura.status != StatusAssinatura.ATIVA or assinatura.status != StatusAssinatura.TESTE:
+            if assinatura.status == StatusAssinatura.EXPIRADA or StatusAssinatura.CANCELADA:
                 mensagem = (
                     f"Olá, {usuario.nome}! 👋\n\n"
                     "Notamos que sua assinatura chegou ao fim. 📅\n\n"
