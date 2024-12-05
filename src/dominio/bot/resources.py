@@ -44,6 +44,7 @@ async def whatsapp_webhook(request: Request) -> Any:
 
     mensagem = dados_whatsapp.mensagem
     if dados_whatsapp.audio:
+        bot.responder(mensagem="Aguarde um momento. Estou processando seu áudio...", telefone=dados_whatsapp.telefone)
         audio_url = bot.obter_url_audio(dados_whatsapp.audio)
         audio = bot.download_audio(audio_url)
         mensagem = bot.transcrever_audio(audio)
