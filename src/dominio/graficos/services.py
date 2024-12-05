@@ -1,12 +1,12 @@
 from collections import defaultdict
 from typing import List, Literal, Dict
 
-from src.dominio.graficos.entidade import GraficoConfig, GraficoFactory
+from src.dominio.graficos.entidade import GraficoConfig, GraficoFactory, GraficoRetorno
 from src.dominio.transacao.entidade import Transacao, Real
 from src.dominio.transacao.tipos import TipoTransacao
 
 
-def criar_grafico_fluxo_de_caixa(transacoes: List[Transacao], formato="png"):
+def criar_grafico_fluxo_de_caixa(transacoes: List[Transacao], formato="png") -> GraficoRetorno:
     config = GraficoConfig(titulo="Fluxo de Caixa", formato=formato)
     transacoes.sort(key=lambda transacao: transacao.caixa)
 
@@ -24,7 +24,7 @@ def criar_grafico_fluxo_de_caixa(transacoes: List[Transacao], formato="png"):
     return grafico.criar()
 
 
-def criar_grafico_receitas_e_despesas(transacoes: List[Transacao]):
+def criar_grafico_receitas_e_despesas(transacoes: List[Transacao]) -> GraficoRetorno:
     config = GraficoConfig(titulo="Receitas e Despesas")
     transacoes.sort(key=lambda transacao: transacao.caixa)
     receitas_despesas_por_mes: Dict[str, Dict[str, float]] = defaultdict(lambda: {"receitas": 0.0, "despesas": 0.0})
@@ -43,9 +43,32 @@ def criar_grafico_receitas_e_despesas(transacoes: List[Transacao]):
     return grafico.criar()
 
 
-def criar_grafico_lucro(transacoes: List[Transacao]):
+def criar_grafico_lucro(transacoes: List[Transacao]) -> GraficoRetorno:
     config = GraficoConfig(titulo="Lucro")
     transacoes.sort(key=lambda transacao: transacao.caixa)
 
     grafico = GraficoFactory.criar_grafico("lucro", config, transacoes=transacoes)
+    return grafico.criar()
+
+
+def criar_grafico_pizza(transacoes: List[Transacao]) -> GraficoRetorno:
+    if any(transacao.tipo == TipoTransacao.DEBITO for transacao in transacoes):
+        titulo = "Despesas"
+    else:
+        titulo = "Receitas"
+
+    config = GraficoConfig(titulo=titulo)
+
+    lancamentos_por_categoria = defaultdict(float)
+
+    for transacao in transacoes:
+        lancamentos_por_categoria[transacao.categoria] += transacao.valor
+
+    grafico = GraficoFactory.criar_grafico(
+        "pizza",
+        config,
+        legendas=list(lancamentos_por_categoria.keys()),
+        valores=list(lancamentos_por_categoria.values()),
+    )
+
     return grafico.criar()

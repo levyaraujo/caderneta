@@ -12,6 +12,7 @@ from src.dominio.graficos.services import (
     criar_grafico_fluxo_de_caixa,
     criar_grafico_receitas_e_despesas,
     criar_grafico_lucro,
+    criar_grafico_pizza,
 )
 from src.dominio.transacao.entidade import Real
 from src.dominio.transacao.repo import RepoTransacaoEscrita
@@ -105,7 +106,7 @@ def grafico_balanco(*args: List[str], **kwargs: Any) -> str:
     return caminho_arquivo
 
 
-@bot.comando("lucro", "Devolve lucro mensal")
+@bot.comando("lucro", "Gráfico de lucro, receitas e gastos")
 def lucro(*args: List[str], **kwargs: Any) -> str:
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
@@ -127,7 +128,6 @@ def remover_transacao(*args: Tuple[str], **kwargs: Any) -> str:
     wamid_transacao = str(args[0])
     usuario: Usuario = kwargs.get("usuario")
     uow = UnitOfWork(session_factory=get_session)
-    robo = WhatsAppBot()
 
     try:
         with uow:
@@ -166,3 +166,41 @@ def exportar(*args: Tuple[str], **kwargs: Any) -> str:
     url_arquivo: str = uploader.upload_file(nome_do_arquivo, excel_bytes)
 
     return url_arquivo
+
+
+@bot.comando("gastos", "Gráfico de pizza de gastos por categoria")
+def lucro(*args: List[str], **kwargs: Any) -> str:
+    usuario: Usuario = kwargs.get("usuario")
+    intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
+    uploader = Uploader()
+
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_usuario_e_tipo(
+        usuario_id=usuario.id, intervalo=intervalo, tipo=TipoTransacao.DEBITO
+    )
+
+    if not transacoes:
+        return "Você ainda não registrou nenhuma despesa ou receita este mês"
+
+    grafico = criar_grafico_pizza(transacoes=transacoes)
+    nome_arquivo = f"{grafico['nome_arquivo']}.png"
+    caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
+    return caminho_arquivo
+
+
+@bot.comando("receitas", "Gráfico de pizza de receitas por categoria")
+def lucro(*args: List[str], **kwargs: Any) -> str:
+    usuario: Usuario = kwargs.get("usuario")
+    intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
+    uploader = Uploader()
+
+    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_usuario_e_tipo(
+        usuario_id=usuario.id, intervalo=intervalo, tipo=TipoTransacao.CREDITO
+    )
+
+    if not transacoes:
+        return "Você ainda não registrou nenhuma despesa ou receita este mês"
+
+    grafico = criar_grafico_pizza(transacoes=transacoes)
+    nome_arquivo = f"{grafico['nome_arquivo']}.png"
+    caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
+    return caminho_arquivo
