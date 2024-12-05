@@ -210,7 +210,7 @@ class GerenciadorComandos:
         for alias in command.aliases or []:
             self.commands[alias] = command
 
-    async def processar_mensagem(self, message: str, **kwargs) -> str:
+    async def processar_comando(self, message: str, **kwargs) -> str:
         message = f"{self.prefix}{message}"
 
         message = message[len(self.prefix) :].strip()

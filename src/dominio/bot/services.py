@@ -22,7 +22,7 @@ async def responder_usuario(
     dados_whatsapp: Optional[WhatsAppPayload] = None,
 ) -> Any:
     try:
-        resposta = await bot.processar_mensagem(mensagem, nome_usuario=usuario.nome, usuario=usuario, uow=uow)
+        resposta = await bot.processar_comando(mensagem, nome_usuario=usuario.nome, usuario=usuario, uow=uow)
         return robo.responder(resposta, telefone)
 
     except ComandoDesconhecido:
