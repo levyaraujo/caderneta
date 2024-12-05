@@ -157,7 +157,7 @@ class WhatsAppBot(BotBase):
 
         caminho_audio = os.path.join(BUCKET, filename)
 
-        ffmpeg_command = ["ffmpeg", "-i", caminho_audio, "-ar", "16000", "-ac", "1", "-f", "wav", caminho_audio]
+        ffmpeg_command = ["ffmpeg", "-y", "-i", caminho_audio, "-ar", "16000", "-ac", "1", "-f", "wav", caminho_audio]
 
         subprocess.run(ffmpeg_command, check=True)
 
