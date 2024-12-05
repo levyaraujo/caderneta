@@ -28,7 +28,7 @@ from tests.conftest import gerar_wamid
 @pytest.mark.asyncio
 async def test_comando_nao_existe(mensagem):
     with pytest.raises(ComandoDesconhecido) as exc_info:
-        await bot.processar_mensagem(mensagem)
+        await bot.processar_comando(mensagem)
 
     assert isinstance(exc_info.value, ComandoDesconhecido)
     assert exc_info.match("Comando não existe")
@@ -64,7 +64,7 @@ async def test_comandos_validos(mensagem, esperado, mock_usuario, transacao_gen,
         uow.commit()
 
     intervalo = Intervalo(inicio=datetime(2024, 10, 1), fim=datetime(2024, 10, 31))
-    assert await bot.processar_mensagem(mensagem, nome_usuario="Levy", usuario=usuario, intervalo=intervalo) == esperado
+    assert await bot.processar_comando(mensagem, nome_usuario="Levy", usuario=usuario, intervalo=intervalo) == esperado
 
 
 @pytest.mark.asyncio
@@ -96,7 +96,7 @@ async def test_grafico_fluxo(mock_usuario, transacao_gen, session):
 
     mensagem = "grafico fluxo"
     intervalo = Intervalo(inicio=datetime(2024, 10, 1), fim=datetime(2024, 10, 31))
-    resposta = await bot.processar_mensagem(mensagem, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
+    resposta = await bot.processar_comando(mensagem, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
     print(resposta)
 
     assert resposta.startswith(os.getenv("STATIC_URL"))
@@ -150,6 +150,6 @@ async def test_remover_transacao_por_wamid(mock_usuario, session, transacao_gen,
 
     intervalo = Intervalo(inicio=datetime(2024, 10, 1), fim=datetime(2024, 10, 31))
     assert (
-        await bot.processar_mensagem(wamid, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
+        await bot.processar_comando(wamid, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
         == "Lançamento removido com sucesso! ✅"
     )
