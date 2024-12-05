@@ -45,6 +45,7 @@ class GraficoBase(IGrafico):
 
     def _criar_layout_base(self) -> go.Layout:
         return go.Layout(
+            margin=dict(l=50, r=30, t=50, b=50),
             title={
                 "text": self.config.titulo,
                 "x": 0.5,
@@ -179,8 +180,10 @@ class GraficoPizza(GraficoBase):
             textinfo="percent+label",
             insidetextorientation="radial",
             hovertext=self.hover_texts,
+            insidetextfont=dict(size=22),
         )
         layout = self._criar_layout_base()
+        layout.update(font=dict(size=22))
         self.figura = go.Figure(data=[trace], layout=layout)
         return self._retorno()
 
