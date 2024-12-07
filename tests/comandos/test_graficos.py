@@ -76,37 +76,3 @@ def test_grafico_receitas_e_despesas(mock_usuario, transacao_gen):
 
     grafico = criar_grafico_receitas_e_despesas(transacoes)
     grafico["figura"].show()
-
-
-def test_grafico_despesas(mock_usuario, transacao_gen):
-    usuario = mock_usuario
-    transacoes = []
-    for i in range(150):
-        transacoes.append(
-            transacao_gen(
-                usuario=usuario,
-                valor=randint(500, 1500),
-                destino=choice(
-                    [
-                        "Loja A",
-                        "Loja B",
-                        "Loja C",
-                        "Vendedor",
-                        "Fornecedor",
-                        "Salário",
-                        "Calça Jeans",
-                    ]
-                ),
-                tipo=choice([TipoTransacao.CREDITO, TipoTransacao.DEBITO]),
-                caixa=datetime(
-                    2024,
-                    choice([j for j in range(1, 2)]),
-                    choice([j for j in range(1, 28)]),
-                ),
-            )
-        )
-
-    transacoes = [transacao for transacao in transacoes if transacao.tipo == TipoTransacao.DEBITO]
-
-    grafico = criar_grafico_pizza(transacoes)
-    grafico["figura"].show()

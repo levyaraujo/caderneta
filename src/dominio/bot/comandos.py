@@ -78,7 +78,7 @@ def grafico_fluxo(*args: List[str], **kwargs: Any) -> str:
     return caminho_arquivo
 
 
-@bot.comando("grafico balanco", "Devolve gráfico de receitas e despesas", aliases=["balanco"])
+@bot.comando("receitas e despesas", "Devolve gráfico de receitas e despesas", aliases=["balanco"])
 def grafico_balanco(*args: List[str], **kwargs: Any) -> str:
     now = datetime.now()
     uploader = Uploader()
@@ -166,41 +166,3 @@ def exportar(*args: Tuple[str], **kwargs: Any) -> str:
     url_arquivo: str = uploader.upload_file(nome_do_arquivo, excel_bytes)
 
     return url_arquivo
-
-
-@bot.comando("gastos", "Gráfico de pizza de gastos por categoria")
-def lucro(*args: List[str], **kwargs: Any) -> str:
-    usuario: Usuario = kwargs.get("usuario")
-    intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
-    uploader = Uploader()
-
-    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_usuario_e_tipo(
-        usuario_id=usuario.id, intervalo=intervalo, tipo=TipoTransacao.DEBITO
-    )
-
-    if not transacoes:
-        return "Você ainda não registrou nenhuma despesa ou receita este mês"
-
-    grafico = criar_grafico_pizza(transacoes=transacoes)
-    nome_arquivo = f"{grafico['nome_arquivo']}.png"
-    caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
-    return caminho_arquivo
-
-
-@bot.comando("receitas", "Gráfico de pizza de receitas por categoria")
-def lucro(*args: List[str], **kwargs: Any) -> str:
-    usuario: Usuario = kwargs.get("usuario")
-    intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
-    uploader = Uploader()
-
-    transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_usuario_e_tipo(
-        usuario_id=usuario.id, intervalo=intervalo, tipo=TipoTransacao.CREDITO
-    )
-
-    if not transacoes:
-        return "Você ainda não registrou nenhuma despesa ou receita este mês"
-
-    grafico = criar_grafico_pizza(transacoes=transacoes)
-    nome_arquivo = f"{grafico['nome_arquivo']}.png"
-    caminho_arquivo: str = uploader.upload_file(nome_arquivo, grafico["dados"])
-    return caminho_arquivo
