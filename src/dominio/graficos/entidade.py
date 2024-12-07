@@ -244,40 +244,29 @@ class GraficoBarraEmpilhada(GraficoBase):
         receitas = [self.dados[periodo]["receitas"] for periodo in self.periodos]
         despesas = [self.dados[periodo]["despesas"] for periodo in self.periodos]
 
-        if len(self.periodos) == 1:
-            periodo = [datetime.strptime(self.periodos[0], "%Y-%m").strftime("%m/%Y")]
-            largura = 0.5
-        else:
-            periodo = [datetime.strptime(periodo, "%Y-%m").strftime("%m/%Y") for periodo in self.periodos]
-            largura = None
+        periodo = [datetime.strptime(periodo, "%Y-%m").strftime("%m/%Y") for periodo in self.periodos]
 
         trace_receitas = go.Bar(
-            insidetextfont=dict(size=20),
+            insidetextfont=dict(size=22),
             x=periodo,
             y=receitas,
             hoverinfo="text",
             name="Receitas",
             text=[str(Real(valor)) for valor in receitas],
             marker=dict(color="lightgreen"),
-            width=largura,
         )
         trace_despesas = go.Bar(
-            insidetextfont=dict(size=20),
+            insidetextfont=dict(size=22),
             x=periodo,
             y=despesas,
             hoverinfo="text",
             name="Despesas",
             text=[str(Real(valor)) for valor in despesas],
             marker=dict(color="lightcoral"),
-            width=largura,
         )
 
         layout = self._criar_layout_base()
-        layout.update(
-            font={"size": 15},
-            barmode="relative",
-            margin=dict(l=40, r=30, t=40, b=40),
-        )
+        layout.update(font={"size": 16}, barmode="relative", margin=dict(l=20, r=20, t=45, b=20), yaxis_title="R$")
 
         self.figura = go.Figure(data=[trace_receitas, trace_despesas], layout=layout)
         return self._retorno()
