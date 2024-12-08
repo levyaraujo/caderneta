@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -13,19 +14,18 @@ logger = setup_logging()
 scheduler = BackgroundScheduler(timezone=pytz.UTC)
 
 
-def treinar_modelo():
+def treinar_modelo() -> None:
     classificador = ClassificadorTexto()
     classificador.treinar_modelo()
     classificador.salvar_modelo()
 
     logger.info("Modelo treinado com sucesso!")
-    return
 
 
-async def iniciar_scheduler():
+async def iniciar_scheduler() -> None:
     scheduler.add_job(
         treinar_modelo,
-        trigger=CronTrigger(hour=6),  # Isso será executado 3h da manhã em UTC-3
+        trigger=CronTrigger(hour=3),
         id="treina_modelo",
         name="Treinamento Modelo Transação",
         replace_existing=True,
@@ -36,6 +36,6 @@ async def iniciar_scheduler():
 
 
 @asynccontextmanager
-async def iniciar_servicos(app: FastAPI):
+async def iniciar_servicos(app: FastAPI) -> AsyncGenerator:
     await iniciar_scheduler()
     yield
