@@ -3,7 +3,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Any
 from typing import Optional
 from typing import Tuple
 
@@ -24,15 +24,18 @@ from sklearn.pipeline import Pipeline
 from const import TRANSACAO_DEBITO, TRANSACAO_CREDITO
 from src.dominio.processamento.exceptions import NaoEhTransacao
 from src.dominio.transacao.tipos import TipoTransacao
+from src.infra.log import setup_logging
 
 nltk.download("punkt", quiet=True)
 nltk.download("stopwords", quiet=True)
 nltk.download("wordnet", quiet=True)
 nltk.download("punkt_tab", quiet=True)
 
+logger = setup_logging()
+
 
 class ClassificadorTexto:
-    def __init__(self):
+    def __init__(self) -> None:
         self.csv_path = os.getenv("CSV_TREINAMENTO")
         self.vectorizer_joblib = os.getenv("VECTORIZER_PATH")
         self.classifier_joblib = os.getenv("CLASSIFIER_PATH")
@@ -52,14 +55,14 @@ class ClassificadorTexto:
         self.df = self._carregar_dataframe()
 
     @staticmethod
-    def _carregar_ou_criar_vetorizador(path: str):
+    def _carregar_ou_criar_vetorizador(path: str) -> Any:
         try:
             return joblib.load(path)
         except FileNotFoundError:
             return TfidfVectorizer(max_features=1000)
 
     @staticmethod
-    def _carregar_ou_criar_classificador(path: str):
+    def _carregar_ou_criar_classificador(path: str) -> Any:
         try:
             return joblib.load(path)
         except FileNotFoundError:
@@ -68,10 +71,10 @@ class ClassificadorTexto:
     def _carregar_dataframe(self) -> pd.DataFrame:
         try:
             df = pd.read_csv(self.csv_path, on_bad_lines="skip")
-            logging.info(f"Data loaded successfully. Number of samples: {len(df)}")
+            logger.info(f"Dados carregados com sucesso. Linhas: {len(df)}")
             return df
         except Exception as e:
-            logging.error(f"Error loading data: {e}")
+            logger.error(f"Error loading data: {e}")
             raise
 
     def pre_processar_texto(self, text: str) -> str:
@@ -102,7 +105,8 @@ class ClassificadorTexto:
         self.pipeline.fit(X_train, y_train)
 
         y_pred = self.pipeline.predict(X_test)
-        return "\n" + classification_report(y_test, y_pred)
+        report: str = "\n" + classification_report(y_test, y_pred)
+        return report
 
     def classificar_mensagem(self, mensagem: str, atualizar_df: bool = True) -> Tuple[str, Dict[str, float]]:
         try:
@@ -134,17 +138,17 @@ class ClassificadorTexto:
                 )
                 self.df = pd.concat([self.df, nova_linha], ignore_index=True)
                 self.df.to_csv(self.csv_path, index=False)
-                logging.info(f"Dataframe atualizado com a nova classificação: {previsao}")
+                logger.info(f"Dataframe atualizado com a nova classificação: {previsao}")
 
             return previsao, probs_dict
 
         except NotFittedError as erro:
-            logging.info(f"Model not fitted yet: {erro}")
+            logger.info(f"Model not fitted yet: {erro}")
             self.treinar_modelo()
             self.salvar_modelo()
             return self.classificar_mensagem(mensagem, atualizar_df)
 
-    def classificar_todas_as_mensagens(self):
+    def classificar_todas_as_mensagens(self) -> None:
         results = []
         for message in self.df["mensagem"]:
             prediction, probabilities = self.classificar_mensagem(message, atualizar_df=True)
@@ -157,11 +161,11 @@ class ClassificadorTexto:
             )
         self.df = pd.DataFrame(results).drop_duplicates()
 
-    def salvar_modelo(self):
+    def salvar_modelo(self) -> None:
         joblib.dump(self.vectorizer, self.vectorizer_joblib)
         joblib.dump(self.classifier, self.classifier_joblib)
         self.df.to_csv(self.csv_path, index=False)
-        logging.info(f"Model saved to {self.vectorizer_joblib} and {self.classifier_joblib}")
+        logger.info(f"Model salvo em {self.vectorizer_joblib} e {self.classifier_joblib}")
 
 
 @dataclass
@@ -174,7 +178,7 @@ class DadosTransacao:
     mensagem_original: str
 
     @property
-    def data_formatada(self):
+    def data_formatada(self) -> str:
         return self.data.strftime("%d/%m/%Y")
 
 
