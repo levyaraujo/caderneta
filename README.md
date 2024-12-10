@@ -1,2 +1,2 @@
 # caderneta
-app de gestão financeira para pequenas empresas
+controle financeiro via WhatsApp
