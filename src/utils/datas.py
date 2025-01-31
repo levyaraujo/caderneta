@@ -37,6 +37,12 @@ def ultima_hora(data: datetime) -> datetime:
 
 def intervalo_mes_atual(inicio: datetime | None = None, fim: datetime | None = None):
     now = datetime.now()
+    data = inicio or fim
+
+    if data:
+        ultimo_dia = calendar.monthrange(data.year, data.month)[1]
+        inicio = data.replace(hour=0, minute=0, second=0, microsecond=0)
+        fim = ultima_hora(data.replace(day=ultimo_dia))
 
     if not inicio and not fim:
         inicio = primeira_hora(now.replace(day=1))
@@ -44,3 +50,24 @@ def intervalo_mes_atual(inicio: datetime | None = None, fim: datetime | None = N
         fim = ultima_hora(now.replace(day=ultimo_dia))
 
     return Intervalo(inicio, fim)
+
+
+def mes_e_ano_para_datetime(mes_ano: str) -> datetime:
+    """
+    Essa função transforma strings no formato m/yy, mm/yy ou mm/yyyy para datetime
+    Args:
+        mes_ano:
+
+    Returns:
+        datetime
+    """
+
+    parts = mes_ano.split("/")
+    if len(parts[0]) == 1:
+        mes_ano = f"0{parts[0]}/{parts[1]}"
+
+    for fmt in ("%m/%y", "%m/%Y"):
+        try:
+            return datetime.strptime(mes_ano, fmt)
+        except ValueError as e:
+            pass

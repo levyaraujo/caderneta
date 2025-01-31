@@ -1,6 +1,6 @@
 DADOS_TESTE_COMANDOS = [
     (
-        "listar fluxo",
+        "listar fluxo 01/2025",
         """01/10 ✅ R$ 100,00 | *Loja A*
 02/10 ✅ R$ 100,00 | *Loja A*
 03/10 ✅ R$ 100,00 | *Loja A*

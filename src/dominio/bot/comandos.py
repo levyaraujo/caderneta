@@ -42,7 +42,7 @@ def ajuda(*args: List[str], **kwargs: Any) -> str:
     return ajuda
 
 
-@bot.comando("listar fluxo", "Lista fluxo de caixa no mês atual", aliases=["fluxo"])
+@bot.comando("listar fluxo", "Lista fluxo de caixa no mês", aliases=["fluxo", "fluxo mm/aa"])
 def listar_fluxo(*args: List[str], **kwargs: Any) -> str:
     usuario: Usuario = kwargs.get("usuario")
     intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
@@ -59,7 +59,7 @@ def listar_fluxo(*args: List[str], **kwargs: Any) -> str:
     )
 
 
-@bot.comando("grafico fluxo", "Devolve gráfico de fluxo de caixa do mês atual")
+@bot.comando("grafico fluxo", "Devolve gráfico de fluxo de caixa do mês", aliases=["grafico fluxo mm/aa"])
 def grafico_fluxo(*args: List[str], **kwargs: Any) -> str:
     uploader = Uploader()
     usuario: Usuario = kwargs.get("usuario")
@@ -78,7 +78,9 @@ def grafico_fluxo(*args: List[str], **kwargs: Any) -> str:
     return caminho_arquivo
 
 
-@bot.comando("receitas e despesas", "Devolve gráfico de receitas e despesas", aliases=["balanco"])
+@bot.comando(
+    "receitas e despesas", "Devolve gráfico de receitas e despesas mo mês", aliases=["balanco", "balanco mm/aa"]
+)
 def grafico_balanco(*args: List[str], **kwargs: Any) -> str:
     now = datetime.now()
     uploader = Uploader()

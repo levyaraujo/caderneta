@@ -7,7 +7,9 @@ import subprocess
 import traceback
 import uuid
 from abc import ABC, abstractmethod
+from collections import ChainMap
 from dataclasses import dataclass, field
+from datetime import datetime
 from email.generator import Generator
 from typing import Callable, Dict, List, Optional, Tuple, Iterator
 
@@ -17,6 +19,8 @@ from src.dominio.bot.exceptions import ComandoDesconhecido, ErroAoEnviarMensagem
 from src.dominio.transacao.repo import RepoTransacaoLeitura
 from src.infra.database.connection import get_session
 from src.infra.log import setup_logging
+from src.utils.datas import intervalo_mes_atual, mes_e_ano_para_datetime
+from src.utils.formatos import is_valid_date_format
 from src.utils.uploader import Uploader
 
 logger = setup_logging()
@@ -219,8 +223,13 @@ class GerenciadorComandos:
             return ""
 
         command_name, args = self._extract_command_name_and_args(parts)
-        command = self.commands.get(command_name)
+        mes_ano = list(filter(is_valid_date_format, args))
+        if len(mes_ano) >= 1:
+            mes_ano = mes_e_ano_para_datetime(mes_ano[0])
+            intervalo = intervalo_mes_atual(mes_ano)
+            kwargs = ChainMap(kwargs, {"intervalo": intervalo})
 
+        command = self.commands.get(command_name)
         if not command:
             for cmd_name, cmd in self.commands.items():
                 try:

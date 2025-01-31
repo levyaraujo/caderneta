@@ -12,9 +12,10 @@ from src.infra.database.uow import UnitOfWork
 from src.infra.emails import enviar_email_boas_vindas
 from src.utils.validadores import validar_email
 
+ENV = os.getenv("ENV", "dev")
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "1234")
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "1234") if ENV == "dev" else None
 
 
 class OnboardingState(Enum):
