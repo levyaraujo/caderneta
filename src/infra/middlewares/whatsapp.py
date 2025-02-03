@@ -1,6 +1,6 @@
 import json
 import traceback
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 
 from starlette import status
 from starlette.exceptions import HTTPException
@@ -10,7 +10,7 @@ from starlette.responses import Response, JSONResponse
 
 from src.dominio.assinatura.entidade import StatusAssinatura
 from src.dominio.bot.entidade import WhatsAppBot
-from src.dominio.usuario.onboard import OnboardingHandler
+from src.dominio.usuario.onboard import Onboard
 from src.dominio.usuario.repo import RepoUsuarioLeitura
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
@@ -29,7 +29,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.bot = WhatsAppBot()
 
-    async def _process_webhook(self, request: Request) -> Response | JSONResponse:
+    async def _process_webhook(self, request: Request) -> Optional[JSONResponse]:
         """Process the webhook data and return appropriate response"""
         try:
             raw_data = await request.body()
@@ -46,7 +46,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
 
             if not usuario:
                 uow = UnitOfWork(session_factory=get_session)
-                onboard = OnboardingHandler(uow=uow)
+                onboard = Onboard(uow=uow)
                 pergunta_onboard = onboard.handle_message(parsed_data.telefone, parsed_data.mensagem)
                 resposta = self.bot.responder(pergunta_onboard, parsed_data.telefone)
                 return JSONResponse(content=resposta.get("content"), status_code=resposta.get("status_code"))
@@ -69,6 +69,8 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
                 resposta = self.bot.responder(mensagem, usuario.telefone)
 
                 return JSONResponse(content=resposta, status_code=resposta.get("status_code"))
+
+            return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "processed"})
 
         except json.JSONDecodeError:
             logger.error("Invalid JSON payload")

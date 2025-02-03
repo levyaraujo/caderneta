@@ -47,7 +47,7 @@ class AssinaturaMiddleware(BaseHTTPMiddleware):
                 "Sentimos sua falta e gostaríamos de entender o motivo. "
                 "Há algo que possamos fazer para melhorar sua experiência?\n\n"
                 "Acesse o link abaixo e renove sua assinatura:\n"
-                f"https://buy.stripe.com/7sI01Q1Mh0aq9YAeUV?prefilled_email={usuario.email}"
+                f"https://billing.stripe.com/p/login/4gwdTFckG4s80SI8ww?prefilled_email={usuario.email}"
                 "Se quiser tirar dúvidas, entre em contato conosco: contato@caderneta.chat\n\n"
             )
 
