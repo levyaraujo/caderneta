@@ -15,7 +15,7 @@ from src.utils.whatsapp_api import WhatsAppPayload
 
 dotenv.load_dotenv(".env")
 
-from src.dominio.usuario.onboard import OnboardingHandler
+from src.dominio.usuario.onboard import Onboard
 from src.dominio.bot.entidade import CLIBot
 from src.dominio.bot.services import responder_usuario
 from src.dominio.usuario.repo import RepoUsuarioLeitura
@@ -43,19 +43,17 @@ def gerar_wamid() -> str:
     base64_encoded = base64.b64encode(random_bytes).decode("utf-8")
     wamid = f"wamid.{base64_encoded}"
     wamid_pattern = REGEX_WAMID
-    if not re.match(wamid_pattern, wamid):
-        raise gerar_wamid()
 
     return wamid
 
 
 class ChatSession:
-    def __init__(self, usuario, uow):
+    def __init__(self, usuario: Usuario, uow: UnitOfWork) -> None:
         self.usuario = usuario
         self.uow = uow
         self.bot = CLIBot()
 
-    async def run(self):
+    async def run(self) -> None:
         """Runs the main chat loop."""
         while True:
             try:
@@ -93,7 +91,7 @@ class ChatSession:
 
 
 @app.command()
-def chat():
+def chat() -> None:
     """Start a chat session with the bot."""
     typer.echo(HEADER)
     uow = UnitOfWork(session_factory=get_session)
@@ -104,7 +102,7 @@ def chat():
     mensagem = "olá"
 
     while not usuario:
-        onboard = OnboardingHandler(uow=uow)
+        onboard = Onboard(uow=uow)
         pergunta_onboard = onboard.handle_message(telefone, mensagem)
         mensagem = typer.prompt(pergunta_onboard)
         usuario = repo.buscar_por_telefone(telefone)

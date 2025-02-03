@@ -1,22 +1,21 @@
-import json
 import os
+
+import redis
+import json
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
-from typing import Optional
+from typing import Optional, Generator
 
-from src.dominio.exceptions import EmailInvalido
 from src.dominio.usuario.entidade import UsuarioModel
 from src.dominio.usuario.services import criar_usuario
-from src.infra.database.connection import get_redis
 from src.infra.database.uow import UnitOfWork
 from src.infra.emails import enviar_email_boas_vindas
-from src.infra.log import setup_logging
 from src.utils.validadores import validar_email
 
 ENV = os.getenv("ENV", "dev")
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD") if ENV == "dev" else None
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "1234") if ENV == "dev" else None
 
 
 class OnboardingState(Enum):
@@ -40,12 +39,11 @@ class UserContext:
     data: UserData
 
 
-logger = setup_logging()
-
-
 class Onboard:
-    def __init__(self, uow: UnitOfWork = None) -> None:
-        self.redis_client = get_redis()
+    def __init__(
+        self, redis_host: str = REDIS_HOST, redis_port: str | int = REDIS_PORT, uow: UnitOfWork = None
+    ) -> None:
+        self.redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=0, password=REDIS_PASSWORD)
         self.uow = uow
 
     def start_onboarding(self, phone_number: str) -> str:
@@ -105,11 +103,8 @@ Vamos começar? Me diga seu nome completo para personalizar sua experiência. �
             usuario = criar_usuario(UsuarioModel(**asdict(context.data)), uow=self.uow)  # noqa
             enviar_email_boas_vindas(usuario)
             return self._generate_completion_message()
-        except EmailInvalido:
+        except ValueError as error:
             return "Por favor, digite um email válido."
-        except Exception as erro:
-            logger.error(f"Ocorreu um erro ao validar email do usuário {context.data.telefone}: {erro}", exc_info=True)
-            return "Erro desconhecido"
 
     def _validate_full_name(self, name: str) -> bool:
         if not name or not all(char.isalpha() or char.isspace() for char in name):
@@ -140,8 +135,8 @@ Vamos começar? Me diga seu nome completo para personalizar sua experiência. �
         context = self._get_user_context(phone_number)
         return context.state == OnboardingState.COMPLETED if context else False
 
-    def _get_user_context(self, key: str) -> Optional[UserContext]:
-        raw_context = self.redis_client.get(key)
+    def _get_user_context(self, phone_number: str) -> Optional[UserContext]:
+        raw_context = self.redis_client.get(phone_number)
         if raw_context:
             context_dict = json.loads(raw_context)  # noqa
             user_data = UserData(**context_dict["data"])

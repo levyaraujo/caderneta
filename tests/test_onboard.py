@@ -3,7 +3,7 @@ import pytest
 import json
 import redis
 from unittest.mock import Mock, patch
-from src.dominio.usuario.onboard import OnboardingHandler, OnboardingState, UserContext, UserData
+from src.dominio.usuario.onboard import Onboard, OnboardingState, UserContext, UserData
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 
@@ -17,10 +17,10 @@ def mock_redis():
 
 @pytest.fixture
 def onboarding_handler(mock_redis):
-    """Create an OnboardingHandler with mock Redis and UnitOfWork"""
+    """Create an Onboard with mock Redis and UnitOfWork"""
     with patch("redis.StrictRedis", return_value=mock_redis):
         uow_mock = UnitOfWork(session_factory=get_session)
-        handler = OnboardingHandler(uow=uow_mock)
+        handler = Onboard(uow=uow_mock)
         return handler
 
 
