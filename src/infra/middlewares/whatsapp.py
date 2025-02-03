@@ -70,8 +70,6 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
 
                 return JSONResponse(content=resposta, status_code=resposta.get("status_code"))
 
-            return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "processed"})
-
         except json.JSONDecodeError:
             logger.error("Invalid JSON payload")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON payload")
