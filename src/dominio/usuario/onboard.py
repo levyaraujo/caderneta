@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import redis
 import json
@@ -31,6 +32,7 @@ class UserData:
     nome: Optional[str] = None
     sobrenome: Optional[str] = None
     email: Optional[str] = None
+    cliente: Optional[uuid.UUID | str] = None
 
 
 @dataclass
@@ -143,8 +145,8 @@ Vamos começar? Me diga seu nome completo para personalizar sua experiência. �
             return UserContext(state=OnboardingState[context_dict["state"]], data=user_data)
         return None
 
-    def _save_user_context(self, phone_number: str, context: UserContext) -> str:
+    def _save_user_context(self, key: str, context: UserContext) -> str:
         context_dict = {"state": context.state.name, "data": asdict(context.data)}  # noqa
-        self.redis_client.set(phone_number, json.dumps(context_dict), ex=900)
+        self.redis_client.set(key, json.dumps(context_dict), ex=900)
 
-        return phone_number
+        return key

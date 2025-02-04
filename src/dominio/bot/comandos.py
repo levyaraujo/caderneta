@@ -1,27 +1,31 @@
 import calendar
 import logging
 import os
+import random
+import string
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
+from typing import List, Any, Tuple
 
 import dotenv
 
-from const import REGEX_WAMID
-from src.dominio.bot.entidade import GerenciadorComandos, WhatsAppBot
+from const import REGEX_WAMID, MENSAGEM_CADASTRO_BPO
+from src.dominio.bot.entidade import GerenciadorComandos
+from src.dominio.bpo.onboard import OnboardBPO
 from src.dominio.graficos.services import (
     criar_grafico_fluxo_de_caixa,
     criar_grafico_receitas_e_despesas,
     criar_grafico_lucro,
-    criar_grafico_pizza,
 )
 from src.dominio.transacao.entidade import Real
-from src.dominio.transacao.repo import RepoTransacaoEscrita
 from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
+from src.dominio.usuario.onboard import UserContext, OnboardingState, UserData
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.utils.datas import intervalo_mes_atual, ultima_hora, primeira_hora
+from src.utils.geradores import gerar_codigo_bpo
 from src.utils.uploader import Uploader
+from src.utils.validadores import validar_telefone
 
 bot = GerenciadorComandos()
 
@@ -152,7 +156,7 @@ def exportar(*args: Tuple[str], **kwargs: Any) -> str:
 
     usuario: Usuario = kwargs.get("usuario")
 
-    intervalo = intervalo_mes_atual()
+    intervalo = kwargs.get("intervalo") or intervalo_mes_atual()
 
     transacoes = bot.repo_transacao_leitura.buscar_por_intervalo_e_usuario(intervalo=intervalo, usuario_id=usuario.id)
     dados = [transacao.dicionario() for transacao in transacoes]
@@ -168,3 +172,26 @@ def exportar(*args: Tuple[str], **kwargs: Any) -> str:
     url_arquivo: str = uploader.upload_file(nome_do_arquivo, excel_bytes)
 
     return url_arquivo
+
+
+@bot.comando("adicionar bpo", "Adiciona um usuário BPO ao usuário", aliases=["add bpo", "adicionar bpo"])
+def adicionar_bpo(*args: str, **kwargs: Any) -> str:
+    usuario: Usuario = kwargs.get("usuario")
+
+    onboard = OnboardBPO()
+    if not args:
+        return "Informe o número de WhatsApp do BPO. Ex.: *add bpo 11984033357*"
+
+    try:
+        numero_bpo = next(numero for numero in args if validar_telefone(numero))
+        codigo_bpo = gerar_codigo_bpo()
+        context = UserContext(
+            state=OnboardingState.WAITING_FULL_NAME,
+            data=UserData(telefone=numero_bpo, cliente=str(usuario.id)),
+        )
+        onboard._save_user_context(f"bpo_{numero_bpo}", context)
+
+        return MENSAGEM_CADASTRO_BPO % (usuario.nome, codigo_bpo)
+
+    except StopIteration:
+        return "Informe um número válido. Ex.: *add bpo 11984033357*"

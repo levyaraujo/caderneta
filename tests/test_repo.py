@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from random import randint
 
@@ -16,7 +17,7 @@ def test_adicionar_usuario(session):
     uow = UnitOfWork(session_factory=lambda: session)
     with uow:
         usuario = Usuario(
-            id=randint(1, 10000),
+            id=uuid.uuid4(),
             nome="John",
             sobrenome="Doe",
             telefone="94981360000",

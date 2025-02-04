@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, date, timedelta
 from enum import Enum
 from typing import Optional
+from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
 
@@ -23,7 +24,7 @@ class Assinatura:
     data_inicio: datetime
     data_termino: Optional[datetime] = None
     status: StatusAssinatura = StatusAssinatura.TESTE
-    id: Optional[int] = field(default=None)
+    id: Optional[UUID] = field(default=None)
     data_proximo_pagamento: Optional[datetime] = field(default=None)
     data_ultimo_pagamento: Optional[datetime] = field(default=None)
     renovacao_automatica: bool = True

@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, date
+from uuid import UUID
 
 from const import REGEX_WAMID
 from src.dominio.transacao.exceptions import WamIdInvalido
@@ -16,7 +17,7 @@ class Transacao:
     valor: float
     tipo: TipoTransacao
     wamid: str
-    id: int | None = field(default=None)
+    id: UUID | None = field(default=None)
     categoria: str | None = field(default=None)
     descricao: str | None = field(default=None)
     caixa: datetime | date = field(default_factory=datetime.now)

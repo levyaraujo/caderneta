@@ -1,18 +1,16 @@
-from enum import unique
-
+import uuid
 from sqlalchemy import (
     Table,
     Column,
-    Integer,
     Float,
     String,
     DateTime,
     ForeignKey,
     Boolean,
     Enum,
-    Date,
 )
 from sqlalchemy.orm import registry, relationship
+from sqlalchemy.dialects.postgresql import UUID
 
 from src.dominio.assinatura.entidade import StatusAssinatura, Assinatura
 from src.dominio.transacao.entidade import Transacao
@@ -25,7 +23,7 @@ mapper = registry(metadata=metadata)
 usuarios = Table(
     "usuarios",
     metadata,
-    Column("id", Integer, primary_key=True, index=True),
+    Column("id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
     Column("nome", String),
     Column("sobrenome", String),
     Column("telefone", String),
@@ -36,8 +34,8 @@ usuarios = Table(
 transacoes = Table(
     "transacoes",
     metadata,
-    Column("id", Integer, primary_key=True, index=True),
-    Column("usuario_id", Integer, ForeignKey("usuarios.id")),
+    Column("id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
+    Column("usuario_id", UUID(as_uuid=True), ForeignKey("usuarios.id")),
     Column("valor", Float),
     Column("categoria", String),
     Column("tipo", TipoTransacaoORM),
@@ -50,9 +48,9 @@ transacoes = Table(
 assinaturas = Table(
     "assinaturas",
     metadata,
-    Column("id", Integer, primary_key=True, index=True),
+    Column("id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
     Column("stripe_id", String, unique=True, nullable=False),
-    Column("usuario_id", Integer, ForeignKey("usuarios.id"), unique=True),
+    Column("usuario_id", UUID(as_uuid=True), ForeignKey("usuarios.id"), unique=True),
     Column("plano", String),
     Column("valor_mensal", Float),
     Column("data_inicio", DateTime),

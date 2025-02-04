@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
@@ -12,7 +13,7 @@ class Usuario:
     telefone: str
     email: str
     senha: str | None = field(default=None)
-    id: int | None = field(default=None)
+    id: UUID | None = field(default=None)
 
     def __post_init__(self):
         validar_email(self.email)

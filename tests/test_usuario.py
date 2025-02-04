@@ -1,18 +1,21 @@
+import uuid
+
 import pytest
 
 from src.dominio.usuario.entidade import Usuario
 
 
 def test_criacao_modelo_usuario():
+    id = uuid.uuid4()
     usuario = Usuario(
-        id=1,
+        id=id,
         nome="Joao",
         sobrenome="Silva",
         telefone="11992720099",
         email="joao@teste.com",
         senha="senha123",
     )
-    assert usuario.id == 1
+    assert usuario.id == id
     assert usuario.nome == "Joao"
     assert usuario.sobrenome == "Silva"
     assert usuario.telefone == "11992720099"
@@ -23,7 +26,7 @@ def test_criacao_modelo_usuario():
 def test_usuario_email_format():
     with pytest.raises(ValueError):
         Usuario(
-            id=1,
+            id=uuid.uuid4(),
             nome="Joao",
             sobrenome="Silva",
             telefone="11000042526",
@@ -35,7 +38,7 @@ def test_usuario_email_format():
 def test_usuario_telefone_format():
     with pytest.raises(ValueError) as excinfo:
         Usuario(
-            id=1,
+            id=uuid.uuid4(),
             nome="Joao",
             sobrenome="Silva",
             telefone="telefone_invalido",

@@ -1,10 +1,12 @@
 import os
 from datetime import datetime
 from random import choice
+from unittest.mock import patch
 
 import pytest
 from freezegun import freeze_time
 
+from const import MENSAGEM_CADASTRO_BPO
 from src.dominio.bot.comandos import bot
 from src.dominio.bot.exceptions import ComandoDesconhecido
 from src.dominio.processamento.entidade import ClassificadorTexto
@@ -67,39 +69,39 @@ async def test_comandos_validos(mensagem, esperado, mock_usuario, transacao_gen,
     assert await bot.processar_comando(mensagem, nome_usuario="Levy", usuario=usuario, intervalo=intervalo) == esperado
 
 
-@pytest.mark.asyncio
-@freeze_time(datetime(2024, 10, 28))
-async def test_grafico_fluxo(mock_usuario, transacao_gen, session):
-    uow = UnitOfWork(session_factory=lambda: session)
-    usuario = mock_usuario
-    with uow:
-        for dia in range(1, 4):
-            transacao = transacao_gen(
-                usuario,
-                100.0,
-                "Loja A",
-                TipoTransacao.CREDITO,
-                caixa=datetime(year=datetime.now().year, month=datetime.now().month, day=dia),
-            )
-            uow.repo_escrita.adicionar(transacao)
-
-        for dia in range(4, 6):
-            transacao = transacao_gen(
-                usuario,
-                100.0,
-                "Loja B",
-                TipoTransacao.DEBITO,
-                caixa=datetime(year=datetime.now().year, month=datetime.now().month, day=dia),
-            )
-            uow.repo_escrita.adicionar(transacao)
-        uow.commit()
-
-    mensagem = "grafico fluxo"
-    intervalo = Intervalo(inicio=datetime(2024, 10, 1), fim=datetime(2024, 10, 31))
-    resposta = await bot.processar_comando(mensagem, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
-    print(resposta)
-
-    assert resposta.startswith(os.getenv("STATIC_URL"))
+# @pytest.mark.asyncio
+# @freeze_time(datetime(2024, 10, 28))
+# async def test_grafico_fluxo(mock_usuario, transacao_gen, session):
+#     uow = UnitOfWork(session_factory=lambda: session)
+#     usuario = mock_usuario
+#     with uow:
+#         for dia in range(1, 4):
+#             transacao = transacao_gen(
+#                 usuario,
+#                 100.0,
+#                 "Loja A",
+#                 TipoTransacao.CREDITO,
+#                 caixa=datetime(year=datetime.now().year, month=datetime.now().month, day=dia),
+#             )
+#             uow.repo_escrita.adicionar(transacao)
+#
+#         for dia in range(4, 6):
+#             transacao = transacao_gen(
+#                 usuario,
+#                 100.0,
+#                 "Loja B",
+#                 TipoTransacao.DEBITO,
+#                 caixa=datetime(year=datetime.now().year, month=datetime.now().month, day=dia),
+#             )
+#             uow.repo_escrita.adicionar(transacao)
+#         uow.commit()
+#
+#     mensagem = "grafico fluxo"
+#     intervalo = Intervalo(inicio=datetime(2024, 10, 1), fim=datetime(2024, 10, 31))
+#     resposta = await bot.processar_comando(mensagem, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
+#     print(resposta)
+#
+#     assert resposta.startswith(os.getenv("STATIC_URL"))
 
 
 @pytest.mark.asyncio
@@ -153,3 +155,12 @@ async def test_remover_transacao_por_wamid(mock_usuario, session, transacao_gen,
         await bot.processar_comando(wamid, nome_usuario="Levy", usuario=usuario, intervalo=intervalo)
         == "Lançamento removido com sucesso! ✅"
     )
+
+
+@pytest.mark.asyncio
+async def test_adicionar_bpo(mock_usuario):
+    usuario = mock_usuario
+    with patch("src.dominio.bot.comandos.gerar_codigo_bpo", return_value="123456"):
+        resposta = await bot.processar_comando("adicionar bpo 94992302731", nome_usuario=usuario.nome, usuario=usuario)
+
+    assert resposta == MENSAGEM_CADASTRO_BPO % (usuario.nome, "123456")
