@@ -198,7 +198,7 @@ def adicionar_bpo(*args: str, **kwargs: Any) -> str:
                 tipo="bpo",
             ),
         )
-        onboard._save_user_context(f"bpo_{numero_bpo}", context)
+        onboard._save_user_context(numero_bpo, context)
 
         return MENSAGEM_CADASTRO_BPO % (usuario.nome, codigo_bpo)
 
