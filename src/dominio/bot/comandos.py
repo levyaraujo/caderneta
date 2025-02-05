@@ -10,7 +10,6 @@ import dotenv
 
 from const import REGEX_WAMID, MENSAGEM_CADASTRO_BPO
 from src.dominio.bot.entidade import GerenciadorComandos
-from src.dominio.bpo.onboard import OnboardBPO
 from src.dominio.graficos.services import (
     criar_grafico_fluxo_de_caixa,
     criar_grafico_receitas_e_despesas,
@@ -19,7 +18,7 @@ from src.dominio.graficos.services import (
 from src.dominio.transacao.entidade import Real
 from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
-from src.dominio.usuario.onboard import UserContext, OnboardingState, UserData
+from src.dominio.usuario.onboard import UserContext, OnboardingState, UserData, Onboard
 from src.dominio.usuario.services import PasswordHasher
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
@@ -179,7 +178,7 @@ def exportar(*args: Tuple[str], **kwargs: Any) -> str:
 def adicionar_bpo(*args: str, **kwargs: Any) -> str:
     usuario: Usuario = kwargs.get("usuario")
 
-    onboard = OnboardBPO()
+    onboard = Onboard()
     if not args:
         return "Informe o número de WhatsApp do BPO. Ex.: *add bpo 11984033357*"
 
@@ -194,6 +193,7 @@ def adicionar_bpo(*args: str, **kwargs: Any) -> str:
                 token=PasswordHasher.hash_password(codigo_bpo),
                 nome_cliente=usuario.nome,
                 numero_cliente=usuario.telefone,
+                tipo="bpo",
             ),
         )
         onboard._save_user_context(f"bpo_{numero_bpo}", context)

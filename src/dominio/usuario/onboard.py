@@ -138,9 +138,17 @@ Vamos começar? Me diga seu nome completo para personalizar sua experiência. �
         try:
             validar_email(email)
             context.data.email = email
-            context.state = OnboardingState.WAITING_CODE_CONFIRMATION
+
+            if context.data.tipo == "bpo":
+                context.state = OnboardingState.WAITING_CODE_CONFIRMATION
+                self._save_user_context(context.data.telefone, context)
+                return f"Para finalizar o cadastro, digite o código de 6 dígitos informado pelo seu cliente.\n\nVocê possui {context.data.tentativas} tentativas restantes"
+
+            context.state = OnboardingState.COMPLETED
             self._save_user_context(context.data.telefone, context)
-            return f"Para finalizar o cadastro, digite o código de 6 dígitos informado pelo seu cliente.\n\nVocê possui {context.data.tentativas} tentativas restantes"
+            usuario = criar_usuario(UsuarioModel(**asdict(context.data)), uow=self.uow)  # noqa
+            enviar_email_boas_vindas(usuario)
+            return self._generate_completion_message()
         except ValueError as error:
             return "Por favor, digite um email válido."
 
