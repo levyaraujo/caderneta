@@ -79,7 +79,10 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
             parsed_data = parse_whatsapp_payload(dados)
             logger.error(f"Error processing webhook: {str(e)}")
             traceback.print_exc()
-            self.bot.responder(f"Ocorreu um erro: {e}", parsed_data.telefone)
+            self.bot.responder(
+                f"Ocorreu um erro deconhecido. Se o erro persistir, envie um email para contato@caderneta.chat",
+                parsed_data.telefone,
+            )
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error processing message")
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

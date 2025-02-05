@@ -6,16 +6,18 @@ from src.dominio.transacao.tipos import TipoTransacao
 
 
 def validar_email(email: str) -> bool:
-    padrao = re.compile(
-        r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"
-        r'"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@'
-        r"(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\["
-        r"(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|"
-        r"1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:"
-        r"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+))"
-    )
+    padrao = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
     if not re.match(padrao, email):
         raise ValueError("Formato de email inválido")
+
+    if len(email) > 254:
+        raise ValueError("Email muito longo")
+
+    local_part = email.split("@")[0]
+    if len(local_part) > 64:
+        raise ValueError("Parte local do email muito longa")
+
     return True
 
 
@@ -28,7 +30,7 @@ def validar_telefone(telefone: str) -> bool:
     return True
 
 
-def validar_tipo_da_transacao(tipo) -> None:
+def validar_tipo_da_transacao(tipo: TipoTransacao) -> None:
     if tipo not in [TipoTransacao.DEBITO, TipoTransacao.CREDITO, "credito", "debito"]:
         raise TipoTransacaoInvalido("O tipo desse transacao deve ser TipoTransacao.DEBITO ou TipoTransacao.CREDITO")
 
