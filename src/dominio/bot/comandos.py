@@ -174,7 +174,7 @@ def exportar(*args: Tuple[str], **kwargs: Any) -> str:
     return url_arquivo
 
 
-@bot.comando("adicionar bpo", "Adiciona um usuário BPO ao usuário", aliases=["add bpo", "adicionar bpo"])
+@bot.comando("adicionar bpo", "Atribui um usuário BPO ao cliente", aliases=["add bpo"])
 def adicionar_bpo(*args: str, **kwargs: Any) -> str:
     usuario: Usuario = kwargs.get("usuario")
 
@@ -184,6 +184,8 @@ def adicionar_bpo(*args: str, **kwargs: Any) -> str:
 
     try:
         numero_bpo = next(numero for numero in args if validar_telefone(numero))
+        if not numero_bpo.startswith("55"):
+            numero_bpo = "55" + numero_bpo
         codigo_bpo = gerar_codigo_bpo()
         context = UserContext(
             state=OnboardingState.WAITING_FULL_NAME,
@@ -202,3 +204,6 @@ def adicionar_bpo(*args: str, **kwargs: Any) -> str:
 
     except StopIteration:
         return "Informe um número válido. Ex.: *add bpo 11984033357*"
+
+    except ValueError as erro:
+        return str(erro)
