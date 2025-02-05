@@ -20,6 +20,7 @@ from src.dominio.transacao.entidade import Real
 from src.dominio.transacao.tipos import TipoTransacao
 from src.dominio.usuario.entidade import Usuario
 from src.dominio.usuario.onboard import UserContext, OnboardingState, UserData
+from src.dominio.usuario.services import PasswordHasher
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.utils.datas import intervalo_mes_atual, ultima_hora, primeira_hora
@@ -187,7 +188,13 @@ def adicionar_bpo(*args: str, **kwargs: Any) -> str:
         codigo_bpo = gerar_codigo_bpo()
         context = UserContext(
             state=OnboardingState.WAITING_FULL_NAME,
-            data=UserData(telefone=numero_bpo, cliente=str(usuario.id)),
+            data=UserData(
+                telefone=numero_bpo,
+                cliente=str(usuario.id),
+                token=PasswordHasher.hash_password(codigo_bpo),
+                nome_cliente=usuario.nome,
+                numero_cliente=usuario.telefone,
+            ),
         )
         onboard._save_user_context(f"bpo_{numero_bpo}", context)
 
