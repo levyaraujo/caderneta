@@ -19,7 +19,7 @@ jobs:
           unzip test_data/dados.zip
 
       - name: Upload test data as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-data
           path: test_data/
