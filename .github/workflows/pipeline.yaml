@@ -5,16 +5,6 @@ on:
       - main
 
 jobs:
-  download-test-data:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download files from private repo
-        uses: actions/checkout@v4
-        with:
-          repository: levyaraujo/dados
-          path: test_data
-          token: ${{ secrets.CADERNETA_TOKEN }}
-
   tests:
     runs-on: ubuntu-latest
     services:
@@ -33,7 +23,14 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Download files from private repo
+        uses: actions/checkout@v4
+        with:
+          repository: levyaraujo/dados
+          path: test_data
+          token: ${{ secrets.CADERNETA_TOKEN }}
 
       - name: Use Python 3.12.x
         uses: actions/setup-python@v4
@@ -51,17 +48,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry install --no-root --with dev
-
-      - name: Download test data artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: test-data
-
-      - name: Verifica dados de teste
-        run: ls -la
-
-      - name: Unzipa dados teste
-        run: unzip dados.zip -d test_data
 
       - name: Run migrations
         env:
