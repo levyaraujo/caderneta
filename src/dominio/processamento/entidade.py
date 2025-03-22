@@ -221,6 +221,7 @@ class ConstrutorTransacao(ClassificadorTexto):
 
         if re.search(data_e_hora, self.working_message):
             date_str = re.search(data_e_hora, self.working_message).group()
+            self.working_message = self.working_message.replace(date_str, "")
             return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
 
         date_pattern = r"\b\d{1,2}/\d{1,2}\b"
