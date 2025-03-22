@@ -151,12 +151,12 @@ class WhatsAppBot(BotBase):
 
         return conteudo["url"]
 
-    def download_imagem(self, url: str) -> str:
+    def download_imagem(self, url: str, telefone_usuario: str) -> str:
         uploader = Uploader()
         headers = {"Authorization": f"Bearer {self.__token}"}
         BUCKET = os.getenv("BUCKET", "/opt/caderneta/static")
         resposta = httpx.get(url=url, headers=headers)
-        filename = f"{uuid.uuid4()}.jpg"
+        filename = f"{telefone_usuario}-{uuid.uuid4()}.jpg"
 
         uploader.upload_file(filename, resposta.content)
 

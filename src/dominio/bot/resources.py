@@ -59,7 +59,7 @@ async def whatsapp_webhook(request: Request) -> Any:
                 mensagem="Aguarde um momento. Estou processando sua imagem...", telefone=dados_whatsapp.telefone
             )
             imagem_url = bot.obter_url_midia(dados_whatsapp.imagem)
-            imagem = bot.download_imagem(imagem_url)
+            imagem = bot.download_imagem(imagem_url, dados_whatsapp.telefone)
             filename = imagem.split("/")[-1]
             upload_to_s3(imagem, bucket, filename)
             bot.responder(mensagem="Imagem processada com sucesso! 📸", telefone=dados_whatsapp.telefone)
