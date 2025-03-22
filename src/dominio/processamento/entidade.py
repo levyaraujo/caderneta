@@ -220,7 +220,8 @@ class ConstrutorTransacao(ClassificadorTexto):
         data_e_hora = r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}"
 
         if re.search(data_e_hora, self.working_message):
-            return datetime.strptime(self.working_message, "%Y-%m-%d %H:%M:%S")
+            date_str = re.search(data_e_hora, self.working_message).group()
+            return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
 
         date_pattern = r"\b\d{1,2}/\d{1,2}\b"
         date_match = re.search(date_pattern, self.working_message)
