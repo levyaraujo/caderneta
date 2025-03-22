@@ -24,6 +24,8 @@ jobs:
 
       redis:
         image: redis:7.4-alpine3.20
+        env:
+          REDIS_PASSWORD: 1234
         ports:
           - 6379:6379
 
@@ -71,7 +73,7 @@ jobs:
           CADERNETA_URL: http://localhost:8000
           REDIS_HOST: localhost
           REDIS_PASSWORD: 1234
-          ENV: dev
+          ENV: testing
           PYTHONPATH: ${PWD}
           CSV_TREINAMENTO: test_data/dados_categorizados.csv
           CLASSIFIER_PATH: test_data/classifier.joblib
