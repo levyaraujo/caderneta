@@ -217,6 +217,11 @@ class ConstrutorTransacao(ClassificadorTexto):
         )
 
     def _extract_date(self) -> datetime:
+        data_e_hora = r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}"
+
+        if re.search(data_e_hora, self.working_message):
+            return datetime.strptime(self.working_message, "%Y-%m-%d %H:%M:%S")
+
         date_pattern = r"\b\d{1,2}/\d{1,2}\b"
         date_match = re.search(date_pattern, self.working_message)
         if not date_match:
@@ -292,7 +297,7 @@ class ConstrutorTransacao(ClassificadorTexto):
         return "\n".join(parts)
 
 
-def extract_payment_info(text):
+def extract_payment_info(text: str) -> dict:
     date_regex = r"(\d{2}\s[A-Z]{3}\s\d{4}-\d{2}:\d{2}:\d{2})"
     date_match = re.search(date_regex, text)
     date = date_match.group(1) if date_match else None
