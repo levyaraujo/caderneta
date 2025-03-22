@@ -30,7 +30,8 @@ jobs:
         with:
           repository: levyaraujo/dados
           path: test_data
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+          token: ${{ github.token }}
 
       - name: Use Python 3.12.x
         uses: actions/setup-python@v4
