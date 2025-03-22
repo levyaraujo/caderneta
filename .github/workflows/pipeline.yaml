@@ -5,25 +5,6 @@ on:
       - main
 
 jobs:
-  download-test-data:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download test data from S3
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1 # Change to your S3 bucket region
-        run: |
-          mkdir -p test_data
-          aws s3 cp s3://caderneta-staging/dados.zip test_data/dados.zip
-          unzip test_data/dados.zip
-
-      - name: Upload test data as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-data
-          path: test_data/
-
   tests:
     runs-on: ubuntu-latest
     services:
@@ -40,9 +21,24 @@ jobs:
           --health-retries=5
         ports:
           - 5432:5432
+
+      redis:
+        image: redis:7.4-alpine3.20
+        env:
+          REDIS_PASSWORD: 1234
+        ports:
+          - 6379:6379
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Download files from private repo
+        uses: actions/checkout@v4
+        with:
+          repository: levyaraujo/dados
+          path: test_data
+          token: ${{ secrets.CADERNETA_TOKEN }}
 
       - name: Use Python 3.12.x
         uses: actions/setup-python@v4
@@ -61,17 +57,6 @@ jobs:
           pip install poetry
           poetry install --no-root --with dev
 
-      - name: Download test data artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: test-data
-
-      - name: Verifica dados de teste
-        run: ls -la
-
-      - name: Unzipa dados teste
-        run: unzip dados.zip -d test_data
-
       - name: Run migrations
         env:
           DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
@@ -86,6 +71,8 @@ jobs:
         env:
           DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
           CADERNETA_URL: http://localhost:8000
+          REDIS_HOST: localhost
+          REDIS_PASSWORD: 1234
           ENV: testing
           PYTHONPATH: ${PWD}
           CSV_TREINAMENTO: test_data/dados_categorizados.csv

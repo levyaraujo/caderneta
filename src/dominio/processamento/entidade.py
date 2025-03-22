@@ -36,9 +36,9 @@ logger = setup_logging()
 
 class ClassificadorTexto:
     def __init__(self) -> None:
-        self.csv_path = os.getenv("CSV_TREINAMENTO")
-        self.vectorizer_joblib = os.getenv("VECTORIZER_PATH")
-        self.classifier_joblib = os.getenv("CLASSIFIER_PATH")
+        self.csv_path = os.getenv("CSV_TREINAMENTO", "/opt/caderneta/static/dados_categorizados.csv")
+        self.vectorizer_joblib = os.getenv("VECTORIZER_PATH", "/opt/caderneta/static/vectorizer.joblib")
+        self.classifier_joblib = os.getenv("CLASSIFIER_PATH", "/opt/caderneta/static/classifier.joblib")
         self.vectorizer = (
             self._carregar_ou_criar_vetorizador(self.vectorizer_joblib)
             if self.vectorizer_joblib
@@ -290,3 +290,15 @@ class ConstrutorTransacao(ClassificadorTexto):
             parts.append(f"Category: {transacao.categoria}")
 
         return "\n".join(parts)
+
+
+def extract_payment_info(text):
+    date_regex = r"(\d{2}\s[A-Z]{3}\s\d{4}-\d{2}:\d{2}:\d{2})"
+    date_match = re.search(date_regex, text)
+    date = date_match.group(1) if date_match else None
+
+    amount_regex = r"Valor\s+R\$\s+(\d+,\d+)"
+    amount_match = re.search(amount_regex, text)
+    amount = amount_match.group(1) if amount_match else None
+
+    return {"date": date, "amount": amount}

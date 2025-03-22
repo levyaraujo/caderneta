@@ -44,6 +44,7 @@ def limpar_texto(texto: str) -> str:
         str: O texto sem acentos.
     """
     # Normaliza e remove acentos
+    texto.replace("r $", "")
     nfkd = unicodedata.normalize("NFKD", texto)
     texto_sem_acentos = "".join([c for c in nfkd if not unicodedata.combining(c)])
     return texto_sem_acentos.strip()

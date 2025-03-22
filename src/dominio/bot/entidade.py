@@ -144,12 +144,25 @@ class WhatsAppBot(BotBase):
         except sr.RequestError as e:
             logger.error("Could not request results from Google Speech Recognition service; {0}".format(e))
 
-    def obter_url_audio(self, audio_id: str) -> str:
+    def obter_url_midia(self, midia_id: str) -> str:
         headers = {"Authorization": f"Bearer {self.__token}"}
-        resposta = httpx.get(f"{self.__url}/{audio_id}", headers=headers)
+        resposta = httpx.get(f"{self.__url}/{midia_id}", headers=headers)
         conteudo = resposta.json()
 
         return conteudo["url"]
+
+    def download_imagem(self, url: str) -> str:
+        uploader = Uploader()
+        headers = {"Authorization": f"Bearer {self.__token}"}
+        BUCKET = os.getenv("BUCKET", "/opt/caderneta/static")
+        resposta = httpx.get(url=url, headers=headers)
+        filename = f"{uuid.uuid4()}.jpg"
+
+        uploader.upload_file(filename, resposta.content)
+
+        caminho_imagem = os.path.join(BUCKET, filename)
+
+        return caminho_imagem
 
     def download_audio(self, url) -> str:
         headers = {"Authorization": f"Bearer {self.__token}"}

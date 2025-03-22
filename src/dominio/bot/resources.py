@@ -10,9 +10,11 @@ from src.dominio.bot.entidade import WhatsAppBot
 from src.dominio.bot.services import responder_usuario
 from fastapi import APIRouter, status, Request
 
+from src.infra.aws import upload_to_s3
 from src.infra.database.connection import get_session
 from src.infra.database.uow import UnitOfWork
 from src.utils.validadores import limpar_texto
+from src.utils.whatsapp_api import WhatsAppPayload
 
 BotRouter = APIRouter(prefix="/bot", tags=["twilio", "whatsapp"])
 
@@ -41,14 +43,30 @@ async def whatsapp_webhook(request: Request) -> Any:
     uow = UnitOfWork(session_factory=get_session)
     bot = WhatsAppBot()
     usuario = request.state.usuario
-    dados_whatsapp = request.state.dados_whatsapp
+    dados_whatsapp: WhatsAppPayload = request.state.dados_whatsapp
 
     mensagem = dados_whatsapp.mensagem
     if dados_whatsapp.audio:
         bot.responder(mensagem="Aguarde um momento. Estou processando seu áudio...", telefone=dados_whatsapp.telefone)
-        audio_url = bot.obter_url_audio(dados_whatsapp.audio)
+        audio_url = bot.obter_url_midia(dados_whatsapp.audio)
         audio = bot.download_audio(audio_url)
         mensagem = limpar_texto(bot.transcrever_audio(audio))
+
+    if dados_whatsapp.imagem:
+        try:
+            bucket = os.getenv("INVOICE_BUCKET")
+            bot.responder(
+                mensagem="Aguarde um momento. Estou processando sua imagem...", telefone=dados_whatsapp.telefone
+            )
+            imagem_url = bot.obter_url_midia(dados_whatsapp.imagem)
+            imagem = bot.download_imagem(imagem_url)
+            filename = imagem.split("/")[-1]
+            upload_to_s3(imagem, bucket, filename)
+            bot.responder(mensagem="Imagem processada com sucesso! 📸", telefone=dados_whatsapp.telefone)
+            return
+
+        except Exception:
+            traceback.format_exc()
 
     resposta = await responder_usuario(
         mensagem=mensagem,
