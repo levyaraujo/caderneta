@@ -30,7 +30,7 @@ jobs:
         with:
           repository: levyaraujo/dados
           path: test_data
-          token: ${{ secrets.CADERNETA_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Use Python 3.12.x
         uses: actions/setup-python@v4
