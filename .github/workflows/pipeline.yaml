@@ -70,6 +70,7 @@ jobs:
           DATABASE_URL: "postgresql://test_user:test_pass@localhost:5432/test_db"
           CADERNETA_URL: http://localhost:8000
           REDIS_HOST: localhost
+          REDIS_PASSWORD: 1234
           ENV: dev
           PYTHONPATH: ${PWD}
           CSV_TREINAMENTO: test_data/dados_categorizados.csv
