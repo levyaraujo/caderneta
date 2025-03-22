@@ -42,7 +42,7 @@ app.add_middleware(
 )
 
 app.add_middleware(WhatsAppOnboardMiddleware)
-app.add_middleware(AssinaturaMiddleware)
+# app.add_middleware(AssinaturaMiddleware)
 
 app.include_router(BotRouter)
 app.include_router(UsuarioRouter)

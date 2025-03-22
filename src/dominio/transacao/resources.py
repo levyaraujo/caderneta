@@ -46,7 +46,8 @@ def gerar_wamid() -> str:
 @TransacaoRouter.post("/lambda")
 async def criar_transacao_via_lambda(transacao: TransacaoRequest) -> dict:
     usuario = RepoUsuarioLeitura(session=get_session()).buscar_por_telefone(transacao.user)
-    mensagem = f"paguei {transacao.amount} para {transacao.institution} em {transacao.payment_date}"
+    destino = f"para {transacao.institution}" if transacao.institution else "outros"
+    mensagem = f"paguei {transacao.amount} {destino} em {transacao.payment_date}"
     bot = WhatsAppBot()
     uow = UnitOfWork(session_factory=get_session)
     dados_whatsapp = WhatsAppPayload(
