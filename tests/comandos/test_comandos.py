@@ -9,7 +9,7 @@ from freezegun import freeze_time
 from const import MENSAGEM_CADASTRO_BPO
 from src.dominio.bot.comandos import bot
 from src.dominio.bot.exceptions import ComandoDesconhecido
-from src.dominio.processamento.entidade import ClassificadorTexto
+from src.dominio.processamento.entidade import ClassificadorTexto, DadosTransacao, ConstrutorTransacao
 from src.dominio.transacao.services import comando_criar_transacao
 from src.dominio.transacao.tipos import TipoTransacao
 from src.infra.database.uow import UnitOfWork
@@ -119,16 +119,83 @@ async def test_integracao_resposta_usuario(mensagem, cli_bot, mock_usuario, sess
     assert resposta == f"Comando {mensagem} não existe\n\nDigite *ajuda* e veja os comandos disponíveis."
 
 
-@pytest.mark.parametrize("comando", ["vendi 150 vestido"])
+@pytest.mark.parametrize(
+    "comando", [{"mensagem": "paguei 53.78 para receita federal em 2025-03-20 13:42:29", "tipo": "DEBITO"}]
+)
 def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, session, mock_payload_whatsapp):
     usuario = mock_usuario
     dados_whatsapp = mock_payload_whatsapp
     uow = UnitOfWork(session_factory=lambda: session)
-    classificador = ClassificadorTexto()
-    tipo, _ = classificador.classificar_mensagem(comando)
-    resposta = comando_criar_transacao(usuario, tipo.upper(), comando, uow, usuario.telefone, dados_whatsapp)
+    resposta = comando_criar_transacao(
+        usuario, comando["tipo"].upper(), comando["mensagem"], uow, usuario.telefone, dados_whatsapp
+    )
 
     assert isinstance(resposta, dict)
+
+
+@pytest.mark.parametrize(
+    "acao, mensagem, esperado",
+    [
+        (
+            TipoTransacao.DEBITO,
+            "paguei 53.78 para receita federal em 2025-03-20 13:42:29",
+            DadosTransacao(
+                tipo=TipoTransacao.DEBITO,
+                valor=53.78,
+                metodo_pagamento=None,
+                categoria="receita federal",
+                data=datetime(2025, 3, 20, 13, 42, 29),
+                mensagem_original="paguei 53.78 para receita federal em 2025-03-20 13:42:29",
+            ),
+        ),
+        (
+            TipoTransacao.CREDITO,
+            "recebi 1.000,50 de salário em 20/03",
+            DadosTransacao(
+                tipo=TipoTransacao.CREDITO,
+                valor=1000.50,
+                metodo_pagamento=None,
+                categoria="salário",
+                data=datetime(datetime.now().year, 3, 20),
+                mensagem_original="recebi 1.000,50 de salário em 20/03",
+            ),
+        ),
+        (
+            TipoTransacao.DEBITO,
+            "gastei 10.500,75 no aluguel em 2025-03-01 08:00:00",
+            DadosTransacao(
+                tipo=TipoTransacao.DEBITO,
+                valor=10500.75,
+                metodo_pagamento=None,
+                categoria="aluguel",
+                data=datetime(2025, 3, 1, 8, 0, 0),
+                mensagem_original="gastei 10.500,75 no aluguel em 2025-03-01 08:00:00",
+            ),
+        ),
+        (
+            TipoTransacao.DEBITO,
+            "paguei 150 no mercado pix em 15/03",
+            DadosTransacao(
+                tipo=TipoTransacao.DEBITO,
+                valor=150.0,
+                metodo_pagamento="pix",
+                categoria="mercado",
+                data=datetime(datetime.now().year, 3, 15),
+                mensagem_original="paguei 150 no mercado pix em 15/03",
+            ),
+        ),
+    ],
+)
+def test_parse_message(acao, mensagem, esperado):
+    parser = ConstrutorTransacao(acao)
+    resultado = parser.parse_message(mensagem)
+
+    assert resultado.tipo == esperado.tipo
+    assert resultado.valor == esperado.valor
+    assert resultado.metodo_pagamento == esperado.metodo_pagamento
+    assert resultado.categoria == esperado.categoria
+    assert resultado.data == esperado.data
+    assert resultado.mensagem_original == esperado.mensagem_original
 
 
 @pytest.mark.asyncio

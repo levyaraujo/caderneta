@@ -199,7 +199,7 @@ class ConstrutorTransacao(ClassificadorTexto):
 
     def parse_message(self, message: str) -> DadosTransacao:
         """Parse a financial message by extracting known patterns first."""
-        self.working_message = message.lower().strip()
+        self.working_message = self.pre_processar_texto(message.lower().strip())
         if self.working_message.split()[0] in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]:
             self.working_message = " ".join(self.working_message.split()[1:])
         date = self._extract_date()
@@ -233,22 +233,24 @@ class ConstrutorTransacao(ClassificadorTexto):
 
         day, month = map(int, date_str.split("/"))
         self.working_message = self.working_message.replace(date_str, "")
-        return datetime.now().replace(day=day, month=month)
+        return datetime.now().replace(day=day, month=month, hour=0, minute=0, second=0, microsecond=0)
 
     def _extract_value(self) -> float:
         """
-        Extrai valores monetários do texto, lida com os formatos:
+        Extract monetary values from the text, handling formats like:
         - 150
         - 520,75
         - 10,500
-        - 10.500
+        - 10.500,15
         - 1,000,000
-        - 1.000.000
+        - 1.000.000,00
+        - 50.46
+        - 550.20
 
         Returns:
-            float: Valor monetário extraído
+            float: Extracted monetary value
         """
-        value_pattern = r"\b\d+(?:[.,]\d{3})*(?:,\d{2})?\b"
+        value_pattern = r"\b\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?\b"
 
         value_match = re.search(value_pattern, self.working_message)
         if not value_match:
@@ -257,10 +259,16 @@ class ConstrutorTransacao(ClassificadorTexto):
         value_str = value_match.group()
         self.working_message = self.working_message.replace(value_str, "")
 
-        if re.search(r",\d{2}$", value_str):
+        # Normalize value string to a float
+        if "," in value_str and "." in value_str:
+            # Handle cases like "1.000,50"
             value_str = value_str.replace(".", "").replace(",", ".")
-        else:
-            value_str = value_str.replace(".", "").replace(",", "")
+        elif "," in value_str:
+            # Handle cases like "520,75"
+            value_str = value_str.replace(",", ".")
+        elif "." in value_str:
+            # Handle cases like "550.20"
+            value_str = value_str
 
         return float(value_str)
 
@@ -297,15 +305,3 @@ class ConstrutorTransacao(ClassificadorTexto):
             parts.append(f"Category: {transacao.categoria}")
 
         return "\n".join(parts)
-
-
-def extract_payment_info(text: str) -> dict:
-    date_regex = r"(\d{2}\s[A-Z]{3}\s\d{4}-\d{2}:\d{2}:\d{2})"
-    date_match = re.search(date_regex, text)
-    date = date_match.group(1) if date_match else None
-
-    amount_regex = r"Valor\s+R\$\s+(\d+,\d+)"
-    amount_match = re.search(amount_regex, text)
-    amount = amount_match.group(1) if amount_match else None
-
-    return {"date": date, "amount": amount}
