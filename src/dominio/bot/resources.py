@@ -62,7 +62,6 @@ async def whatsapp_webhook(request: Request) -> Any:
             imagem = bot.download_imagem(imagem_url, dados_whatsapp.telefone)
             filename = imagem.split("/")[-1]
             upload_to_s3(imagem, bucket, filename)
-            bot.responder(mensagem="Imagem processada com sucesso! 📸", telefone=dados_whatsapp.telefone)
             return
 
         except Exception:
