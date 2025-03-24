@@ -184,6 +184,18 @@ def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, se
                 mensagem_original="paguei 150 no mercado pix em 15/03",
             ),
         ),
+        (
+            TipoTransacao.DEBITO,
+            "paguei 850 pix EQUATORIAL PARA DISTRIBUIDORA DE ENERGIA S.A",
+            DadosTransacao(
+                tipo=TipoTransacao.DEBITO,
+                valor=850.0,
+                metodo_pagamento="pix",
+                categoria="equatorial para distribuidora de energia s.a",
+                data=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
+                mensagem_original="paguei 850 pix EQUATORIAL PARA DISTRIBUIDORA DE ENERGIA S.A",
+            ),
+        ),
     ],
 )
 def test_parse_message(acao, mensagem, esperado):

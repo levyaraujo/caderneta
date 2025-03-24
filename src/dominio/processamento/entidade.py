@@ -25,6 +25,7 @@ from const import TRANSACAO_DEBITO, TRANSACAO_CREDITO
 from src.dominio.processamento.exceptions import NaoEhTransacao
 from src.dominio.transacao.tipos import TipoTransacao
 from src.infra.log import setup_logging
+from src.utils.datas import ultima_hora
 
 nltk.download("punkt", quiet=True)
 nltk.download("stopwords", quiet=True)
@@ -81,14 +82,6 @@ class ClassificadorTexto:
         tokens = word_tokenize(text.lower())
         tokens = [self.lemmatizer.lemmatize(token) for token in tokens if token not in self.stop_words]
         return " ".join(tokens)
-
-    @staticmethod
-    def categorizar_texto(text: str) -> str:
-        if re.search(r"v\s+\d+|recebi|\bvendi\b|\bvender\b", text, re.IGNORECASE):
-            return "credito"
-        if re.search(r"\bpp\b|paguei|gastei|comprei", text, re.IGNORECASE):
-            return "debito"
-        return "outro"
 
     def treinar_modelo(self) -> str:
         """Train the model using the pipeline"""
@@ -199,7 +192,7 @@ class ConstrutorTransacao(ClassificadorTexto):
 
     def parse_message(self, message: str) -> DadosTransacao:
         """Parse a financial message by extracting known patterns first."""
-        self.working_message = self.pre_processar_texto(message.lower().strip())
+        self.working_message = message.lower().strip()
         if self.working_message.split()[0] in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]:
             self.working_message = " ".join(self.working_message.split()[1:])
         date = self._extract_date()
@@ -280,15 +273,22 @@ class ConstrutorTransacao(ClassificadorTexto):
         return None
 
     def _extract_category(self) -> Optional[str]:
+        primeira_palavra = self.working_message.split()[0]
+        ultima_palavra = self.working_message.split()[-1]
+
+        if primeira_palavra in self.stop_words:
+            self.working_message = " ".join(self.working_message.split()[1:])
+
+        if ultima_palavra in self.stop_words:
+            self.working_message = " ".join(self.working_message.split()[:-1])
+
         palavras_restantes = [
-            self.pre_processar_texto(word)
+            word
             for word in self.working_message.split()
-            if self.pre_processar_texto(word)
-            and word not in self.METODOS_PAGAMENTO
-            and word not in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]
+            if word not in self.METODOS_PAGAMENTO and word not in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]
         ]
         category = " ".join(palavras_restantes).strip().replace(",", "|") if len(palavras_restantes) > 0 else "outros"
-        return category.strip() if category else None
+        return category.strip().upper() if category else None
 
     def format_transaction(self, transacao: DadosTransacao) -> str:
         """Format a transaction for display."""

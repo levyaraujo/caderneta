@@ -60,7 +60,7 @@ def comando_criar_transacao(
     salvar_transacao(transacao=transacao, uow=uow)
     mensagem = (
         f"Entendi! Houve um {acao} de *{Real(transacao_comando.valor)}* no dia {transacao_comando.data_formatada} "
-        f"na categoria *{transacao_comando.categoria}*."
+        f"para *{transacao_comando.categoria}*."
     )
 
     resposta = resposta_comando_transacao(telefone, mensagem, transacao.wamid)
