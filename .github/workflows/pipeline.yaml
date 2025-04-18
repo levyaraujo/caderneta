@@ -80,7 +80,7 @@ jobs:
           VECTORIZER_PATH: test_data/vectorizer.joblib
           STATIC_URL: https://caderneta-back.tunn.dev/static
           BUCKET: /tmp/.caderneta-static
-          PLANO_CADERNETA: price_1QPbFYDIhQ6ZuZkkw38co6cy
+          PLANO_CADERNETA: price_1RFLhZDIhQ6ZuZkkQjigsTYf
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |

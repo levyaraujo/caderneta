@@ -29,7 +29,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.bot = WhatsAppBot()
 
-    async def _process_webhook(self, request: Request) -> Optional[JSONResponse]:
+    async def _process_webhook(self, request: Request) -> None | JSONResponse:
         """Process the webhook data and return appropriate response"""
         try:
             raw_data = await request.body()
@@ -54,22 +54,6 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
             request.state.dados_whatsapp = parsed_data
             request.state.usuario = usuario
 
-            assinatura = usuario.assinatura
-
-            if assinatura.status == StatusAssinatura.EXPIRADA or assinatura.status == StatusAssinatura.CANCELADA:
-                mensagem = (
-                    f"Olá, {usuario.nome}! 👋\n\n"
-                    "Notamos que sua assinatura chegou ao fim. 📅\n\n"
-                    "Sentimos sua falta e gostaríamos de entender o motivo. "
-                    "Há algo que possamos fazer para melhorar sua experiência?\n\n"
-                    "Se quiser tirar dúvidas, entre em contato conosco: contato@caderneta.chat\n\n"
-                    "Acesse o link abaixo e renove sua assinatura:\n"
-                    f"https://billing.stripe.com/p/login/4gwdTFckG4s80SI8ww?prefilled_email={usuario.email}"
-                )
-                resposta = self.bot.responder(mensagem, usuario.telefone)
-
-                return JSONResponse(content=resposta, status_code=resposta.get("status_code"))
-
         except json.JSONDecodeError:
             logger.error("Invalid JSON payload")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON payload")
@@ -80,7 +64,7 @@ class WhatsAppOnboardMiddleware(BaseHTTPMiddleware):
             logger.error(f"Error processing webhook: {str(e)}")
             traceback.print_exc()
             self.bot.responder(
-                f"Ocorreu um erro deconhecido. Se o erro persistir, envie um email para contato@caderneta.chat",
+                f"Ocorreu um erro deconhecido. Se o erro persistir, envie um email para cadernetapp@gmail.com",
                 parsed_data.telefone,
             )
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error processing message")
