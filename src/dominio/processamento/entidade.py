@@ -230,38 +230,41 @@ class ConstrutorTransacao(ClassificadorTexto):
 
     def _extract_value(self) -> float:
         """
-        Extract monetary values from the text, handling formats like:
-        - 150
-        - 520,75
-        - 10,500
-        - 10.500,15
-        - 1,000,000
-        - 1.000.000,00
-        - 50.46
-        - 550.20
-
+        Extracts monetary value from a text string, handling formats like:
+        - BRL: 150, 520,75, 10.500,15, 1.000.000,00
+        - USD: 150, 520.75, 10,500.15, 1,000,000.00
+        - Plain: 10500
         Returns:
-            float: Extracted monetary value
+            float: Extracted monetary value as float
         """
-        value_pattern = r"\b\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?\b"
-
+        # Regex para capturar valores com ou sem separadores, com ou sem decimais
+        value_pattern = r"\b\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?\b|\b\d+\b"
         value_match = re.search(value_pattern, self.working_message)
+
         if not value_match:
-            raise ValueError("No value found in message")
+            raise ValueError("No monetary value found in message")
 
         value_str = value_match.group()
         self.working_message = self.working_message.replace(value_str, "")
 
-        # Normalize value string to a float
+        # Normalização
         if "," in value_str and "." in value_str:
-            # Handle cases like "1.000,50"
+            # BRL com milhar e decimal: "1.000,50" -> "1000.50"
             value_str = value_str.replace(".", "").replace(",", ".")
         elif "," in value_str:
-            # Handle cases like "520,75"
-            value_str = value_str.replace(",", ".")
+            parts = value_str.split(",")
+            if len(parts[-1]) == 2:
+                # "520,75" → decimal
+                value_str = value_str.replace(",", ".")
+            else:
+                # "10,500" → milhar (BR) → remove vírgula
+                value_str = value_str.replace(",", "")
         elif "." in value_str:
-            # Handle cases like "550.20"
-            value_str = value_str
+            parts = value_str.split(".")
+            if len(parts[-1]) == 2:
+                pass
+            else:
+                value_str = value_str.replace(".", "")
 
         return float(value_str)
 

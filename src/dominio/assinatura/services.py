@@ -166,3 +166,11 @@ def criar_assinatura_entidade(id_stripe: str, usuario: Usuario) -> Assinatura:
 
         uow.commit()
         return assinatura
+
+
+def criar_customer_portal_link(subscription_id: str):
+    subscription = stripe.Subscription.retrieve(subscription_id)
+    customer_id = subscription["customer"]
+    link = stripe.billing_portal.Session.create(customer=customer_id, locale="pt-BR")
+
+    return link

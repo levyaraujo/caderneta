@@ -9,6 +9,7 @@ from starlette.responses import Response
 
 from src.dominio.assinatura.entidade import StatusAssinatura
 from src.dominio.assinatura.repo import RepoAssinaturaLeitura
+from src.dominio.assinatura.services import criar_customer_portal_link
 from src.dominio.bot.entidade import WhatsAppBot
 from src.dominio.usuario.entidade import Usuario
 from src.infra.database.connection import get_session
@@ -32,23 +33,22 @@ class AssinaturaMiddleware(BaseHTTPMiddleware):
         If subscription is canceled, send a WhatsApp notification
         """
         try:
-            # Retrieve subscription for the user
             repo_assinatura = RepoAssinaturaLeitura(session=get_session())
             assinatura = repo_assinatura.buscar_por_id_usuario(usuario.id)
 
-            # If no subscription exists or is not canceled, continue
             if not assinatura or assinatura.status != StatusAssinatura.CANCELADA:
                 return
 
-            # Prepare and send WhatsApp message for canceled subscription
+            link = criar_customer_portal_link(subscription_id=assinatura.stripe_id)
+
             mensagem = (
                 f"Olá, {usuario.nome}! 👋\n\n"
                 "Notamos que sua assinatura foi cancelada. 📅\n\n"
                 "Sentimos sua falta e gostaríamos de entender o motivo. "
                 "Há algo que possamos fazer para melhorar sua experiência?\n\n"
                 "Acesse o link abaixo e renove sua assinatura:\n"
-                f"https://billing.stripe.com/p/login/4gwdTFckG4s80SI8ww?prefilled_email={usuario.email}"
-                "Se quiser tirar dúvidas, entre em contato conosco: contato@caderneta.chat\n\n"
+                f"{link.url}"
+                "Se quiser tirar dúvidas, entre em contato conosco: cadernetapp@gmail.com\n\n"
             )
 
             # Send message via WhatsApp
