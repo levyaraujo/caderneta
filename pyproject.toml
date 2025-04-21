@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "caderneta"
 version = "0.1.0"
-description = "app de gestão financeira para pequenas empresas"
+description = "Controle financeiro via WhatsApp"
 authors = ["Levy Araujo <lev0x79@gmail.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
@@ -35,6 +36,9 @@ resend = "^2.4.0"
 openpyxl = "^3.1.5"
 xlsxwriter = "^3.2.0"
 speechrecognition = "^3.11.0"
+dateparser = "^1.2.1"
+spacy = "^3.8.5"
+parsedatetime = "^2.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"

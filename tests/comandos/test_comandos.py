@@ -196,8 +196,45 @@ def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, se
                 mensagem_original="paguei 850 pix EQUATORIAL PARA DISTRIBUIDORA DE ENERGIA S.A",
             ),
         ),
+        (
+            TipoTransacao.DEBITO,
+            "paguei 1200 aluguel ontem",
+            DadosTransacao(
+                tipo=TipoTransacao.DEBITO,
+                valor=1200,
+                metodo_pagamento=None,
+                categoria="ALUGUEL",
+                data=datetime(2025, 4, 20),
+                mensagem_original="paguei 1200 aluguel ontem",
+            ),
+        ),
+        (
+            TipoTransacao.DEBITO,
+            "paguei 200 casamento sexta passada",
+            DadosTransacao(
+                tipo=TipoTransacao.DEBITO,
+                valor=200,
+                metodo_pagamento=None,
+                categoria="CASAMENTO",
+                data=datetime(2025, 4, 18),
+                mensagem_original="paguei 200 casamento sexta passada",
+            ),
+        ),
+        (
+            TipoTransacao.DEBITO,
+            "recebi 500 mãe anteontem",
+            DadosTransacao(
+                tipo=TipoTransacao.DEBITO,
+                valor=500,
+                metodo_pagamento=None,
+                categoria="MÃE",
+                data=datetime(2025, 4, 19),
+                mensagem_original="recebi 500 mãe anteontem",
+            ),
+        ),
     ],
 )
+@freeze_time(datetime(2025, 4, 21))
 def test_parse_message(acao, mensagem, esperado):
     parser = ConstrutorTransacao(acao)
     resultado = parser.parse_message(mensagem)

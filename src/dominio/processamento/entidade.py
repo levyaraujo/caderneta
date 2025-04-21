@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, Any
 from typing import Optional
 from typing import Tuple
@@ -10,6 +10,7 @@ from typing import Tuple
 import joblib
 import nltk
 import pandas as pd
+from httpx import RemoteProtocolError
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -195,8 +196,8 @@ class ConstrutorTransacao(ClassificadorTexto):
         self.working_message = message.lower().strip()
         if self.working_message.split()[0] in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]:
             self.working_message = " ".join(self.working_message.split()[1:])
-        date = self._extract_date()
         value = self._extract_value()
+        date = self._extract_date()
         payment_method = self._extract_payment_method()
         category = self._extract_category()
 
@@ -209,7 +210,49 @@ class ConstrutorTransacao(ClassificadorTexto):
             mensagem_original=message,
         )
 
-    def _extract_date(self) -> datetime:
+    def _extract_fuzzy_date(self) -> dict | None:
+        import httpx
+
+        payload = {"text": f"{self.working_message}", "locale": "pt_BR", "reftime": datetime.now().isoformat()}
+
+        try:
+            response = httpx.post("http://localhost:8000/parse", data=payload, timeout=5.0)
+            response.raise_for_status()
+            data = response.json()
+
+            dates = [d for d in data if d["dim"] == "time"]
+            if not dates:
+                return None
+
+            duckling_result = dates[0]["value"]["value"]
+            dt = datetime.fromisoformat(duckling_result.replace("Z", "+00:00"))
+            return dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+
+        except RemoteProtocolError:
+            payload.pop("reftime")
+            response = httpx.post("http://localhost:8000/parse", data=payload, timeout=5.0)
+            response.raise_for_status()
+            data = response.json()
+
+            dates = [d for d in data if d["dim"] == "time"]
+            if not dates:
+                return None
+
+            duckling_result = dates[0]
+            date_str = duckling_result["value"]["value"]
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            data = dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+
+            return {
+                "body": duckling_result["body"],
+                "data": data,
+            }
+
+        except httpx.RequestError as exc:
+            logger.error(f"🛑 Error communicating with Duckling: {exc}")
+            return None
+
+    def _extract_date(self) -> datetime | date:
         data_e_hora = r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}"
 
         if re.search(data_e_hora, self.working_message):
@@ -220,6 +263,10 @@ class ConstrutorTransacao(ClassificadorTexto):
         date_pattern = r"\b\d{1,2}/\d{1,2}\b"
         date_match = re.search(date_pattern, self.working_message)
         if not date_match:
+            parsed_duckling = self._extract_fuzzy_date()
+            if parsed_duckling:
+                self.working_message = self.working_message.replace(parsed_duckling["body"], "")
+                return parsed_duckling["data"]
             date_str = datetime.now().date().strftime("%d/%m")
         else:
             date_str = date_match.group()
