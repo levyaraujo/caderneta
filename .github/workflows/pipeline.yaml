@@ -22,6 +22,15 @@ jobs:
         ports:
           - 5432:5432
 
+      duckling:
+        image: rasa/duckling:latest
+        ports:
+          - 8000:8000
+        env:
+          PORT: 8000
+          DUCKLING_PORT: 8000
+          DUCKLING_LANG: pt_BR
+
       redis:
         image: redis:7.4-alpine3.20
         env:
