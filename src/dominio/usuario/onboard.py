@@ -70,18 +70,21 @@ class Onboard:
 
     def mensagem_inicial(self) -> str:
         mensagem_boas_vindas = f"""
-Olá, empreendedor! 🚀💼
+Olá! 👋✨
 
-Bem-vindo ao *Caderneta* - Seu parceiro inteligente em gestão financeira! 📊💰
+Seja muito bem-vindo ao *Caderneta* – seu assistente pessoal de finanças! 💸📱
 
-Imagina controlar suas finanças com simplicidade e precisão, direto do seu WhatsApp? Estamos aqui para transformar sua gestão financeira em algo descomplicado e estratégico.
+Aqui, você tem o controle do seu dinheiro na palma da mão, direto pelo WhatsApp. Nossa missão é te ajudar a organizar seus gastos, acompanhar sua evolução e alcançar seus objetivos com mais clareza e tranquilidade. 🧘‍♂️📊
 
-Com o *Caderneta*, você vai:
-✅ Acompanhar receitas e despesas em tempo real
-✅ Gerar relatórios financeiros instantâneos
-✅ Tomar decisões inteligentes sobre seu negócio
+Com o *Caderneta*, você pode:
+✅ Registrar seus gastos e ganhos de forma simples
+✅ Acompanhar seu saldo e hábitos financeiros
+✅ Receber resumos e dicas personalizadas
 
-Vamos começar? Me diga seu nome completo para personalizar sua experiência. 😊"""
+Vamos juntos nessa jornada rumo a uma vida financeira mais leve e inteligente?
+
+Para começar, me diga seu nome completo. 😊
+"""
         return mensagem_boas_vindas
 
     def mensagem_inicial_bpo(self, contexto: UserContext) -> str:
