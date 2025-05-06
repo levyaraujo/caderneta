@@ -38,6 +38,7 @@ transacoes = Table(
     Column("usuario_id", UUID(as_uuid=True), ForeignKey("usuarios.id")),
     Column("valor", Float),
     Column("categoria", String),
+    Column("destino", String, default="OUTROS"),
     Column("tipo", TipoTransacaoORM),
     Column("descricao", String),
     Column("caixa", DateTime),

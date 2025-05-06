@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, Any
 from typing import Optional
@@ -101,7 +101,7 @@ class ClassificadorTexto:
         report: str = "\n" + classification_report(y_test, y_pred)
         return report
 
-    def classificar_mensagem(self, mensagem: str, atualizar_df: bool = True) -> Tuple[str, Dict[str, float]]:
+    def classificar_mensagem(self, mensagem: str) -> Tuple[str, Dict[str, float]]:
         try:
             mensagem_processada = self.pre_processar_texto(mensagem)
 
@@ -119,40 +119,13 @@ class ClassificadorTexto:
                     raise NaoEhTransacao("O comando informado não é de transação")
                 probs_dict = {previsao: 1.0}
 
-            if atualizar_df and previsao != "outros":
-                nova_linha = pd.DataFrame(
-                    [
-                        {
-                            "mensagem": mensagem,
-                            "classificacao": previsao,
-                            "probabilidade": probs_dict[previsao],
-                        }
-                    ]
-                )
-                self.df = pd.concat([self.df, nova_linha], ignore_index=True)
-                self.df.to_csv(self.csv_path, index=False)
-                logger.info(f"Dataframe atualizado com a nova classificação: {previsao}")
-
             return previsao, probs_dict
 
         except NotFittedError as erro:
             logger.info(f"Model not fitted yet: {erro}")
             self.treinar_modelo()
             self.salvar_modelo()
-            return self.classificar_mensagem(mensagem, atualizar_df)
-
-    def classificar_todas_as_mensagens(self) -> None:
-        results = []
-        for message in self.df["mensagem"]:
-            prediction, probabilities = self.classificar_mensagem(message, atualizar_df=True)
-            results.append(
-                {
-                    "mensagem": message,
-                    "classificacao": prediction,
-                    "probabilidade": probabilities[prediction],
-                }
-            )
-        self.df = pd.DataFrame(results).drop_duplicates()
+            return self.classificar_mensagem(mensagem)
 
     def salvar_modelo(self) -> None:
         joblib.dump(self.vectorizer, self.vectorizer_joblib)
@@ -166,9 +139,10 @@ class DadosTransacao:
     tipo: TipoTransacao
     valor: float
     metodo_pagamento: Optional[str]
-    categoria: Optional[str]
+    destino: Optional[str]
     data: datetime
     mensagem_original: str
+    categoria: Optional[str] = field(default="OUTROS")
 
     @property
     def data_formatada(self) -> str:
@@ -195,19 +169,37 @@ class ConstrutorTransacao(ClassificadorTexto):
         self.working_message = message.lower().strip()
         if self.working_message.split()[0] in [*TRANSACAO_DEBITO, *TRANSACAO_CREDITO]:
             self.working_message = " ".join(self.working_message.split()[1:])
+
+        category = self._get_transaction_category().get("category", "OUTROS")
         date = self._extract_date()
         value = self._extract_value()
         payment_method = self._extract_payment_method()
-        category = self._extract_category()
+        destination = self._extract_category()
 
         return DadosTransacao(
             tipo=self.acao,
             valor=value,
             metodo_pagamento=payment_method,
-            categoria=category,
+            destino=destination,
+            categoria=category.upper(),
             data=date,
             mensagem_original=message,
         )
+
+    def _get_transaction_category(self):
+        import httpx
+        import json
+
+        categorizer = os.getenv("CATEGORIZER")
+        if not categorizer:
+            return {"category": "outros"}
+
+        resposta = httpx.post(categorizer, json={"message": self.working_message})
+
+        if resposta.status_code != 200:
+            return {"category": "outros"}
+
+        return json.loads(resposta.content)
 
     def _extract_date(self) -> datetime:
         data_e_hora = r"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}"

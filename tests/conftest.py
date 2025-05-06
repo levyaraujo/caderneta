@@ -48,7 +48,7 @@ def transacao_gen(gerar_wamid):
         return Transacao(
             usuario=usuario,
             valor=valor,
-            categoria=destino,
+            destino=destino,
             tipo=tipo,
             descricao="asodihasjklfnasfr",
             caixa=caixa,
