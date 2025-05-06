@@ -59,11 +59,11 @@ def comando_criar_transacao(
         wamid=dados_whatsapp.wamid,
     )
     salvar_transacao(transacao=transacao, uow=uow)
-    icone = "💹" if tipo == TipoTransacao.CREDITO else "❌"
+    icone = "✅"
     mensagem = (
         f"{icone} {acao.title()} de *{Real(transacao_comando.valor)}*\n"
         f"📅 Data: {transacao_comando.data_formatada}\n"
-        f"📂 Categoria: *{transacao_comando.categoria}*"
+        f"📂 Categoria: *{transacao_comando.categoria}*\n"
         f"📍 Destino: *{transacao_comando.destino}*"
     )
 
