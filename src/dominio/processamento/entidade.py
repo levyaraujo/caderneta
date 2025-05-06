@@ -191,6 +191,9 @@ class ConstrutorTransacao(ClassificadorTexto):
         import json
 
         categorizer = os.getenv("CATEGORIZER")
+        if not categorizer:
+            return {"category": "outros"}
+
         resposta = httpx.post(categorizer, json={"message": self.working_message})
 
         if resposta.status_code != 200:
