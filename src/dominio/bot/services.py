@@ -33,6 +33,11 @@ async def responder_usuario(
             )
 
         try:
+            tem_numero = any(char.isdigit() for char in mensagem)
+
+            if not tem_numero:
+                raise NaoEhTransacao()
+
             classifier = ClassificadorTexto()
             tipo, _ = classifier.classificar_mensagem(mensagem)
             if tipo == "debito" or tipo == "credito":
