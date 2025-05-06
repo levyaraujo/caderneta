@@ -143,7 +143,7 @@ def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, se
                 tipo=TipoTransacao.DEBITO,
                 valor=53.78,
                 metodo_pagamento=None,
-                categoria="RECEITA FEDERAL",
+                destino="RECEITA FEDERAL",
                 data=datetime(2025, 3, 20, 13, 42, 29),
                 mensagem_original="paguei 53.78 para receita federal em 2025-03-20 13:42:29",
             ),
@@ -155,7 +155,7 @@ def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, se
                 tipo=TipoTransacao.CREDITO,
                 valor=1000.50,
                 metodo_pagamento=None,
-                categoria="SALÁRIO",
+                destino="SALÁRIO",
                 data=datetime(datetime.now().year, 3, 20),
                 mensagem_original="recebi 1.000,50 de salário em 20/03",
             ),
@@ -167,7 +167,7 @@ def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, se
                 tipo=TipoTransacao.DEBITO,
                 valor=10500.75,
                 metodo_pagamento=None,
-                categoria="ALUGUEL",
+                destino="ALUGUEL",
                 data=datetime(2025, 3, 1, 8, 0, 0),
                 mensagem_original="gastei 10.500,75 no aluguel em 2025-03-01 08:00:00",
             ),
@@ -179,7 +179,7 @@ def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, se
                 tipo=TipoTransacao.DEBITO,
                 valor=150.0,
                 metodo_pagamento="pix",
-                categoria="MERCADO",
+                destino="MERCADO",
                 data=datetime(datetime.now().year, 3, 15),
                 mensagem_original="paguei 150 no mercado pix em 15/03",
             ),
@@ -191,7 +191,7 @@ def test_comando_transacao_retorna_mensagem_interativa(comando, mock_usuario, se
                 tipo=TipoTransacao.DEBITO,
                 valor=850.0,
                 metodo_pagamento="pix",
-                categoria="EQUATORIAL PARA DISTRIBUIDORA DE ENERGIA S.A",
+                destino="EQUATORIAL PARA DISTRIBUIDORA DE ENERGIA S.A",
                 data=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
                 mensagem_original="paguei 850 pix EQUATORIAL PARA DISTRIBUIDORA DE ENERGIA S.A",
             ),
@@ -205,7 +205,7 @@ def test_parse_message(acao, mensagem, esperado):
     assert resultado.tipo == esperado.tipo
     assert resultado.valor == esperado.valor
     assert resultado.metodo_pagamento == esperado.metodo_pagamento
-    assert resultado.categoria == esperado.categoria
+    assert resultado.destino == esperado.destino
     assert resultado.data == esperado.data
     assert resultado.mensagem_original == esperado.mensagem_original
 

@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, Any
 from typing import Optional
@@ -140,9 +140,9 @@ class DadosTransacao:
     valor: float
     metodo_pagamento: Optional[str]
     destino: Optional[str]
-    categoria: Optional[str]
     data: datetime
     mensagem_original: str
+    categoria: Optional[str] = field(default="OUTROS")
 
     @property
     def data_formatada(self) -> str:

@@ -37,7 +37,7 @@ def test_start_onboarding_new_user(onboarding_handler, mock_redis):
     assert mock_redis.set.called
 
     # Verify welcome message
-    assert "Olá, empreendedor!" in welcome_message
+    assert "Olá!" in welcome_message
 
     # Verify context was saved in Redis
     context_dict = json.loads(mock_redis.set.call_args[0][1])

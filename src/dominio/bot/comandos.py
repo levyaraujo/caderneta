@@ -58,7 +58,7 @@ def listar_fluxo(*args: List[str], **kwargs: Any) -> str:
     return "\n".join(
         f"{transacao.caixa.strftime('%d/%m')} "
         f"{'✅' if transacao.tipo == TipoTransacao.CREDITO else '🔻'} "
-        f"{Real(transacao.valor)} | *{transacao.categoria}*"
+        f"{Real(transacao.valor)} | *{transacao.destino}*"
         for transacao in transacoes
     )
 

@@ -17,7 +17,7 @@ def test_criacao_transacao(mock_usuario, transacao_gen):
     assert isinstance(transacao, Transacao)
     assert transacao.usuario == mock_usuario
     assert transacao.valor == 100.0
-    assert transacao.categoria == "Loja A"
+    assert transacao.destino == "Loja A"
     assert transacao.tipo == TipoTransacao.DEBITO
     assert isinstance(transacao.caixa, datetime)
     assert isinstance(transacao.competencia, datetime)
@@ -31,7 +31,7 @@ def test_tipo_transacao_enum():
 def test_transacao_campos_opcionais(mock_usuario, transacao_gen):
     transacao = transacao_gen(mock_usuario, 100.0, None, TipoTransacao.CREDITO)
 
-    assert transacao.categoria is None
+    assert transacao.destino is None
     assert isinstance(transacao.descricao, str)
 
 
