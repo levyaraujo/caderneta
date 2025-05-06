@@ -54,13 +54,17 @@ def comando_criar_transacao(
         valor=transacao_comando.valor,
         tipo=transacao_comando.tipo,
         categoria=transacao_comando.categoria,
+        destino=transacao_comando.destino,
         caixa=transacao_comando.data,
         wamid=dados_whatsapp.wamid,
     )
     salvar_transacao(transacao=transacao, uow=uow)
+    icone = "💹" if tipo == TipoTransacao.CREDITO else "❌"
     mensagem = (
-        f"Entendi! Houve um {acao} de *{Real(transacao_comando.valor)}* no dia {transacao_comando.data_formatada} "
-        f"para *{transacao_comando.categoria}*."
+        f"{icone} {acao.title()} de *{Real(transacao_comando.valor)}*\n"
+        f"📅 Data: {transacao_comando.data_formatada}\n"
+        f"📂 Categoria: *{transacao_comando.categoria}*"
+        f"📍 Destino: *{transacao_comando.destino}*"
     )
 
     resposta = resposta_comando_transacao(telefone, mensagem, transacao.wamid)

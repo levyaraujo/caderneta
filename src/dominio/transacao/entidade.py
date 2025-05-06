@@ -18,7 +18,8 @@ class Transacao:
     tipo: TipoTransacao
     wamid: str
     id: UUID | None = field(default=None)
-    categoria: str | None = field(default=None)
+    destino: str | None = field(default=None)
+    categoria: str | None = field(default="OUTROS")
     descricao: str | None = field(default=None)
     caixa: datetime | date = field(default_factory=datetime.now)
     competencia: datetime = field(default_factory=datetime.now)
